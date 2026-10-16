@@ -94,7 +94,7 @@ Todos os cálculos vivem em `domain/` como **funções puras**, 100% cobertas po
 ### Projeção do Hodômetro
 * **Com < 2 leituras:** taxa = chip mensal escolhido.
 $$\text{km\_diario} = \frac{\text{km\_mensal\_estimado}}{30}$$
-* **Com ≥ 2 leituras:** taxa = regressão linear simples sobre as leituras dos últimos 90 dias, usando o chip como piso de sanidade (evita taxa ~0 por leituras próximas).
+* **Com ≥ 2 leituras nos últimos 90 dias, espaçadas por ≥ 14 dias:** taxa = regressão linear simples (km/dia) sobre essas leituras, limitada a ≥ 0. Caso contrário, usa o chip. *(O espaçamento mínimo evita taxas ruidosas de leituras próximas sem impedir que a taxa real fique abaixo da estimativa inicial.)*
 $$\text{odometro\_projetado} = \text{km\_ultima\_leitura} + (\text{dias\_decorridos} \times \text{km\_diario})$$
 * Leituras nunca podem ser menores que a anterior (validação na entrada).
 
@@ -281,9 +281,34 @@ dossier_shares                       -- v1
 * **Linguagem simples**, sem jargão técnico; números formatados em pt-BR (`46.250 km`, `R$ 1.234,56`).
 * **Estados vazios úteis**, nunca telas em branco.
 
+### Identidade visual
+O vocabulário visual vem do universo do carro brasileiro, não de templates.
+* **Elemento memorável (único):** hodômetro de tambores mecânicos no topo do dashboard. O último tambor é invertido (claro com dígito escuro), sinalizando "estimado". Os dígitos rolam quando o KM muda (instantâneo com "reduzir movimento" ativo). Todo o resto é discreto.
+* **Cor:** ação primária no azul da faixa da placa Mercosul (`#0F3B9C`); fundo concreto frio (`#F3F5F4`); atenção no âmbar de placa de trânsito (`#E8A317`); crítico `#B3261E`; em dia `#2D6A4F`. Paleta escura equivalente.
+* **Tipografia:** Barlow (derivada da sinalização rodoviária) para a interface; Barlow Condensed para números (hodômetro, km, R$). Sempre em caixa de frase, sem rótulos em caixa alta.
+* **Estrutura:** itens de manutenção como linhas de largura total com barra lateral de urgência — não grade de cards iguais. Sem sombras; separação por linhas de 1px e espaçamento. Raios variam por papel (botões 10, plaquinhas de specs 6, tambores 3, linhas 0).
+* Tokens implementados em `src/ui/theme.ts`.
+
 ---
 
-## 11. Próximos Passos
+## 11. Estratégia de Testes
+
+Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra sem teste.
+
+| Camada | Ferramenta | O que cobre |
+|---|---|---|
+| `src/domain` | Jest (jest-expo) | Todas as regras: datas, projeção, vencimento, urgência, presets, formatação. Casos de borda obrigatórios (fim de mês, ano bissexto, limites do semáforo). |
+| `src/db` | Jest + **sql.js** (SQLite em WASM) rodando as migrations reais | Repositório: criação, validações, constraints, transações e rollback, soft delete, ordenação. |
+| `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
+| `src/app` (telas) | Jest + RNTL | Fluxos principais com banco em memória: onboarding, registro de troca, ajuste de KM. |
+
+* **Comando único:** `npm test` (mais `npm run typecheck`) — deve passar antes de todo commit.
+* **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store) e notificações. Validados manualmente em dev build.
+* `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
+
+---
+
+## 12. Próximos Passos
 
 1. ~~Confirmar a opção de gestão de chave na nuvem~~ → **chave gerenciada pelo servidor** (8.3).
 2. **Scaffold do projeto** Expo + TypeScript + Drizzle + SQLCipher.
