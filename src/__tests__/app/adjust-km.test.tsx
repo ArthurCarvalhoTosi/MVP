@@ -1,7 +1,8 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { Alert, type AlertButton } from 'react-native';
 import AdjustKm from '@/app/adjust-km';
 import type { Db } from '@/db/client';
-import { readingsQuery } from '@/db/repo';
+import { addOdometerReading, readingsQuery } from '@/db/repo';
 import { odometerReadings } from '@/db/schema';
 import { addDays, todayISO } from '@/domain';
 import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
@@ -20,6 +21,24 @@ beforeEach(async () => {
 });
 
 const field = () => screen.getByLabelText('KM no painel agora, km');
+const HINT = 'Valor estimado. Confira no painel do carro.';
+
+async function saveKm(km: string) {
+  const user = userEvent.setup();
+  await user.clear(field());
+  await user.type(field(), km);
+  await user.press(screen.getByRole('button', { name: 'Salvar KM' }));
+}
+
+/** Spies on Alert.alert and returns a way to press one of its buttons. */
+function spyAlert() {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const press = async (text: string) => {
+    const buttons = alert.mock.calls.at(-1)?.[2] as AlertButton[];
+    await act(async () => buttons.find((b) => b.text === text)?.onPress?.());
+  };
+  return { alert, press };
+}
 
 test('prefills the projection and saves the panel reading as an adjustment', async () => {
   await render(<AdjustKm />);
@@ -27,9 +46,14 @@ test('prefills the projection and saves the panel reading as an adjustment', asy
 
   expect(screen.getByRole('header', { name: 'Ajustar KM' })).toBeOnTheScreen();
   expect(field()).toHaveDisplayValue('41000');
+  expect(field()).toHaveProp('selectTextOnFocus', true);
+  expect(field()).toHaveProp('maxLength', 9);
+  expect(screen.getByText(HINT)).toBeOnTheScreen();
 
   await user.clear(field());
   await user.type(field(), '40.800');
+  // The value is no longer the estimate.
+  expect(screen.queryByText(HINT)).not.toBeOnTheScreen();
   await user.press(screen.getByRole('button', { name: 'Salvar KM' }));
 
   expect(router.back).toHaveBeenCalled();
@@ -37,15 +61,45 @@ test('prefills the projection and saves the panel reading as an adjustment', asy
   expect(db.select({ source: odometerReadings.source }).from(odometerReadings).all()).toContainEqual({ source: 'adjust' });
 });
 
-test('rejects a KM below the last reading', async () => {
+test('asks before correcting a KM below earlier readings, then discards the higher ones', async () => {
+  // An earlier log accepted a too-high projection.
+  await addOdometerReading(db, vehicleId, 41500, addDays(todayISO(), -5), 'log');
+  const { alert, press } = spyAlert();
   await render(<AdjustKm />);
-  const user = userEvent.setup();
 
-  await user.clear(field());
-  await user.type(field(), '39999');
-  await user.press(screen.getByRole('button', { name: 'Salvar KM' }));
+  await saveKm('41.200');
 
-  expect(screen.getByText('Esse KM é menor que uma leitura anterior. Confira o valor.')).toBeOnTheScreen();
+  expect(alert).toHaveBeenCalledWith(
+    'Corrigir o KM?',
+    'Esse valor é menor que um KM registrado antes. Se o painel mostra este número, as leituras maiores serão descartadas e as próximas trocas recalculadas.',
+    [expect.objectContaining({ text: 'Cancelar', style: 'cancel' }), expect.objectContaining({ text: 'Corrigir KM' })],
+  );
+  expect(router.back).not.toHaveBeenCalled();
+
+  await press('Corrigir KM');
+
+  expect(router.back).toHaveBeenCalled();
+  expect(readingsQuery(db, vehicleId).all().map((r) => r.km)).toEqual([40000, 41200]);
+});
+
+test('keeps every reading when the correction is cancelled', async () => {
+  const { alert, press } = spyAlert();
+  await render(<AdjustKm />);
+
+  await saveKm('39999');
+  expect(alert).toHaveBeenCalledTimes(1);
+  await press('Cancelar');
+
   expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
   expect(router.back).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Salvar KM' })).toBeEnabled();
+});
+
+test('rejects a KM too high to be real', async () => {
+  await render(<AdjustKm />);
+
+  await saveKm('2000001');
+
+  expect(screen.getByText('Confira o KM: o valor parece alto demais.')).toBeOnTheScreen();
+  expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
 });

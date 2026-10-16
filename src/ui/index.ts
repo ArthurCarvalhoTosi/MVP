@@ -1,4 +1,4 @@
-export { tokens, type, space, radius, useTheme } from './theme';
+export { type, space, radius, useTheme } from './theme';
 export type { Colors, ColorName, TypeVariant } from './theme';
 export { fonts } from './fonts';
 export { Icon } from './Icon';
@@ -13,4 +13,5 @@ export { SpecStrip } from './SpecStrip';
 export type { SpecItem } from './SpecStrip';
 export { ChipGroup } from './ChipGroup';
 export { TextField } from './TextField';
+export { FormError } from './FormError';
 export { Section } from './Section';

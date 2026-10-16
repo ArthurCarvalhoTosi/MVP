@@ -33,4 +33,15 @@ describe('Button', () => {
     expect(button).toBeBusy();
     expect(button).toBeDisabled();
   });
+
+  it('reports expanded state only when given', async () => {
+    await render(<Button label="Em dia (2)" onPress={jest.fn()} expanded={false} />);
+    expect(screen.getByRole('button', { name: 'Em dia (2)' })).toBeCollapsed();
+
+    await screen.rerender(<Button label="Em dia (2)" onPress={jest.fn()} expanded />);
+    expect(screen.getByRole('button', { name: 'Em dia (2)' })).toBeExpanded();
+
+    await screen.rerender(<Button label="Salvar" onPress={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Salvar' })).not.toBeCollapsed();
+  });
 });

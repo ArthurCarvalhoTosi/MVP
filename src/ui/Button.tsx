@@ -10,9 +10,19 @@ type Props = {
   icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
+  /** For buttons that show or hide content below them. */
+  expanded?: boolean;
 };
 
-export function Button({ label, onPress, variant = 'primary', icon, disabled = false, loading = false }: Props) {
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  icon,
+  disabled = false,
+  loading = false,
+  expanded,
+}: Props) {
   const { c } = useTheme();
   const fg = variant === 'primary' ? 'onPrimary' : 'primary';
   const inactive = disabled || loading;
@@ -23,7 +33,7 @@ export function Button({ label, onPress, variant = 'primary', icon, disabled = f
       disabled={inactive}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled: inactive, busy: loading }}
+      accessibilityState={{ disabled: inactive, busy: loading, expanded }}
       style={({ pressed }) => [
         styles.base,
         variant === 'primary' && { backgroundColor: c.primary },

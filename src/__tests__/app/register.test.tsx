@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { eq } from 'drizzle-orm';
 import Register from '@/app/register';
 import type { Db } from '@/db/client';
@@ -32,6 +32,8 @@ test('saves the log, moves the item baseline to it and closes', async () => {
 
   expect(screen.getByRole('header', { name: 'Troca de óleo e filtro' })).toBeOnTheScreen();
   expect(kmField()).toHaveDisplayValue(String(projected));
+  expect(screen.getByText('Valor estimado. Confira no painel do carro.')).toBeOnTheScreen();
+  expect(screen.getByText('Data da troca')).toBeOnTheScreen();
   expect(screen.getByRole('radio', { name: 'Hoje' })).toBeChecked();
 
   await user.type(screen.getByLabelText('Custo (opcional), R$'), '1.234,5');
@@ -61,9 +63,38 @@ test('rejects a KM below an earlier reading', async () => {
   await user.type(kmField(), '39000');
   await user.press(screen.getByRole('button', { name: 'Registrar troca' }));
 
-  expect(screen.getByText('Esse KM é menor que uma leitura anterior. Confira o valor.')).toBeOnTheScreen();
+  // Correcting an earlier reading lives in Ajustar KM, behind a confirmation.
+  expect(
+    screen.getByText(
+      'Esse KM é menor que uma leitura anterior. Confira o valor. Se o KM salvo antes estava errado, corrija em Ajustar KM.',
+    ),
+  ).toBeOnTheScreen();
   expect(logsQuery(db, vehicleId).all()).toEqual([]);
   expect(router.back).not.toHaveBeenCalled();
+});
+
+test('rejects a KM too high to be real', async () => {
+  await render(<Register />);
+  const user = userEvent.setup();
+
+  await user.clear(kmField());
+  await user.type(kmField(), '2.000.001');
+  await user.press(screen.getByRole('button', { name: 'Registrar troca' }));
+
+  expect(screen.getByText('Confira o KM: o valor parece alto demais.')).toBeOnTheScreen();
+  expect(logsQuery(db, vehicleId).all()).toEqual([]);
+});
+
+test('saves once when the button is tapped twice in a row', async () => {
+  await render(<Register />);
+  const button = screen.getByRole('button', { name: 'Registrar troca' });
+
+  // Raw presses, without userEvent's press-and-release delays; the sheet stays open (router is mocked).
+  await fireEvent.press(button);
+  await fireEvent.press(button);
+
+  expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
+  expect(button).toBeBusy();
 });
 
 test('asks for a valid past date and a readable cost', async () => {

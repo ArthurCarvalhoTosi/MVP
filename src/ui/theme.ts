@@ -41,8 +41,6 @@ const dark: Colors = {
   drumDigit: '#F4F4EE',
 };
 
-export const tokens: { light: Colors; dark: Colors } = { light, dark };
-
 export const type = {
   caption: { fontFamily: 'Barlow_500Medium', fontSize: 13, lineHeight: 18 },
   body: { fontFamily: 'Barlow_400Regular', fontSize: 16, lineHeight: 24 },

@@ -1,10 +1,10 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { specsQuery, upsertSpecs, vehicleQuery } from '@/db/repo';
 import { parseIntBR } from '@/domain';
-import { AppText, Button, Screen, Section, TextField, space } from '@/ui';
+import { AppText, Button, FormError, Screen, Section, TextField, space } from '@/ui';
 
 const PSI_ERROR = 'Digite só números, por exemplo 32.';
 
@@ -24,7 +24,9 @@ export default function Specs() {
     wiperPassenger: s?.wiperPassenger ?? '',
     battery: s?.battery ?? '',
   });
-  const [errors, setErrors] = useState<{ front?: string; rear?: string; form?: string }>({});
+  const [errors, setErrors] = useState<{ front?: string; rear?: string }>({});
+  const [saveError, setSaveError] = useState<unknown>(null);
+  const [saving, setSaving] = useState(false);
 
   if (!start) return <Redirect href="/" />;
 
@@ -36,6 +38,7 @@ export default function Specs() {
   const psi = (v: string) => (v.trim() ? parseIntBR(v) : null);
 
   const save = async () => {
+    if (saving) return;
     const front = psi(form.front);
     const rear = psi(form.rear);
     const next = {
@@ -43,7 +46,9 @@ export default function Specs() {
       rear: form.rear.trim() && rear === null ? PSI_ERROR : undefined,
     };
     setErrors(next);
+    setSaveError(null);
     if (next.front || next.rear) return;
+    setSaving(true);
     try {
       await upsertSpecs(db, start.vehicleId, {
         oilSpec: text(form.oil),
@@ -53,11 +58,10 @@ export default function Specs() {
         wiperPassenger: text(form.wiperPassenger),
         battery: text(form.battery),
       });
-      router.back();
+      router.back(); // stays "saving" while the sheet closes
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      setErrors({ form: message });
-      AccessibilityInfo.announceForAccessibility(message);
+      setSaving(false);
+      setSaveError(e);
     }
   };
 
@@ -66,8 +70,8 @@ export default function Specs() {
       scroll
       footer={
         <>
-          {errors.form ? <AppText color="critical">{errors.form}</AppText> : null}
-          <Button label="Salvar" onPress={save} />
+          <FormError error={saveError} />
+          <Button label="Salvar" loading={saving} onPress={save} />
         </>
       }
     >

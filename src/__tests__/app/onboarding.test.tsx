@@ -35,6 +35,21 @@ test('shows what to fix and creates nothing when the form is incomplete', async 
   expect(router.replace).not.toHaveBeenCalled();
 });
 
+test('rejects an odometer too high to be real', async () => {
+  await render(<Onboarding />);
+  const user = userEvent.setup();
+  const km = screen.getByLabelText('Hodômetro atual, km');
+  expect(km).toHaveProp('maxLength', 9);
+  expect(km).toHaveProp('selectTextOnFocus', true);
+
+  await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Sandero');
+  await user.type(km, '2.000.001');
+  await user.press(screen.getByRole('button', { name: 'Começar' }));
+
+  expect(screen.getByText('Confira o KM: o valor parece alto demais.')).toBeOnTheScreen();
+  expect(vehicleQuery(db).all()).toEqual([]);
+});
+
 test('creates the vehicle with the chosen pace, severe intervals and items, then opens the garage', async () => {
   await render(<Onboarding />);
   const user = userEvent.setup();
@@ -43,6 +58,8 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
   expect(checkbox(/^Troca de óleo e filtro\. A cada 10\.000 km ou 12 meses$/)).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Cerca de 1.000 km' })).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Não' })).toBeChecked();
+  expect(screen.getByText('Quanto você roda por mês?')).toBeOnTheScreen();
+  expect(screen.getByText('Usa mais na cidade, com trânsito?')).toBeOnTheScreen();
 
   await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Sandero 2018');
   await user.type(screen.getByLabelText('Hodômetro atual, km'), '46.250');

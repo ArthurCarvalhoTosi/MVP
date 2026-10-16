@@ -5,6 +5,9 @@ export interface OdometerReading {
   readAt: ISODate;
 }
 
+// Far beyond any car's lifetime; rejects extra-digit typos that would wreck every projection.
+export const MAX_KM = 2_000_000;
+
 export const MONTHLY_KM_OPTIONS: readonly { label: string; value: number }[] = [
   { label: 'Menos de 500 km', value: 400 },
   { label: 'Cerca de 1.000 km', value: 1000 },

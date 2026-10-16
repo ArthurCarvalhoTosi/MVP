@@ -1,6 +1,7 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import Specs from '@/app/specs';
 import type { Db } from '@/db/client';
+import * as repo from '@/db/repo';
 import { specsQuery, upsertSpecs } from '@/db/repo';
 import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
@@ -54,4 +55,22 @@ test('asks for numbers in the tire pressure fields', async () => {
   expect(screen.getByText('Digite só números, por exemplo 32.')).toBeOnTheScreen();
   expect(specsQuery(db, vehicleId).all()[0].tireFrontPsi).toBeNull();
   expect(router.back).not.toHaveBeenCalled();
+});
+
+test('shows a plain message when saving fails unexpectedly, and lets the user try again', async () => {
+  const upsert = jest.spyOn(repo, 'upsertSpecs').mockRejectedValueOnce(new Error('disk I/O error'));
+  await render(<Specs />);
+  const user = userEvent.setup();
+
+  await user.press(screen.getByRole('button', { name: 'Salvar' }));
+
+  expect(screen.getByText('Não foi possível salvar. Tente de novo.')).toBeOnTheScreen();
+  expect(screen.queryByText(/disk I\/O/)).not.toBeOnTheScreen();
+  expect(router.back).not.toHaveBeenCalled();
+
+  await user.press(screen.getByRole('button', { name: 'Salvar' }));
+
+  expect(router.back).toHaveBeenCalled();
+  expect(screen.queryByText('Não foi possível salvar. Tente de novo.')).not.toBeOnTheScreen();
+  upsert.mockRestore();
 });

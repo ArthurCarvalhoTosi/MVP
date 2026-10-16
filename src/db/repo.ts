@@ -1,30 +1,31 @@
-import { and, asc, desc, eq, getTableColumns, isNull } from 'drizzle-orm';
-import { checkReading, type ISODate } from '@/domain';
+import { and, asc, desc, eq, getTableColumns, gt, isNull, lte } from 'drizzle-orm';
+import { checkReading, MAX_KM, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
 import type { Db } from './client';
 import { uuidv7 } from './id';
 import { maintenanceItems, maintenanceLogs, odometerReadings, vehicleSpecs, vehicles } from './schema';
 
 // updatedAt is refreshed on every update by $onUpdateFn in schema.ts.
 
-export class OdometerError extends Error {
+export class OdometerError extends ValidationError {
   constructor(public check: 'below_previous' | 'above_next') {
-    super(
-      check === 'below_previous'
-        ? 'A quilometragem é menor que uma leitura anterior.'
-        : 'A quilometragem é maior que uma leitura posterior.',
-    );
+    super(READING_ERRORS[check]);
   }
 }
 
-// --- Input validation (pt-BR messages surface in the UI) ---
+// --- Input validation ---
 
 function nonNegativeInt(n: number, message: string) {
-  if (!Number.isInteger(n) || n < 0) throw new Error(message);
+  if (!Number.isInteger(n) || n < 0) throw new ValidationError(message);
+}
+
+function odometerKm(n: number) {
+  nonNegativeInt(n, 'Quilometragem inválida.');
+  if (n > MAX_KM) throw new ValidationError('Quilometragem inválida.');
 }
 
 function requiredText(s: string, message: string): string {
   const t = s.trim();
-  if (!t) throw new Error(message);
+  if (!t) throw new ValidationError(message);
   return t;
 }
 
@@ -32,7 +33,7 @@ function isoDate(d: string) {
   const t = Date.parse(`${d}T00:00:00Z`);
   // Round trip rejects shapes that parse but roll over, like 2026-02-30.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== d) {
-    throw new Error('Data inválida.');
+    throw new ValidationError('Data inválida.');
   }
 }
 
@@ -114,16 +115,16 @@ export async function createVehicle(
   today: ISODate,
 ): Promise<string> {
   const nickname = requiredText(input.nickname, 'Informe um apelido para o veículo.');
-  nonNegativeInt(input.odometerKm, 'Quilometragem inválida.');
+  odometerKm(input.odometerKm);
   nonNegativeInt(input.monthlyKmEstimate, 'Estimativa de km por mês inválida.');
   isoDate(today);
   const vehicleId = uuidv7();
   const items = input.items.map((item) => {
     if (item.intervalKm === null && item.intervalMonths === null) {
-      throw new Error('Informe um intervalo em km ou em meses.');
+      throw new ValidationError('Informe um intervalo em km ou em meses.');
     }
     for (const n of [item.intervalKm, item.intervalMonths]) {
-      if (n !== null && (!Number.isInteger(n) || n <= 0)) throw new Error('Intervalo inválido.');
+      if (n !== null && (!Number.isInteger(n) || n <= 0)) throw new ValidationError('Intervalo inválido.');
     }
     return {
       id: uuidv7(),
@@ -156,10 +157,40 @@ export async function addOdometerReading(
   km: number,
   readAt: ISODate,
   source: 'adjust' | 'log',
+  opts: { correct?: boolean } = {},
 ): Promise<void> {
-  nonNegativeInt(km, 'Quilometragem inválida.');
+  odometerKm(km);
   isoDate(readAt);
   db.transaction((tx) => {
+    // The panel shows the real km: earlier readings above it were overestimates (e.g. a log that
+    // accepted the projection) and give way to it.
+    if (opts.correct && source === 'adjust') {
+      const now = new Date().toISOString();
+      tx.update(odometerReadings)
+        .set({ deletedAt: now, updatedAt: now })
+        .where(
+          and(
+            eq(odometerReadings.vehicleId, vehicleId),
+            isNull(odometerReadings.deletedAt),
+            lte(odometerReadings.readAt, readAt),
+            gt(odometerReadings.km, km),
+          ),
+        )
+        .run();
+      // A maintenance can't have happened above today's real km; clamping errs toward an earlier due date.
+      tx.update(maintenanceItems)
+        .set({ baselineKm: km })
+        .where(
+          and(
+            eq(maintenanceItems.vehicleId, vehicleId),
+            isNull(maintenanceItems.deletedAt),
+            gt(maintenanceItems.baselineKm, km),
+          ),
+        )
+        .run();
+      // shortcut: logs keep their typed km; editing a log comes with history editing.
+    }
+    // Still throws above_next with correct (rolling the correction back): later readings aren't overridden.
     assertReading(tx, vehicleId, km, readAt);
     tx.insert(odometerReadings).values({ id: uuidv7(), vehicleId, km, readAt, source }).run();
   });
@@ -178,7 +209,7 @@ export async function registerMaintenance(
   },
 ): Promise<void> {
   const { vehicleId, itemId, performedAt, km } = input;
-  nonNegativeInt(km, 'Quilometragem inválida.');
+  odometerKm(km);
   isoDate(performedAt);
   if (input.costCents != null) nonNegativeInt(input.costCents, 'Valor inválido.');
 
@@ -197,7 +228,7 @@ export async function registerMaintenance(
           )
           .get()
       : undefined;
-    if (itemId && !item) throw new Error('Item de manutenção não encontrado.');
+    if (itemId && !item) throw new ValidationError('Item de manutenção não encontrado.');
 
     tx.insert(maintenanceLogs)
       .values({

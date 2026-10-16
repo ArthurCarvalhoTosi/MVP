@@ -53,6 +53,16 @@ describe('dueLabel', () => {
     expect(primary(null)).toBe('Sem previsão');
   });
 
+  it('says "Vencido" once the km limit is reached, whatever the date says', () => {
+    expect(dueLabel(due(0, -1200))).toEqual({ primary: 'Vencido', secondary: 'Passou 1.200 km' });
+    expect(dueLabel(due(30, -10)).primary).toBe('Vencido');
+    expect(dueLabel(due(null, -1)).primary).toBe('Vencido');
+    expect(dueLabel(due(0, 0))).toEqual({ primary: 'Vence hoje', secondary: 'Faltam 0 km' });
+    // An overdue date keeps its own count; km still ahead keeps the date wording.
+    expect(dueLabel(due(-3, -500)).primary).toBe('Vencido há 3 dias');
+    expect(dueLabel(due(0, 100)).primary).toBe('Vence hoje');
+  });
+
   it('describes km left', () => {
     expect(secondary(null)).toBeNull();
     expect(secondary(-1200)).toBe('Passou 1.200 km');

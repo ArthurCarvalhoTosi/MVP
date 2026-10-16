@@ -17,9 +17,12 @@ type Props = {
   prefix?: string;
   suffix?: string;
   error?: string | null;
+  /** Muted note under the field, read after it by screen readers. */
+  hint?: string | null;
   keyboardType?: KeyboardTypeOptions;
   placeholder?: string;
-  autoFocus?: boolean;
+  maxLength?: number;
+  selectTextOnFocus?: boolean;
 };
 
 export function TextField({
@@ -29,9 +32,11 @@ export function TextField({
   prefix,
   suffix,
   error,
+  hint,
   keyboardType,
   placeholder,
-  autoFocus,
+  maxLength,
+  selectTextOnFocus,
 }: Props) {
   const { c } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -71,7 +76,8 @@ export function TextField({
           onChangeText={onChangeText}
           keyboardType={keyboardType}
           placeholder={placeholder}
-          autoFocus={autoFocus}
+          maxLength={maxLength}
+          selectTextOnFocus={selectTextOnFocus}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           accessibilityLabel={[label, prefix ?? suffix].filter(Boolean).join(', ')}
@@ -86,6 +92,11 @@ export function TextField({
       {error ? (
         <AppText variant="caption" color="critical" accessibilityLiveRegion="polite">
           {error}
+        </AppText>
+      ) : null}
+      {hint ? (
+        <AppText variant="caption" color="inkMuted">
+          {hint}
         </AppText>
       ) : null}
     </View>

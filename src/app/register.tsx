@@ -1,10 +1,10 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { itemsQuery, OdometerError, readingsQuery, registerMaintenance, vehicleQuery } from '@/db/repo';
-import { addDays, parseBRDate, parseBRL, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
-import { AppText, Button, ChipGroup, Screen, Section, TextField, space } from '@/ui';
+import { addDays, MAX_KM, parseBRDate, parseBRL, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
+import { Button, ChipGroup, FormError, Screen, Section, TextField, space } from '@/ui';
 
 const DATE_OPTIONS = [
   { label: 'Hoje', value: 'today' },
@@ -12,7 +12,7 @@ const DATE_OPTIONS = [
   { label: 'Outra data', value: 'other' },
 ] as const;
 
-type Errors = Partial<Record<'km' | 'date' | 'cost' | 'form', string>>;
+type Errors = Partial<Record<'km' | 'date' | 'cost', string>>;
 
 export default function Register() {
   const db = useDb();
@@ -31,22 +31,32 @@ export default function Register() {
   const [cost, setCost] = useState('');
   const [brandSpec, setBrandSpec] = useState('');
   const [errors, setErrors] = useState<Errors>({});
+  const [saveError, setSaveError] = useState<unknown>(null);
+  const [saving, setSaving] = useState(false);
 
   if (!start) return <Redirect href="/" />;
 
   const save = async () => {
+    if (saving) return;
     const today = todayISO();
     const kmValue = parseIntBR(km);
     const performedAt =
       dateChoice === 'today' ? today : dateChoice === 'yesterday' ? addDays(today, -1) : parseBRDate(otherDate, today);
     const costCents = cost.trim() ? parseBRL(cost) : null;
     const next: Errors = {
-      km: kmValue === null ? 'Digite o KM do painel usando só números.' : undefined,
+      km:
+        kmValue === null
+          ? 'Digite o KM do painel usando só números.'
+          : kmValue > MAX_KM
+            ? 'Confira o KM: o valor parece alto demais.'
+            : undefined,
       date: performedAt === null ? 'Use uma data até hoje, no formato DD/MM/AAAA.' : undefined,
       cost: cost.trim() && costCents === null ? 'Digite o valor em reais, por exemplo 150,00.' : undefined,
     };
     setErrors(next);
-    if (kmValue === null || performedAt === null || next.cost) return;
+    setSaveError(null);
+    if (kmValue === null || next.km || performedAt === null || next.cost) return;
+    setSaving(true);
     try {
       await registerMaintenance(db, {
         vehicleId: start.vehicleId,
@@ -56,12 +66,13 @@ export default function Register() {
         costCents,
         brandSpec,
       });
-      router.back();
+      router.back(); // stays "saving" while the sheet closes
     } catch (e) {
-      if (e instanceof OdometerError) return setErrors({ km: READING_ERRORS[e.check] });
-      const message = e instanceof Error ? e.message : String(e);
-      setErrors({ form: message });
-      AccessibilityInfo.announceForAccessibility(message);
+      setSaving(false);
+      if (!(e instanceof OdometerError)) return setSaveError(e);
+      // Fixing an earlier reading discards data, so it only happens in Ajustar KM, after a confirmation.
+      const fix = e.check === 'below_previous' ? ' Se o KM salvo antes estava errado, corrija em Ajustar KM.' : '';
+      setErrors({ km: READING_ERRORS[e.check] + fix });
     }
   };
 
@@ -70,8 +81,8 @@ export default function Register() {
       scroll
       footer={
         <>
-          {errors.form ? <AppText color="critical">{errors.form}</AppText> : null}
-          <Button label="Registrar troca" onPress={save} />
+          <FormError error={saveError} />
+          <Button label="Registrar troca" loading={saving} onPress={save} />
         </>
       }
     >
@@ -81,21 +92,14 @@ export default function Register() {
             label="KM no momento da troca"
             suffix="km"
             keyboardType="number-pad"
+            selectTextOnFocus
+            maxLength={9}
             value={km}
             onChangeText={setKm}
             error={errors.km}
+            hint={km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
           />
-          <View style={styles.question}>
-            <AppText variant="caption" color="inkMuted" accessibilityElementsHidden importantForAccessibility="no">
-              Data da troca
-            </AppText>
-            <ChipGroup
-              accessibilityLabel="Data da troca"
-              options={DATE_OPTIONS}
-              value={dateChoice}
-              onChange={setDateChoice}
-            />
-          </View>
+          <ChipGroup label="Data da troca" options={DATE_OPTIONS} value={dateChoice} onChange={setDateChoice} />
           {dateChoice === 'other' ? (
             <TextField
               label="Data (DD/MM/AAAA)"
@@ -127,5 +131,4 @@ export default function Register() {
 
 const styles = StyleSheet.create({
   fields: { gap: space.xl },
-  question: { gap: space.s },
 });

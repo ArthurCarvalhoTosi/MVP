@@ -49,9 +49,11 @@ export function formatPair(a?: string | number | null, b?: string | number | nul
 }
 
 export function dueLabel(due: Due): { primary: string; secondary: string | null } {
-  const { kmLeft } = due;
+  const { kmLeft, daysLeft } = due;
+  // Past the km limit, the date may still say today or later (e.g. no km/day trend), so "Vence hoje" would never move.
+  const kmOverdue = kmLeft !== null && kmLeft < 0 && (daysLeft === null || daysLeft >= 0);
   return {
-    primary: daysLabel(due.daysLeft),
+    primary: kmOverdue ? 'Vencido' : daysLabel(daysLeft),
     secondary: kmLeft === null ? null : kmLeft < 0 ? `Passou ${formatKm(-kmLeft)}` : `Faltam ${formatKm(kmLeft)}`,
   };
 }

@@ -1,4 +1,5 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import Dashboard from '@/app/index';
 import type { Db } from '@/db/client';
 import { upsertSpecs } from '@/db/repo';
@@ -51,10 +52,37 @@ test('shows the all-clear state with the next item, and expands ok items', async
   expect(screen.getByRole('button', { name: 'Óleo: Adicionar' })).toBeOnTheScreen();
 
   expect(screen.queryByRole('button', { name: /^Troca de óleo e filtro\. Em dia/ })).not.toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Em dia (1)' })).toBeCollapsed();
   await user.press(screen.getByRole('button', { name: 'Em dia (1)' }));
+  expect(screen.getByRole('button', { name: 'Em dia (1)' })).toBeExpanded();
   await user.press(screen.getByRole('button', { name: /^Troca de óleo e filtro\. Em dia/ }));
   expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { itemId: expect.any(String) } });
 
   await user.press(screen.getByRole('button', { name: 'Ver histórico' }));
   expect(router.push).toHaveBeenCalledWith('/history');
+});
+
+test('moves to the new day when the app comes back to the foreground', async () => {
+  await seedVehicle(db);
+  const listeners: ((state: AppStateStatus) => void)[] = [];
+  const spy = jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+    listeners.push(listener);
+    return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+  });
+  await render(<Dashboard />);
+  const changeState = (state: AppStateStatus) => act(() => listeners.forEach((l) => l(state)));
+  expect(screen.getByLabelText('Hodômetro estimado: 40.000 quilômetros')).toBeOnTheScreen();
+
+  // A month later (~1.000 km at the estimate), the app is reopened from the background.
+  jest.useFakeTimers({ now: Date.now() + 30 * 86_400_000, advanceTimers: true });
+  try {
+    await changeState('background');
+    expect(screen.getByLabelText('Hodômetro estimado: 40.000 quilômetros')).toBeOnTheScreen();
+
+    await changeState('active');
+    expect(screen.getByLabelText('Hodômetro estimado: 41.000 quilômetros')).toBeOnTheScreen();
+  } finally {
+    jest.useRealTimers();
+    spy.mockRestore();
+  }
 });

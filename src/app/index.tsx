@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Redirect, router, Stack } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { itemsQuery, readingsQuery, specsQuery, vehicleQuery } from '@/db/repo';
 import type { vehicles } from '@/db/schema';
@@ -22,13 +22,22 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
   const items = useLiveQuery(itemsQuery(db, vehicle.id), [vehicle.id]);
   const specs = useLiveQuery(specsQuery(db, vehicle.id), [vehicle.id]);
   const [showOk, setShowOk] = useState(false);
+  // State, not computed per render: the compiler would reuse a stale value until the queries change.
+  const [today, setToday] = useState(todayISO);
+
+  // The app can sit in the background past midnight; pick up the new day when it comes back.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setToday(todayISO());
+    });
+    return () => sub.remove();
+  }, []);
 
   const failed = readings.error ?? items.error ?? specs.error;
   if (failed) throw failed;
   // Wait for real data so the drums don't roll up from zero and the feed doesn't flash "Tudo em dia".
   if (!readings.updatedAt || !items.updatedAt || !specs.updatedAt) return null;
 
-  const today = todayISO();
   const feed = buildFeed(items.data, readings.data, vehicle.monthlyKmEstimate, today);
   const needsAttention = [...feed.critical, ...feed.attention];
   const s = specs.data[0];
@@ -98,7 +107,12 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
       {feed.ok.length > 0 ? (
         <View>
           <View style={styles.start}>
-            <Button variant="quiet" label={`Em dia (${feed.ok.length})`} onPress={() => setShowOk(!showOk)} />
+            <Button
+              variant="quiet"
+              label={`Em dia (${feed.ok.length})`}
+              expanded={showOk}
+              onPress={() => setShowOk(!showOk)}
+            />
           </View>
           {showOk ? feed.ok.map(row) : null}
         </View>

@@ -1,4 +1,5 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import { MAX_KM, READING_ERRORS, ValidationError } from '@/domain';
 import type { Db } from '../client';
 import {
   addOdometerReading,
@@ -58,6 +59,19 @@ async function rejection(p: Promise<unknown>): Promise<unknown> {
   throw new Error('expected a rejection');
 }
 
+/** Rejected with a ValidationError, whose pt-BR message the UI may show as is. */
+async function expectValidation(p: Promise<unknown>, message: string) {
+  const err = await rejection(p);
+  expect(err).toBeInstanceOf(ValidationError);
+  expect((err as Error).message).toBe(message);
+}
+
+function expectOdometerError(err: unknown, check: 'below_previous' | 'above_next') {
+  expect(err).toBeInstanceOf(OdometerError);
+  expect(err).toBeInstanceOf(ValidationError);
+  expect(err).toMatchObject({ check, message: READING_ERRORS[check] });
+}
+
 describe('createVehicle', () => {
   test('creates vehicle, onboarding reading, items at baseline and an empty specs row', async () => {
     const vehicleId = await seed();
@@ -83,17 +97,25 @@ describe('createVehicle', () => {
     ['empty nickname', { nickname: '   ' }, 'Informe um apelido para o veículo.'],
     ['negative km', { odometerKm: -1 }, 'Quilometragem inválida.'],
     ['fractional km', { odometerKm: 1.5 }, 'Quilometragem inválida.'],
+    ['km above MAX_KM', { odometerKm: MAX_KM + 1 }, 'Quilometragem inválida.'],
     ['item without name', { items: [{ ...OIL, name: ' ' }] }, 'Informe o nome do item.'],
     ['item without interval', { items: [{ ...OIL, intervalKm: null, intervalMonths: null }] }, 'Informe um intervalo em km ou em meses.'],
+    ['zero interval', { items: [{ ...OIL, intervalKm: 0 }] }, 'Intervalo inválido.'],
   ])('rejects %s and writes nothing', async (_, overrides, message) => {
-    await expect(seed(overrides)).rejects.toThrow(message);
+    await expectValidation(seed(overrides), message);
     expect(db.select().from(vehicles).all()).toEqual([]);
   });
 
+  test('accepts km exactly at MAX_KM', async () => {
+    const vehicleId = await seed({ odometerKm: MAX_KM });
+    expect(readingsQuery(db, vehicleId).all()).toEqual([{ km: 2_000_000, readAt: TODAY }]);
+  });
+
   test.each(['2026-02-30', '01/10/2026', '2026-1-1', ''])('rejects bad date %p', async (today) => {
-    await expect(
+    await expectValidation(
       createVehicle(db, { nickname: 'Carro', odometerKm: 0, monthlyKmEstimate: 0, severeUse: false, items: [] }, today),
-    ).rejects.toThrow('Data inválida.');
+      'Data inválida.',
+    );
   });
 });
 
@@ -113,13 +135,8 @@ describe('addOdometerReading', () => {
     const vehicleId = await seed();
     await addOdometerReading(db, vehicleId, 52000, '2026-11-01', 'adjust');
 
-    const below = await rejection(addOdometerReading(db, vehicleId, 49000, '2026-10-15', 'adjust'));
-    expect(below).toBeInstanceOf(OdometerError);
-    expect((below as OdometerError).check).toBe('below_previous');
-
-    const above = await rejection(addOdometerReading(db, vehicleId, 53000, '2026-10-15', 'adjust'));
-    expect(above).toBeInstanceOf(OdometerError);
-    expect((above as OdometerError).check).toBe('above_next');
+    expectOdometerError(await rejection(addOdometerReading(db, vehicleId, 49000, '2026-10-15', 'adjust')), 'below_previous');
+    expectOdometerError(await rejection(addOdometerReading(db, vehicleId, 53000, '2026-10-15', 'adjust')), 'above_next');
 
     expect(readingsQuery(db, vehicleId).all()).toEqual([
       { km: 50000, readAt: TODAY },
@@ -127,10 +144,89 @@ describe('addOdometerReading', () => {
     ]);
   });
 
-  test('validates km and date', async () => {
+  test('validates km (0..MAX_KM integer) and date', async () => {
     const vehicleId = await seed();
-    await expect(addOdometerReading(db, vehicleId, -5, TODAY, 'adjust')).rejects.toThrow('Quilometragem inválida.');
-    await expect(addOdometerReading(db, vehicleId, 51000, '2026-13-01', 'adjust')).rejects.toThrow('Data inválida.');
+    await expectValidation(addOdometerReading(db, vehicleId, -5, TODAY, 'adjust'), 'Quilometragem inválida.');
+    await expectValidation(addOdometerReading(db, vehicleId, MAX_KM + 1, '2026-11-01', 'adjust'), 'Quilometragem inválida.');
+    await expectValidation(addOdometerReading(db, vehicleId, 51000, '2026-13-01', 'adjust'), 'Data inválida.');
+
+    await addOdometerReading(db, vehicleId, MAX_KM, '2026-11-01', 'adjust');
+    expect(readingsQuery(db, vehicleId).all().map((r) => r.km)).toEqual([50000, 2_000_000]);
+  });
+
+  describe('correct', () => {
+    // 40.000 km on 2026-09-01; the oil log on 2026-10-01 accepted the projected 43.200 km,
+    // but the panel shows 41.100 km on 2026-10-15.
+    async function seedOverestimatedLog() {
+      jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });
+      const vehicleId = await createVehicle(
+        db,
+        { nickname: 'Carro', odometerKm: 40000, monthlyKmEstimate: 1000, severeUse: false, items: [OIL, TIRES] },
+        '2026-09-01',
+      );
+      const items = itemsQuery(db, vehicleId).all();
+      const oilId = items.find((i) => i.name === OIL.name)!.id;
+      const tiresId = items.find((i) => i.name === TIRES.name)!.id;
+      await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: '2026-10-01', km: 43200 });
+      jest.setSystemTime(new Date('2026-10-15T10:00:00.000Z'));
+      return { vehicleId, oilId, tiresId };
+    }
+
+    const allReadings = () =>
+      db
+        .select({ km: odometerReadings.km, source: odometerReadings.source, updatedAt: odometerReadings.updatedAt, deletedAt: odometerReadings.deletedAt })
+        .from(odometerReadings)
+        .orderBy(odometerReadings.readAt)
+        .all();
+
+    test('without correct, a panel km below a log reading is rejected', async () => {
+      const { vehicleId } = await seedOverestimatedLog();
+      expectOdometerError(await rejection(addOdometerReading(db, vehicleId, 41100, '2026-10-15', 'adjust')), 'below_previous');
+    });
+
+    test('soft-deletes the readings above it, clamps baselines and keeps logs', async () => {
+      const { vehicleId, oilId, tiresId } = await seedOverestimatedLog();
+
+      await addOdometerReading(db, vehicleId, 41100, '2026-10-15', 'adjust', { correct: true });
+
+      const now = '2026-10-15T10:00:00.000Z';
+      expect(allReadings()).toEqual([
+        { km: 40000, source: 'onboarding', updatedAt: '2026-10-01T10:00:00.000Z', deletedAt: null },
+        { km: 43200, source: 'log', updatedAt: now, deletedAt: now },
+        { km: 41100, source: 'adjust', updatedAt: now, deletedAt: null },
+      ]);
+      expect(readingsQuery(db, vehicleId).all()).toEqual([
+        { km: 40000, readAt: '2026-09-01' },
+        { km: 41100, readAt: '2026-10-15' },
+      ]);
+      expect(item(oilId)).toMatchObject({ baselineKm: 41100, baselineDate: '2026-10-01' });
+      expect(item(tiresId)).toMatchObject({ baselineKm: 40000, baselineDate: '2026-09-01' });
+      expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ itemId: oilId, km: 43200, performedAt: '2026-10-01' })]);
+    });
+
+    test('rolls everything back when the insert fails', async () => {
+      const { vehicleId, oilId } = await seedOverestimatedLog();
+      const before = allReadings();
+      db.run(sql`CREATE TRIGGER fail_insert BEFORE INSERT ON odometer_readings BEGIN SELECT RAISE(ABORT, 'boom'); END`);
+
+      await expect(addOdometerReading(db, vehicleId, 41100, '2026-10-15', 'adjust', { correct: true })).rejects.toThrow('boom');
+
+      expect(allReadings()).toEqual(before);
+      expect(item(oilId)).toMatchObject({ baselineKm: 43200 });
+    });
+
+    test('still rejects a km above a later reading', async () => {
+      const { vehicleId, oilId } = await seedOverestimatedLog();
+      const before = allReadings();
+
+      expectOdometerError(
+        await rejection(addOdometerReading(db, vehicleId, 44000, '2026-09-15', 'adjust', { correct: true })),
+        'above_next',
+      );
+
+      expect(allReadings()).toEqual(before);
+      expect(item(oilId)).toMatchObject({ baselineKm: 43200 });
+    });
   });
 });
 
@@ -175,9 +271,10 @@ describe('registerMaintenance', () => {
   test('invalid km rolls back everything and leaves the connection usable', async () => {
     const { vehicleId, oilId } = await seedWithItems();
 
-    const err = await rejection(registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: '2026-11-01', km: 40000 }));
-    expect(err).toBeInstanceOf(OdometerError);
-    expect((err as OdometerError).check).toBe('below_previous');
+    expectOdometerError(
+      await rejection(registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: '2026-11-01', km: 40000 })),
+      'below_previous',
+    );
     expect(db.select().from(maintenanceLogs).all()).toEqual([]);
     expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
     expect(item(oilId)).toMatchObject({ baselineKm: 50000, baselineDate: TODAY });
@@ -186,15 +283,24 @@ describe('registerMaintenance', () => {
     expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
   });
 
-  test('rejects negative cost and unknown item', async () => {
+  test('rejects negative cost, km above MAX_KM and unknown item', async () => {
     const { vehicleId } = await seedWithItems();
-    await expect(
+    await expectValidation(
       registerMaintenance(db, { vehicleId, itemId: null, performedAt: TODAY, km: 50000, costCents: -1 }),
-    ).rejects.toThrow('Valor inválido.');
-    await expect(
+      'Valor inválido.',
+    );
+    await expectValidation(
+      registerMaintenance(db, { vehicleId, itemId: null, performedAt: TODAY, km: MAX_KM + 1 }),
+      'Quilometragem inválida.',
+    );
+    await expectValidation(
       registerMaintenance(db, { vehicleId, itemId: 'nope', performedAt: TODAY, km: 50000 }),
-    ).rejects.toThrow('Item de manutenção não encontrado.');
+      'Item de manutenção não encontrado.',
+    );
     expect(db.select().from(maintenanceLogs).all()).toEqual([]);
+
+    await registerMaintenance(db, { vehicleId, itemId: null, performedAt: TODAY, km: MAX_KM });
+    expect(logsQuery(db, vehicleId).all().map((l) => l.km)).toEqual([2_000_000]);
   });
 });
 
@@ -212,7 +318,7 @@ test('setSnooze sets and clears the date and refreshes updatedAt', async () => {
 
   await setSnooze(db, oilId, null);
   expect(item(oilId).snoozedUntil).toBeNull();
-  await expect(setSnooze(db, oilId, '20/10/2026')).rejects.toThrow('Data inválida.');
+  await expectValidation(setSnooze(db, oilId, '20/10/2026'), 'Data inválida.');
 });
 
 test('upsertSpecs updates only the given fields and inserts when the row is missing', async () => {
@@ -225,7 +331,7 @@ test('upsertSpecs updates only the given fields and inserts when the row is miss
   await upsertSpecs(db, vehicleId, { battery: '60Ah' });
   expect(specsQuery(db, vehicleId).get()).toMatchObject({ battery: '60Ah', oilSpec: null });
 
-  await expect(upsertSpecs(db, vehicleId, { tireFrontPsi: -1 })).rejects.toThrow('Calibragem inválida.');
+  await expectValidation(upsertSpecs(db, vehicleId, { tireFrontPsi: -1 }), 'Calibragem inválida.');
 });
 
 test('soft-deleted rows are excluded from reads; inactive items too', async () => {

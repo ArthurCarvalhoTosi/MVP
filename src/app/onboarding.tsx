@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { createVehicle } from '@/db/repo';
-import { intervalLabel, MONTHLY_KM_OPTIONS, parseIntBR, PRESETS, presetSchedule, todayISO } from '@/domain';
-import { AppText, Button, ChipGroup, Icon, Screen, Section, TextField, space, radius, useTheme } from '@/ui';
+import { intervalLabel, MAX_KM, MONTHLY_KM_OPTIONS, parseIntBR, PRESETS, presetSchedule, todayISO } from '@/domain';
+import { AppText, Button, ChipGroup, FormError, Icon, Screen, Section, TextField, space, radius, useTheme } from '@/ui';
 
 const SEVERE_OPTIONS = [
   { label: 'Sim', value: true },
@@ -22,20 +22,31 @@ export default function Onboarding() {
   const [severe, setSevere] = useState(false);
   const [picked, setPicked] = useState(() => PRESETS.map((p) => p.key));
   const [errors, setErrors] = useState<Errors>({});
+  const [saveError, setSaveError] = useState<unknown>(null);
+  const [saving, setSaving] = useState(false);
 
   const start = async () => {
+    if (saving) return;
     const odometerKm = parseIntBR(km);
     const next: Errors = {
       nickname: nickname.trim() ? undefined : 'Digite um nome para o carro.',
-      km: odometerKm === null ? 'Digite o KM do painel usando só números.' : undefined,
+      km:
+        odometerKm === null
+          ? 'Digite o KM do painel usando só números.'
+          : odometerKm > MAX_KM
+            ? 'Confira o KM: o valor parece alto demais.'
+            : undefined,
       items: picked.length ? undefined : 'Marque pelo menos um item para acompanhar.',
     };
-    if (odometerKm === null || next.nickname || next.items) {
+    setSaveError(null);
+    if (odometerKm === null || next.km || next.nickname || next.items) {
       // Fields above may be scrolled away; this line sits next to the button that was pressed.
       setErrors({ ...next, form: 'Confira os campos destacados acima.' });
       if (next.items) AccessibilityInfo.announceForAccessibility(next.items);
       return;
     }
+    setErrors({});
+    setSaving(true);
     try {
       await createVehicle(
         db,
@@ -52,11 +63,10 @@ export default function Onboarding() {
         },
         todayISO(),
       );
-      router.replace('/');
+      router.replace('/'); // stays "saving" while the garage opens
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      setErrors({ form: message });
-      AccessibilityInfo.announceForAccessibility(message);
+      setSaving(false);
+      setSaveError(e);
     }
   };
 
@@ -66,7 +76,8 @@ export default function Onboarding() {
       footer={
         <>
           {errors.form ? <AppText color="critical">{errors.form}</AppText> : null}
-          <Button label="Começar" onPress={start} />
+          <FormError error={saveError} />
+          <Button label="Começar" loading={saving} onPress={start} />
         </>
       }
     >
@@ -82,21 +93,21 @@ export default function Onboarding() {
           label="Hodômetro atual"
           suffix="km"
           keyboardType="number-pad"
+          selectTextOnFocus
+          maxLength={9}
           value={km}
           onChangeText={setKm}
           error={errors.km}
         />
-        <Question label="Quanto você roda por mês?">
+        <ChipGroup
+          label="Quanto você roda por mês?"
+          options={MONTHLY_KM_OPTIONS}
+          value={monthly}
+          onChange={setMonthly}
+        />
+        <View style={styles.question}>
           <ChipGroup
-            accessibilityLabel="Quanto você roda por mês?"
-            options={MONTHLY_KM_OPTIONS}
-            value={monthly}
-            onChange={setMonthly}
-          />
-        </Question>
-        <Question label="Usa mais na cidade, com trânsito?">
-          <ChipGroup
-            accessibilityLabel="Usa mais na cidade, com trânsito?"
+            label="Usa mais na cidade, com trânsito?"
             options={SEVERE_OPTIONS}
             value={severe}
             onChange={setSevere}
@@ -104,7 +115,7 @@ export default function Onboarding() {
           <AppText variant="caption" color="inkMuted">
             Uso urbano costuma exigir trocas mais frequentes.
           </AppText>
-        </Question>
+        </View>
       </View>
 
       <Section title="O que acompanhar">
@@ -149,18 +160,6 @@ export default function Onboarding() {
         </AppText>
       </Section>
     </Screen>
-  );
-}
-
-// Visible label for a chip group; screen readers get it from the group's own label.
-function Question({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <View style={styles.question}>
-      <AppText variant="caption" color="inkMuted" accessibilityElementsHidden importantForAccessibility="no">
-        {label}
-      </AppText>
-      {children}
-    </View>
   );
 }
 
