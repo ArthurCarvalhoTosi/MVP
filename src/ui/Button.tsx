@@ -38,7 +38,8 @@ export function Button({
         styles.base,
         variant === 'primary' && { backgroundColor: c.primary },
         variant === 'secondary' && { borderWidth: 1.5, borderColor: c.primary },
-        pressed && (variant === 'primary' ? styles.pressedFill : { backgroundColor: c.line }),
+        variant === 'quiet' && styles.quiet,
+        pressed && (variant === 'secondary' ? { backgroundColor: c.line } : styles.pressedFill),
         disabled && styles.disabled,
       ]}
     >
@@ -65,6 +66,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space.s,
   },
+  // Text-only: no side padding, so the label lines up with the column edge.
+  quiet: { paddingHorizontal: 0 },
   label: { textAlign: 'center', flexShrink: 1 },
   pressedFill: { opacity: 0.82 },
   // Disabled controls are exempt from WCAG contrast; dimming is the conventional cue.
