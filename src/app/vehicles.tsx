@@ -67,16 +67,8 @@ export default function Vehicles() {
   };
 
   return (
-    <Screen
-      scroll
-      footer={
-        <>
-          <FormError error={error} />
-          {/* Replace, not push: on iOS a pushed screen would open underneath this sheet. */}
-          <Button variant="secondary" label="Adicionar carro" onPress={() => router.replace('/onboarding')} />
-        </>
-      }
-    >
+    // Actions sit inline after the list: a pinned footer falls below the fold at the half-height detent.
+    <Screen scroll>
       <Section title="Seus carros">
         {cars.data.map((v) => {
           const carReadings = readings.data.filter((r) => r.vehicleId === v.id);
@@ -110,6 +102,9 @@ export default function Vehicles() {
           );
         })}
       </Section>
+      <FormError error={error} />
+      {/* Replace, not push: on iOS a pushed screen would open underneath this sheet. */}
+      <Button variant="secondary" label="Adicionar carro" onPress={() => router.replace('/onboarding')} />
     </Screen>
   );
 }
