@@ -1,0 +1,57 @@
+import { render, screen, userEvent } from '@testing-library/react-native';
+import Specs from '@/app/specs';
+import type { Db } from '@/db/client';
+import { specsQuery, upsertSpecs } from '@/db/repo';
+import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
+
+jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
+jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
+jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
+jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+
+let db: Db;
+let vehicleId: string;
+beforeEach(async () => {
+  db = await setupScreen();
+  ({ vehicleId } = await seedVehicle(db));
+  await upsertSpecs(db, vehicleId, { oilSpec: '5W-30 sintético', battery: '60 Ah' });
+});
+
+test('prefills saved values, saves edits and stores emptied fields as null', async () => {
+  await render(<Specs />);
+  const user = userEvent.setup();
+
+  expect(screen.getByRole('header', { name: 'Cola de bolso' })).toBeOnTheScreen();
+  expect(screen.getByText('Valores de referência. Confira no manual do proprietário.')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Óleo')).toHaveDisplayValue('5W-30 sintético');
+
+  await user.clear(screen.getByLabelText('Bateria'));
+  await user.type(screen.getByLabelText('Pneu dianteiro, psi'), '32');
+  await user.type(screen.getByLabelText('Pneu traseiro, psi'), '30');
+  await user.type(screen.getByLabelText('Palheta do motorista'), '22"');
+  await user.press(screen.getByRole('button', { name: 'Salvar' }));
+
+  expect(router.back).toHaveBeenCalled();
+  expect(specsQuery(db, vehicleId).all()[0]).toEqual(
+    expect.objectContaining({
+      oilSpec: '5W-30 sintético',
+      tireFrontPsi: 32,
+      tireRearPsi: 30,
+      wiperDriver: '22"',
+      wiperPassenger: null,
+      battery: null,
+    }),
+  );
+});
+
+test('asks for numbers in the tire pressure fields', async () => {
+  await render(<Specs />);
+  const user = userEvent.setup();
+
+  await user.type(screen.getByLabelText('Pneu dianteiro, psi'), '32,5');
+  await user.press(screen.getByRole('button', { name: 'Salvar' }));
+
+  expect(screen.getByText('Digite só números, por exemplo 32.')).toBeOnTheScreen();
+  expect(specsQuery(db, vehicleId).all()[0].tireFrontPsi).toBeNull();
+  expect(router.back).not.toHaveBeenCalled();
+});

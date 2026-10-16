@@ -1,5 +1,5 @@
 import type { Due } from '../due';
-import { dueLabel, formatBRL, formatDate, formatKm } from '../format';
+import { dueLabel, formatBRL, formatDate, formatKm, formatPair, intervalLabel } from '../format';
 
 const NBSP = '\u00a0';
 
@@ -58,5 +58,39 @@ describe('dueLabel', () => {
     expect(secondary(-1200)).toBe('Passou 1.200 km');
     expect(secondary(0)).toBe('Faltam 0 km');
     expect(secondary(3500)).toBe('Faltam 3.500 km');
+  });
+});
+
+describe('intervalLabel', () => {
+  it('joins km and months with "ou"', () => {
+    expect(intervalLabel(10000, 12)).toBe('A cada 10.000 km ou 12 meses');
+    expect(intervalLabel(5000, 6)).toBe('A cada 5.000 km ou 6 meses');
+  });
+
+  it('shows only the interval that exists', () => {
+    expect(intervalLabel(10000, null)).toBe('A cada 10.000 km');
+    expect(intervalLabel(null, 6)).toBe('A cada 6 meses');
+    expect(intervalLabel(null, null)).toBe('Sem intervalo');
+  });
+
+  it('reads whole multiples above 12 months as years', () => {
+    expect(intervalLabel(40000, 48)).toBe('A cada 40.000 km ou 4 anos');
+    expect(intervalLabel(null, 24)).toBe('A cada 2 anos');
+    expect(intervalLabel(null, 12)).toBe('A cada 12 meses');
+    expect(intervalLabel(null, 18)).toBe('A cada 18 meses');
+    expect(intervalLabel(null, 1)).toBe('A cada 1 mês');
+  });
+});
+
+describe('formatPair', () => {
+  it('joins both sides with an optional unit', () => {
+    expect(formatPair(32, 30, 'psi')).toBe('32 / 30 psi');
+    expect(formatPair('22"', '16"')).toBe('22" / 16"');
+  });
+
+  it('marks a missing side and is null when both are missing', () => {
+    expect(formatPair(32, null, 'psi')).toBe('32 / – psi');
+    expect(formatPair(undefined, '16"')).toBe('– / 16"');
+    expect(formatPair(null, undefined, 'psi')).toBeNull();
   });
 });

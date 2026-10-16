@@ -57,6 +57,11 @@ export function isProjectionStale(readings: OdometerReading[], today: ISODate): 
 
 export type ReadingCheck = 'ok' | 'below_previous' | 'above_next';
 
+export const READING_ERRORS: Record<Exclude<ReadingCheck, 'ok'>, string> = {
+  below_previous: 'Esse KM é menor que uma leitura anterior. Confira o valor.',
+  above_next: 'Esse KM é maior que uma leitura de data posterior. Confira o valor ou a data.',
+};
+
 export function checkReading(readings: OdometerReading[], km: number, readAt: ISODate): ReadingCheck {
   // Math.max() of nothing is -Infinity and Math.min() is Infinity, so empty sides never fail.
   const prevMax = Math.max(...readings.filter((r) => r.readAt <= readAt).map((r) => r.km));

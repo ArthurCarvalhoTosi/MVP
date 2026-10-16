@@ -28,6 +28,26 @@ function daysLabel(d: number | null): string {
   return `Vence em ~${Math.round(d / 30)} meses`; // d > 60 already rounds to >= 2
 }
 
+// 12 stays "12 meses" (how manuals say it); whole multiples above that read as years.
+function monthsLabel(m: number): string {
+  if (m > 12 && m % 12 === 0) return `${m / 12} anos`;
+  return m === 1 ? '1 mês' : `${m} meses`;
+}
+
+export function intervalLabel(intervalKm: number | null, intervalMonths: number | null): string {
+  const parts = [
+    intervalKm === null ? null : formatKm(intervalKm),
+    intervalMonths === null ? null : monthsLabel(intervalMonths),
+  ].filter((p) => p !== null);
+  return parts.length ? `A cada ${parts.join(' ou ')}` : 'Sem intervalo';
+}
+
+/** "32 / 30 psi"; a missing side shows "–", both missing is null. */
+export function formatPair(a?: string | number | null, b?: string | number | null, unit?: string): string | null {
+  if (a == null && b == null) return null;
+  return `${a ?? '–'} / ${b ?? '–'}${unit ? ` ${unit}` : ''}`;
+}
+
 export function dueLabel(due: Due): { primary: string; secondary: string | null } {
   const { kmLeft } = due;
   return {

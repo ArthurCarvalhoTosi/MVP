@@ -1,17 +1,115 @@
-import { Text, View, StyleSheet } from "react-native";
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { Redirect, router, Stack } from 'expo-router';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useDb } from '@/db/provider';
+import { itemsQuery, readingsQuery, specsQuery, vehicleQuery } from '@/db/repo';
+import type { vehicles } from '@/db/schema';
+import { buildFeed, dueLabel, formatPair, isProjectionStale, projectOdometer, todayISO } from '@/domain';
+import { AppText, Button, ItemRow, Odometer, Screen, Section, SpecStrip, space } from '@/ui';
 
-export default function Index() {
+export default function Dashboard() {
+  const db = useDb();
+  const { data, error, updatedAt } = useLiveQuery(vehicleQuery(db));
+  if (error) throw error;
+  if (!updatedAt) return null; // first read still running: [] here doesn't mean "no vehicle" yet
+  return data[0] ? <Garage vehicle={data[0]} /> : <Redirect href="/onboarding" />;
+}
+
+function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
+  const db = useDb();
+  const readings = useLiveQuery(readingsQuery(db, vehicle.id), [vehicle.id]);
+  const items = useLiveQuery(itemsQuery(db, vehicle.id), [vehicle.id]);
+  const specs = useLiveQuery(specsQuery(db, vehicle.id), [vehicle.id]);
+  const [showOk, setShowOk] = useState(false);
+
+  const failed = readings.error ?? items.error ?? specs.error;
+  if (failed) throw failed;
+  // Wait for real data so the drums don't roll up from zero and the feed doesn't flash "Tudo em dia".
+  if (!readings.updatedAt || !items.updatedAt || !specs.updatedAt) return null;
+
+  const today = todayISO();
+  const feed = buildFeed(items.data, readings.data, vehicle.monthlyKmEstimate, today);
+  const needsAttention = [...feed.critical, ...feed.attention];
+  const s = specs.data[0];
+
+  const register = (itemId: string) => router.push({ pathname: '/register', params: { itemId } });
+  const row = ({ item, due }: (typeof feed.ok)[number]) => {
+    const label = dueLabel(due);
+    return (
+      <ItemRow
+        key={item.id}
+        name={item.name}
+        urgency={due.urgency}
+        primary={label.primary}
+        secondary={label.secondary}
+        onPress={() => register(item.id)}
+        action={{ label: 'Registrar troca', onPress: () => register(item.id) }}
+      />
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
-    </View>
+    <Screen
+      scroll
+      footer={<Button variant="secondary" label="Ver histórico" onPress={() => router.push('/history')} />}
+    >
+      <Stack.Screen options={{ title: vehicle.nickname }} />
+
+      <View style={styles.block}>
+        <Odometer km={projectOdometer(readings.data, vehicle.monthlyKmEstimate, today)} estimated />
+        <View style={styles.start}>
+          <Button variant="quiet" label="Ajustar KM" onPress={() => router.push('/adjust-km')} />
+        </View>
+        {isProjectionStale(readings.data, today) ? (
+          <AppText color="inkMuted">
+            Faz mais de 30 dias que o KM não é atualizado. Ajuste para melhorar as previsões.
+          </AppText>
+        ) : null}
+      </View>
+
+      <Section title="Cola de bolso">
+        <SpecStrip
+          items={[
+            { key: 'oil', icon: 'oil', label: 'Óleo', value: s?.oilSpec ?? null },
+            { key: 'tires', icon: 'car-tire-alert', label: 'Calibragem', value: formatPair(s?.tireFrontPsi, s?.tireRearPsi, 'psi') },
+            { key: 'wipers', icon: 'wiper', label: 'Palhetas', value: formatPair(s?.wiperDriver, s?.wiperPassenger) },
+            { key: 'battery', icon: 'car-battery', label: 'Bateria', value: s?.battery ?? null },
+          ]}
+          onEdit={() => router.push('/specs')}
+        />
+      </Section>
+
+      {needsAttention.length > 0 ? (
+        <Section title="Precisa de atenção">
+          <View>{needsAttention.map(row)}</View>
+        </Section>
+      ) : (
+        <View style={styles.block}>
+          <AppText variant="lead">Tudo em dia.</AppText>
+          {feed.next ? (
+            <AppText color="inkMuted">
+              {`Próxima: ${feed.next.item.name}, ${lowerFirst(dueLabel(feed.next.due).primary)}`}
+            </AppText>
+          ) : null}
+        </View>
+      )}
+
+      {feed.ok.length > 0 ? (
+        <View>
+          <View style={styles.start}>
+            <Button variant="quiet" label={`Em dia (${feed.ok.length})`} onPress={() => setShowOk(!showOk)} />
+          </View>
+          {showOk ? feed.ok.map(row) : null}
+        </View>
+      ) : null}
+    </Screen>
   );
 }
 
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  block: { gap: space.s, marginBottom: space.xxl },
+  start: { alignItems: 'flex-start' },
 });
