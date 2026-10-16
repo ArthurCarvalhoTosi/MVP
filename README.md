@@ -13,14 +13,24 @@ npx expo run:android   # ou: npx expo run:ios (macOS)
 
 Alternativa sem toolchain local: `eas build --profile development`.
 
+### Windows
+
+- `JAVA_HOME` → JBR do Android Studio (`C:\Program Files\Android\Android Studio\jbr`); `ANDROID_HOME` → `%LOCALAPPDATA%\Android\Sdk`.
+- O CMake 3.22.1 padrão traz o ninja 1.10, que falha com caminhos > 260 caracteres. Instale um CMake mais novo (`sdkmanager "cmake;3.31.6"`, traz ninja 1.12) e aponte em `android/local.properties`:
+  ```
+  cmake.dir=C\:\\Users\\<você>\\AppData\\Local\\Android\\Sdk\\cmake\\3.31.6
+  ```
+  (`android/` é gerado pelo `expo prebuild`; refaça este passo após `prebuild --clean`.) O registro `LongPathsEnabled` do Windows também precisa estar em 1.
+
 ## Testar
 
 ```bash
 npm test            # Jest: domínio, banco (sql.js + migrations reais), componentes e telas
 npm run typecheck
+npm run lint        # ESLint (eslint-config-expo, inclui regras do React Compiler)
 ```
 
-Ambos devem passar antes de todo commit.
+Os três devem passar antes de todo commit.
 
 ## Banco
 
