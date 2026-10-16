@@ -48,6 +48,7 @@ export function DatabaseProvider({ children, onSettled }: { children: ReactNode;
         setState({ error });
       },
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per mount; re-running on a new onSettled identity would reopen the DB
   }, []);
 
   if (!state) return null; // the root layout keeps the splash screen up until onSettled
