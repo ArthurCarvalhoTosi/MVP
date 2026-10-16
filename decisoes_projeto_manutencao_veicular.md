@@ -310,9 +310,17 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 
 ## 12. Próximos Passos
 
-1. ~~Confirmar a opção de gestão de chave na nuvem~~ → **chave gerenciada pelo servidor** (8.3).
-2. **Scaffold do projeto** Expo + TypeScript + Drizzle + SQLCipher.
-3. **Camada `domain/`** com testes: `projectOdometer`, `computeDue`, `urgency`, `buildDigest`.
-4. **Esquema e migrations** iniciais (seção 7).
-5. **Seed curado:** levantar os ~40 modelos mais vendidos e suas specs.
-6. **Design system** básico (tokens de cor, tipografia, componentes do semáforo) e protótipo das 4 telas.
+### Feito (2026-10-16)
+* ~~Gestão de chave na nuvem~~ → **chave gerenciada pelo servidor** (8.3).
+* Scaffold Expo SDK 58 + TypeScript + Drizzle + SQLCipher; repositório git.
+* Camada `domain/`, esquema/migrations, design system e telas: onboarding, dashboard, registro de troca, ajuste de KM, cola de bolso, histórico — com testes (Jest + RNTL + sql.js).
+* Revisão completa e correções: limite de KM, correção de leituras via "Ajustar KM", verificação de que o SQLCipher está ativo (falha fechada), reset confirmado quando a chave não existe (restauração de iPhone), "hoje" atualizado ao voltar ao app.
+
+### Pendente
+1. **Validar em dispositivo** (dev build): criptografia real do arquivo, teclado nas sheets, VoiceOver/TalkBack, splash.
+2. **Seed curado:** levantar os ~40 modelos mais vendidos e suas specs + busca no onboarding.
+3. **Notificações locais** (resumo semanal + item crítico; `buildDigest`, adiar 15 dias).
+4. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade.
+5. **Foto do comprovante** (anexo cifrado, sem EXIF).
+6. **Backup cifrado por arquivo** (exportar/importar com senha).
+7. Edição/exclusão de registros no histórico.
