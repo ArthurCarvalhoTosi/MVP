@@ -3,7 +3,7 @@ import Specs from '@/app/specs';
 import type { Db } from '@/db/client';
 import * as repo from '@/db/repo';
 import { specsQuery, upsertSpecs } from '@/db/repo';
-import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import { params, redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
@@ -16,6 +16,7 @@ beforeEach(async () => {
   db = await setupScreen();
   ({ vehicleId } = await seedVehicle(db));
   await upsertSpecs(db, vehicleId, { oilSpec: '5W-30 sintético', battery: '60 Ah' });
+  params.vehicleId = vehicleId;
 });
 
 test('prefills saved values, saves edits and stores emptied fields as null', async () => {
@@ -73,4 +74,24 @@ test('shows a plain message when saving fails unexpectedly, and lets the user tr
   expect(router.back).toHaveBeenCalled();
   expect(screen.queryByText('Não foi possível salvar. Tente de novo.')).not.toBeOnTheScreen();
   upsert.mockRestore();
+});
+
+test('edits the car it was opened for, not the first one', async () => {
+  const { vehicleId: gol } = await seedVehicle(db, undefined, { nickname: 'Meu Gol' });
+  params.vehicleId = gol;
+  await render(<Specs />);
+  const user = userEvent.setup();
+
+  expect(screen.getByLabelText('Óleo')).toHaveDisplayValue('');
+  await user.type(screen.getByLabelText('Óleo'), '0W-20');
+  await user.press(screen.getByRole('button', { name: 'Salvar' }));
+
+  expect(specsQuery(db, gol).all()[0].oilSpec).toBe('0W-20');
+  expect(specsQuery(db, vehicleId).all()[0].oilSpec).toBe('5W-30 sintético');
+});
+
+test('leaves for the garage when the car is gone', async () => {
+  params.vehicleId = 'missing';
+  await render(<Specs />);
+  expect(redirect).toHaveBeenCalledWith('/');
 });

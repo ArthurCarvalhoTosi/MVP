@@ -67,7 +67,12 @@ test('generates the key once, stores it device-only, and sends it first as a raw
   // The real drizzle/migrations.js, with .sql inlined by babel-plugin-inline-import.
   expect(migrate).toHaveBeenCalledWith(
     {},
-    expect.objectContaining({ migrations: { m0000: expect.stringContaining('CREATE TABLE `vehicles`') } }),
+    expect.objectContaining({
+      migrations: {
+        m0000: expect.stringContaining('CREATE TABLE `vehicles`'),
+        m0001: expect.stringContaining('CREATE TABLE `device_prefs`'),
+      },
+    }),
   );
 });
 

@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
+import { Button } from '../Button';
 import { ItemRow } from '../ItemRow';
 
 const hidden = { includeHiddenElements: true };
@@ -52,6 +53,35 @@ describe('ItemRow', () => {
       <ItemRow name="Troca de óleo" urgency="attention" primary="Vence em 30 dias" action={action} />,
     );
     expect(screen.queryByRole('button', { name: 'Registrar troca' })).not.toBeOnTheScreen();
+  });
+
+  it('marks the selected row with a check and the selected state', async () => {
+    await render(<ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" selected onPress={jest.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'Meu Sandero. Em dia. Tudo em dia' })).toBeSelected();
+    expect(screen.getByTestId('icon-check', hidden)).toBeOnTheScreen();
+
+    await screen.rerender(<ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" onPress={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Meu Sandero. Em dia. Tudo em dia' })).not.toBeSelected();
+    expect(screen.queryByTestId('icon-check', hidden)).not.toBeOnTheScreen();
+  });
+
+  it('keeps the end control as its own button', async () => {
+    const onEnd = jest.fn();
+    const onPress = jest.fn();
+    await render(
+      <ItemRow
+        name="Meu Sandero"
+        urgency="ok"
+        primary="Tudo em dia"
+        onPress={onPress}
+        end={<Button label="Remover Meu Sandero" onPress={onEnd} />}
+      />,
+    );
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Remover Meu Sandero' }));
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
   });
 
   it.each([

@@ -1,9 +1,9 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import Onboarding from '@/app/onboarding';
 import type { Db } from '@/db/client';
-import { itemsQuery, readingsQuery, vehicleQuery } from '@/db/repo';
+import { itemsQuery, readingsQuery, selectedVehicleIdQuery, vehiclesQuery } from '@/db/repo';
 import { todayISO } from '@/domain';
-import { router, setupScreen } from '@/test-utils/screens';
+import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
@@ -31,8 +31,8 @@ test('shows what to fix and creates nothing when the form is incomplete', async 
   expect(screen.getByText('Digite o KM do painel usando só números.')).toBeOnTheScreen();
   expect(screen.getByText('Marque pelo menos um item para acompanhar.')).toBeOnTheScreen();
   expect(screen.getByText('Confira os campos destacados acima.')).toBeOnTheScreen();
-  expect(vehicleQuery(db).all()).toEqual([]);
-  expect(router.replace).not.toHaveBeenCalled();
+  expect(vehiclesQuery(db).all()).toEqual([]);
+  expect(router.dismissTo).not.toHaveBeenCalled();
 });
 
 test('rejects an odometer too high to be real', async () => {
@@ -47,13 +47,15 @@ test('rejects an odometer too high to be real', async () => {
   await user.press(screen.getByRole('button', { name: 'Começar' }));
 
   expect(screen.getByText('Confira o KM: o valor parece alto demais.')).toBeOnTheScreen();
-  expect(vehicleQuery(db).all()).toEqual([]);
+  expect(vehiclesQuery(db).all()).toEqual([]);
 });
 
 test('creates the vehicle with the chosen pace, severe intervals and items, then opens the garage', async () => {
   await render(<Onboarding />);
   const user = userEvent.setup();
 
+  // First car: the layout's "Seu carro" title stays.
+  expect(screen.queryByRole('header', { name: 'Adicionar carro' })).not.toBeOnTheScreen();
   // Presets start checked, with normal-use intervals.
   expect(checkbox(/^Troca de óleo e filtro\. A cada 10\.000 km ou 12 meses$/)).toBeChecked();
   expect(screen.getByRole('radio', { name: 'Cerca de 1.000 km' })).toBeChecked();
@@ -71,8 +73,8 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
 
   await user.press(screen.getByRole('button', { name: 'Começar' }));
 
-  expect(router.replace).toHaveBeenCalledWith('/');
-  const [vehicle] = vehicleQuery(db).all();
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
+  const [vehicle] = vehiclesQuery(db).all();
   expect(vehicle).toEqual(
     expect.objectContaining({ nickname: 'Meu Sandero 2018', monthlyKmEstimate: 1600, severeUse: true }),
   );
@@ -88,4 +90,20 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
   );
   expect(items).toHaveLength(4);
   expect(items.every((i) => i.baselineKm === 46250 && i.baselineDate === todayISO())).toBe(true);
+});
+
+test('adds another car and opens it in the garage', async () => {
+  await seedVehicle(db);
+  await render(<Onboarding />);
+  const user = userEvent.setup();
+
+  expect(screen.getByRole('header', { name: 'Adicionar carro' })).toBeOnTheScreen();
+  await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Gol');
+  await user.type(screen.getByLabelText('Hodômetro atual, km'), '80000');
+  await user.press(screen.getByRole('button', { name: 'Adicionar carro' }));
+
+  const cars = vehiclesQuery(db).all();
+  expect(cars.map((v) => v.nickname)).toEqual(['Meu Sandero', 'Meu Gol']);
+  expect(selectedVehicleIdQuery(db).all()).toEqual([{ value: cars[1].id }]);
+  expect(router.dismissTo).toHaveBeenCalledWith('/');
 });

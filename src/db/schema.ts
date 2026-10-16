@@ -94,3 +94,11 @@ export const vehicleSpecs = sqliteTable('vehicle_specs', {
   battery: text('battery'),
   ...timestamps,
 });
+
+// Device-local UI state (e.g. the open car). Never synced: v1 sync must skip this table,
+// which is why it has no createdAt/deletedAt and rows are hard-deleted.
+export const devicePrefs = sqliteTable('device_prefs', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamps.updatedAt,
+});

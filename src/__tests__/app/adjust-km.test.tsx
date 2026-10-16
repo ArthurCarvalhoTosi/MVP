@@ -1,11 +1,10 @@
-import { act, render, screen, userEvent } from '@testing-library/react-native';
-import { Alert, type AlertButton } from 'react-native';
+import { render, screen, userEvent } from '@testing-library/react-native';
 import AdjustKm from '@/app/adjust-km';
 import type { Db } from '@/db/client';
 import { addOdometerReading, readingsQuery } from '@/db/repo';
 import { odometerReadings } from '@/db/schema';
 import { addDays, todayISO } from '@/domain';
-import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import { params, redirect, router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
@@ -18,6 +17,7 @@ beforeEach(async () => {
   db = await setupScreen();
   // 30 days at ~1.000 km/month: projected 41.000 km today.
   ({ vehicleId } = await seedVehicle(db, addDays(todayISO(), -30)));
+  params.vehicleId = vehicleId;
 });
 
 const field = () => screen.getByLabelText('KM no painel agora, km');
@@ -28,16 +28,6 @@ async function saveKm(km: string) {
   await user.clear(field());
   await user.type(field(), km);
   await user.press(screen.getByRole('button', { name: 'Salvar KM' }));
-}
-
-/** Spies on Alert.alert and returns a way to press one of its buttons. */
-function spyAlert() {
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  const press = async (text: string) => {
-    const buttons = alert.mock.calls.at(-1)?.[2] as AlertButton[];
-    await act(async () => buttons.find((b) => b.text === text)?.onPress?.());
-  };
-  return { alert, press };
 }
 
 test('prefills the projection and saves the panel reading as an adjustment', async () => {
@@ -102,4 +92,22 @@ test('rejects a KM too high to be real', async () => {
 
   expect(screen.getByText('Confira o KM: o valor parece alto demais.')).toBeOnTheScreen();
   expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
+});
+
+test('adjusts the car it was opened for, not the first one', async () => {
+  const { vehicleId: gol } = await seedVehicle(db, todayISO(), { nickname: 'Meu Gol', odometerKm: 80000 });
+  params.vehicleId = gol;
+  await render(<AdjustKm />);
+
+  expect(field()).toHaveDisplayValue('80000');
+  await saveKm('80.500');
+
+  expect(readingsQuery(db, gol).all().map((r) => r.km)).toEqual([80000, 80500]);
+  expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
+});
+
+test('leaves for the garage when the car is gone', async () => {
+  params.vehicleId = 'missing';
+  await render(<AdjustKm />);
+  expect(redirect).toHaveBeenCalledWith('/');
 });

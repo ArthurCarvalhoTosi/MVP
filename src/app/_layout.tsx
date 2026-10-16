@@ -50,6 +50,7 @@ function AppStack() {
         <Stack.Screen name="register" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />
         <Stack.Screen name="adjust-km" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="specs" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+        <Stack.Screen name="vehicles" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
       </Stack>
     </>
   );

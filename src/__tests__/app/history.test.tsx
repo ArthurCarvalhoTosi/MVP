@@ -3,7 +3,7 @@ import History from '@/app/history';
 import type { Db } from '@/db/client';
 import { registerMaintenance } from '@/db/repo';
 import { addDays, formatBRL, formatDate, todayISO } from '@/domain';
-import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import { params, redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
@@ -18,6 +18,7 @@ const since = addDays(todayISO(), -60);
 beforeEach(async () => {
   db = await setupScreen();
   ({ vehicleId, oilId } = await seedVehicle(db, since));
+  params.vehicleId = vehicleId;
 });
 
 test('invites the first record when there is no history', async () => {
@@ -53,4 +54,28 @@ test('shows the total spent and a reverse timeline, flagging late records', asyn
   ]);
   // Logged today for earlier dates: two late records, the same-day one isn't flagged.
   expect(screen.getAllByText(`Registrado em ${formatDate(todayISO())}`)).toHaveLength(2);
+});
+
+test("shows the history of the car it was opened for, not the first one's", async () => {
+  await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: todayISO(), km: 42000, costCents: 9900 });
+  const gol = await seedVehicle(db, since, { nickname: 'Meu Gol', odometerKm: 80000 });
+  await registerMaintenance(db, {
+    vehicleId: gol.vehicleId,
+    itemId: gol.oilId,
+    performedAt: todayISO(),
+    km: 82000,
+    costCents: 15000,
+  });
+  params.vehicleId = gol.vehicleId;
+  await render(<History />);
+
+  expect(screen.getByText('1 troca registrada')).toBeOnTheScreen();
+  expect(screen.getByText(`${formatDate(todayISO())} · 82.000 km`)).toBeOnTheScreen();
+  expect(screen.queryByText(/42\.000 km/)).not.toBeOnTheScreen();
+});
+
+test('leaves for the garage when the car is gone', async () => {
+  params.vehicleId = 'missing';
+  await render(<History />);
+  expect(redirect).toHaveBeenCalledWith('/');
 });

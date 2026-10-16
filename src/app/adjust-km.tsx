@@ -1,16 +1,17 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useDb } from '@/db/provider';
-import { addOdometerReading, OdometerError, readingsQuery, vehicleQuery } from '@/db/repo';
+import { addOdometerReading, OdometerError, readingsQuery, vehiclesQuery } from '@/db/repo';
 import { MAX_KM, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
 import { Button, FormError, Screen, Section, TextField } from '@/ui';
 
 export default function AdjustKm() {
   const db = useDb();
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
-    const vehicle = vehicleQuery(db).all()[0];
+    const vehicle = vehiclesQuery(db).all().find((v) => v.id === vehicleId);
     if (!vehicle) return null;
     const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, todayISO());
     return { vehicleId: vehicle.id, km };

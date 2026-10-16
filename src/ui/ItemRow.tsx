@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Button } from './Button';
@@ -20,9 +21,13 @@ type Props = {
   secondary?: string | null;
   onPress?: () => void;
   action?: { label: string; onPress: () => void };
+  /** For rows that pick one of a list: a check mark, plus the selected state for screen readers. */
+  selected?: boolean;
+  /** A separate control at the end of the row (e.g. remove), reachable on its own. */
+  end?: ReactNode;
 };
 
-export function ItemRow({ name, urgency, primary, secondary, onPress, action }: Props) {
+export function ItemRow({ name, urgency, primary, secondary, onPress, action, selected, end }: Props) {
   const { c } = useTheme();
   const u = urgencyStyle[urgency];
   const critical = urgency === 'critical';
@@ -40,6 +45,7 @@ export function ItemRow({ name, urgency, primary, secondary, onPress, action }: 
           </AppText>
         ) : null}
       </View>
+      {selected ? <Icon name="check" size={24} color={c.primary} /> : null}
     </>
   );
 
@@ -53,20 +59,24 @@ export function ItemRow({ name, urgency, primary, secondary, onPress, action }: 
       <View style={[styles.bar, { backgroundColor: c[u.bar] }]} />
       <View style={styles.body}>
         {/* The summary is one screen-reader stop; the action stays a separate, reachable button. */}
-        {onPress ? (
-          <Pressable
-            onPress={onPress}
-            accessibilityRole="button"
-            accessibilityLabel={a11yLabel}
-            style={({ pressed }) => [styles.info, pressed && { backgroundColor: c.line }]}
-          >
-            {content}
-          </Pressable>
-        ) : (
-          <View accessible accessibilityLabel={a11yLabel} style={styles.info}>
-            {content}
-          </View>
-        )}
+        <View style={styles.main}>
+          {onPress ? (
+            <Pressable
+              onPress={onPress}
+              accessibilityRole="button"
+              accessibilityLabel={a11yLabel}
+              accessibilityState={{ selected }}
+              style={({ pressed }) => [styles.info, pressed && { backgroundColor: c.line }]}
+            >
+              {content}
+            </Pressable>
+          ) : (
+            <View accessible accessibilityLabel={a11yLabel} accessibilityState={{ selected }} style={styles.info}>
+              {content}
+            </View>
+          )}
+          {end}
+        </View>
         {critical && action ? (
           <View style={styles.action}>
             <Button label={action.label} onPress={action.onPress} />
@@ -83,7 +93,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', borderBottomWidth: 1 },
   bar: { width: 4 },
   body: { flex: 1 },
+  main: { flexDirection: 'row', alignItems: 'center' },
   info: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: ICON_GAP,

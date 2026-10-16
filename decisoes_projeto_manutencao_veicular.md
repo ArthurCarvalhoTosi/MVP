@@ -12,6 +12,7 @@ Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura
 * **Decisão de Escopo:** **Hiper-focado em Carros.**
   * Casa e híbrido descartados (menor dor financeira percebida, diluição de valor).
   * **Motos fora do MVP** (exigem presets próprios — corrente, intervalos de óleo menores — e dobram o trabalho de seed). O modelo de dados mantém `vehicle_type` para permitir inclusão futura.
+* **Múltiplos carros:** o usuário pode acompanhar vários carros. O app abre direto no último carro visto (preserva a consulta em 3 segundos); tocar no nome do carro no topo abre "Seus carros", com o status de cada um, "Adicionar carro" (reusa o onboarding) e "Remover" (com confirmação; soft delete do carro e de todos os seus registros). Renomear fica para depois.
 * **Sem conta no MVP (v0):** app 100% local. A arquitetura já é preparada para contas e acesso multi-dispositivo na v1 (ver seção 7).
 * **Plataforma prioritária:** Android (~80% do mercado BR). iOS sai junto, mas testes de notificação priorizam Android.
 
@@ -193,6 +194,9 @@ vehicle_specs                        -- override do seed (cola de bolso)
   vehicle_id PK, oil_spec, tire_front_psi, tire_rear_psi,
   wiper_driver, wiper_passenger, battery,
   updated_at
+
+device_prefs                         -- estado de UI local do aparelho; NUNCA sincronizado
+  key PK, value, updated_at          -- ex.: selectedVehicleId (carro aberto por último)
 
 dossier_shares                       -- v1
   id, vehicle_id, token_hash, include_photos,

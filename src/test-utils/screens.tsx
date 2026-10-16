@@ -1,7 +1,9 @@
 // Mocks and seed shared by the screen tests in src/__tests__/app. Those tests can't live in
 // src/app: expo-router loads every file there as a route. Wire mocks up per test file with
 //   jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
-import { Text } from 'react-native';
+import { act } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
+import { Alert, Text, type AlertButton } from 'react-native';
 import type { Db } from '@/db/client';
 import { createVehicle, itemsQuery } from '@/db/repo';
 import { createTestDb } from '@/db/test-utils/testDb';
@@ -18,10 +20,14 @@ export const expoRouterMock = {
     redirect(href);
     return null;
   },
-  // Renders the header title so tests can assert it.
+  // Renders the header title (or a custom headerTitle) so tests can assert it.
   Stack: {
-    Screen: ({ options }: { options?: { title?: string } }) =>
-      options?.title ? <Text accessibilityRole="header">{options.title}</Text> : null,
+    Screen: ({ options }: { options?: { title?: string; headerTitle?: () => ReactNode } }) =>
+      options?.headerTitle ? (
+        options.headerTitle()
+      ) : options?.title ? (
+        <Text accessibilityRole="header">{options.title}</Text>
+      ) : null,
   },
 };
 
@@ -42,13 +48,27 @@ export async function setupScreen(): Promise<Db> {
   return db;
 }
 
+/** Spies on Alert.alert and returns a way to press one of its buttons. */
+export function spyAlert() {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const press = async (text: string) => {
+    const buttons = alert.mock.calls.at(-1)?.[2] as AlertButton[];
+    await act(async () => buttons.find((b) => b.text === text)?.onPress?.());
+  };
+  return { alert, press };
+}
+
 export const OIL = { templateKey: 'oil', name: 'Troca de óleo e filtro', intervalKm: 10000, intervalMonths: 12 };
 
-/** "Meu Sandero" at 40.000 km on `since`, ~1.000 km/month, tracking oil only. */
-export async function seedVehicle(target: Db, since: ISODate = todayISO()) {
+/** "Meu Sandero" at 40.000 km on `since`, ~1.000 km/month, tracking oil only. Selected, like a new car. */
+export async function seedVehicle(
+  target: Db,
+  since: ISODate = todayISO(),
+  over: { nickname?: string; odometerKm?: number } = {},
+) {
   const vehicleId = await createVehicle(
     target,
-    { nickname: 'Meu Sandero', odometerKm: 40000, monthlyKmEstimate: 1000, severeUse: false, items: [OIL] },
+    { nickname: 'Meu Sandero', odometerKm: 40000, monthlyKmEstimate: 1000, severeUse: false, items: [OIL], ...over },
     since,
   );
   return { vehicleId, oilId: itemsQuery(target, vehicleId).all()[0].id };

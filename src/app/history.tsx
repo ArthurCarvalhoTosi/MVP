@@ -1,16 +1,17 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { logsQuery, vehicleQuery } from '@/db/repo';
+import { logsQuery, vehiclesQuery } from '@/db/repo';
 import { formatBRL, formatDate, formatKm, todayISO } from '@/domain';
 import { AppText, Button, Screen, Section, space, useTheme } from '@/ui';
 
 export default function History() {
   const db = useDb();
   const { c } = useTheme();
-  const [vehicle] = useState(() => vehicleQuery(db).all()[0]);
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
+  const [vehicle] = useState(() => vehiclesQuery(db).all().find((v) => v.id === vehicleId));
   const logs = useLiveQuery(logsQuery(db, vehicle?.id ?? ''), [vehicle?.id]);
 
   if (!vehicle) return <Redirect href="/" />;

@@ -26,6 +26,8 @@ const glyphs = {
   magnify: { ios: 'magnifyingglass', android: 'search' },
   close: { ios: 'xmark', android: 'close' },
   'chevron-right': { ios: 'chevron.right', android: 'chevron_right' },
+  'chevron-down': { ios: 'chevron.down', android: 'expand_more' },
+  'trash-can-outline': { ios: 'trash', android: 'delete' },
 } satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof glyphs;

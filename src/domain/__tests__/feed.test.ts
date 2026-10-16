@@ -1,5 +1,5 @@
 import type { ItemSchedule } from '../due';
-import { buildFeed } from '../feed';
+import { buildFeed, vehicleStatus } from '../feed';
 
 const today = '2026-10-15';
 const readings = [{ km: 40000, readAt: today }];
@@ -71,5 +71,33 @@ describe('buildFeed', () => {
   it('keeps the caller item shape', () => {
     const feed = buildFeed([{ ...item('Óleo', { intervalMonths: 12 }), id: 'abc' }], readings, 1500, today);
     expect(feed.ok[0].item.id).toBe('abc');
+  });
+});
+
+describe('vehicleStatus', () => {
+  const critical = item('Overdue', { intervalKm: 5000, baselineKm: 30000 });
+  const attention = item('Attention', { intervalKm: 1000 }); // 20 days
+  const ok = item('Ok', { intervalMonths: 12 });
+  const status = (items: ReturnType<typeof item>[]) => vehicleStatus(buildFeed(items, readings, 1500, today));
+
+  it('reports the critical count first, even with attention items', () => {
+    expect(status([critical, attention, ok])).toEqual({ urgency: 'critical', label: '1 troca vencida ou próxima' });
+    expect(status([critical, { ...critical, name: 'Overdue 2' }])).toEqual({
+      urgency: 'critical',
+      label: '2 trocas vencidas ou próximas',
+    });
+  });
+
+  it('reports the attention count when nothing is critical', () => {
+    expect(status([attention, ok])).toEqual({ urgency: 'attention', label: '1 em atenção' });
+    expect(status([attention, { ...attention, name: 'Attention 2' }])).toEqual({
+      urgency: 'attention',
+      label: '2 em atenção',
+    });
+  });
+
+  it('is all clear with only ok items or none', () => {
+    expect(status([ok])).toEqual({ urgency: 'ok', label: 'Tudo em dia' });
+    expect(status([])).toEqual({ urgency: 'ok', label: 'Tudo em dia' });
   });
 });

@@ -1,8 +1,18 @@
-import { and, asc, desc, eq, getTableColumns, gt, isNull, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, gt, inArray, isNull, lte } from 'drizzle-orm';
 import { checkReading, MAX_KM, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
 import type { Db } from './client';
 import { uuidv7 } from './id';
-import { maintenanceItems, maintenanceLogs, odometerReadings, vehicleSpecs, vehicles } from './schema';
+import {
+  attachments,
+  devicePrefs,
+  maintenanceItems,
+  maintenanceLogs,
+  odometerReadings,
+  vehicleSpecs,
+  vehicles,
+} from './schema';
+
+const SELECTED_VEHICLE = 'selectedVehicleId';
 
 // updatedAt is refreshed on every update by $onUpdateFn in schema.ts.
 
@@ -43,14 +53,37 @@ function optionalText(s: string | null | undefined): string | null {
 
 // --- Live-queryable reads (soft-deleted rows excluded) ---
 
-export function vehicleQuery(db: Db) {
-  // shortcut: single vehicle in the UI for MVP; schema already supports many.
+export function vehiclesQuery(db: Db) {
   return db
     .select()
     .from(vehicles)
     .where(isNull(vehicles.deletedAt))
-    .orderBy(asc(vehicles.createdAt))
-    .limit(1);
+    .orderBy(asc(vehicles.createdAt), asc(vehicles.id));
+}
+
+export function selectedVehicleIdQuery(db: Db) {
+  return db.select({ value: devicePrefs.value }).from(devicePrefs).where(eq(devicePrefs.key, SELECTED_VEHICLE));
+}
+
+// useLiveQuery only watches the FROM table, not joined ones; removeVehicle soft-deletes the
+// vehicle's items and readings too, so a removal still refreshes these two.
+
+export function allItemsQuery(db: Db) {
+  return db
+    .select(getTableColumns(maintenanceItems))
+    .from(maintenanceItems)
+    .innerJoin(vehicles, eq(maintenanceItems.vehicleId, vehicles.id))
+    .where(and(eq(maintenanceItems.active, true), isNull(maintenanceItems.deletedAt), isNull(vehicles.deletedAt)))
+    .orderBy(asc(maintenanceItems.createdAt));
+}
+
+export function allReadingsQuery(db: Db) {
+  return db
+    .select({ vehicleId: odometerReadings.vehicleId, km: odometerReadings.km, readAt: odometerReadings.readAt })
+    .from(odometerReadings)
+    .innerJoin(vehicles, eq(odometerReadings.vehicleId, vehicles.id))
+    .where(and(isNull(odometerReadings.deletedAt), isNull(vehicles.deletedAt)))
+    .orderBy(asc(odometerReadings.readAt), asc(odometerReadings.km));
 }
 
 export function readingsQuery(db: Db, vehicleId: string) {
@@ -103,6 +136,51 @@ function assertReading(db: Db, vehicleId: string, km: number, readAt: ISODate) {
   if (check !== 'ok') throw new OdometerError(check);
 }
 
+function assertVehicle(db: Db, vehicleId: string) {
+  const found = db
+    .select({ id: vehicles.id })
+    .from(vehicles)
+    .where(and(eq(vehicles.id, vehicleId), isNull(vehicles.deletedAt)))
+    .get();
+  if (!found) throw new ValidationError('Carro não encontrado.');
+}
+
+function setSelectedVehicle(db: Db, vehicleId: string) {
+  db.insert(devicePrefs)
+    .values({ key: SELECTED_VEHICLE, value: vehicleId })
+    .onConflictDoUpdate({ target: devicePrefs.key, set: { value: vehicleId } })
+    .run();
+}
+
+export async function selectVehicle(db: Db, vehicleId: string): Promise<void> {
+  assertVehicle(db, vehicleId);
+  setSelectedVehicle(db, vehicleId);
+}
+
+export async function removeVehicle(db: Db, vehicleId: string): Promise<void> {
+  db.transaction((tx) => {
+    assertVehicle(tx, vehicleId);
+    const now = new Date().toISOString();
+    const gone = { deletedAt: now, updatedAt: now };
+    tx.update(vehicles).set(gone).where(eq(vehicles.id, vehicleId)).run();
+    // Rows deleted earlier keep their own deletedAt, so sync sees when each one really went away.
+    for (const t of [odometerReadings, maintenanceItems, maintenanceLogs, vehicleSpecs]) {
+      tx.update(t)
+        .set(gone)
+        .where(and(eq(t.vehicleId, vehicleId), isNull(t.deletedAt)))
+        .run();
+    }
+    const logIds = tx.select({ id: maintenanceLogs.id }).from(maintenanceLogs).where(eq(maintenanceLogs.vehicleId, vehicleId));
+    tx.update(attachments)
+      .set(gone)
+      .where(and(inArray(attachments.logId, logIds), isNull(attachments.deletedAt)))
+      .run();
+    tx.delete(devicePrefs)
+      .where(and(eq(devicePrefs.key, SELECTED_VEHICLE), eq(devicePrefs.value, vehicleId)))
+      .run();
+  });
+}
+
 export async function createVehicle(
   db: Db,
   input: {
@@ -147,6 +225,7 @@ export async function createVehicle(
       .run();
     if (items.length > 0) tx.insert(maintenanceItems).values(items).run();
     tx.insert(vehicleSpecs).values({ vehicleId }).run();
+    setSelectedVehicle(tx, vehicleId);
   });
   return vehicleId;
 }

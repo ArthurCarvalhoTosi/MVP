@@ -1,8 +1,8 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { specsQuery, upsertSpecs, vehicleQuery } from '@/db/repo';
+import { specsQuery, upsertSpecs, vehiclesQuery } from '@/db/repo';
 import { parseIntBR } from '@/domain';
 import { AppText, Button, FormError, Screen, Section, TextField, space } from '@/ui';
 
@@ -10,9 +10,10 @@ const PSI_ERROR = 'Digite só números, por exemplo 32.';
 
 export default function Specs() {
   const db = useDb();
+  const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
-    const vehicle = vehicleQuery(db).all()[0];
+    const vehicle = vehiclesQuery(db).all().find((v) => v.id === vehicleId);
     return vehicle ? { vehicleId: vehicle.id, specs: specsQuery(db, vehicle.id).all()[0] } : null;
   });
   const s = start?.specs;

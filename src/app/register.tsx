@@ -2,7 +2,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { itemsQuery, OdometerError, readingsQuery, registerMaintenance, vehicleQuery } from '@/db/repo';
+import { allItemsQuery, OdometerError, readingsQuery, registerMaintenance, vehiclesQuery } from '@/db/repo';
 import { addDays, MAX_KM, parseBRDate, parseBRL, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
 import { Button, ChipGroup, FormError, Screen, Section, TextField, space } from '@/ui';
 
@@ -19,8 +19,8 @@ export default function Register() {
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
-    const vehicle = vehicleQuery(db).all()[0];
-    const item = vehicle && itemsQuery(db, vehicle.id).all().find((i) => i.id === itemId);
+    const item = allItemsQuery(db).all().find((i) => i.id === itemId);
+    const vehicle = item && vehiclesQuery(db).all().find((v) => v.id === item.vehicleId);
     if (!vehicle || !item) return null;
     const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, todayISO());
     return { vehicleId: vehicle.id, item, km };

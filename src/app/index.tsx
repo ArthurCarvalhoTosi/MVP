@@ -1,19 +1,52 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Redirect, router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { itemsQuery, readingsQuery, specsQuery, vehicleQuery } from '@/db/repo';
+import { itemsQuery, readingsQuery, selectedVehicleIdQuery, specsQuery, vehiclesQuery } from '@/db/repo';
 import type { vehicles } from '@/db/schema';
 import { buildFeed, dueLabel, formatPair, isProjectionStale, projectOdometer, todayISO } from '@/domain';
-import { AppText, Button, ItemRow, Odometer, Screen, Section, SpecStrip, space } from '@/ui';
+import { AppText, Button, Icon, ItemRow, Odometer, Screen, Section, SpecStrip, space, useTheme } from '@/ui';
 
 export default function Dashboard() {
   const db = useDb();
-  const { data, error, updatedAt } = useLiveQuery(vehicleQuery(db));
-  if (error) throw error;
-  if (!updatedAt) return null; // first read still running: [] here doesn't mean "no vehicle" yet
-  return data[0] ? <Garage vehicle={data[0]} /> : <Redirect href="/onboarding" />;
+  const cars = useLiveQuery(vehiclesQuery(db));
+  const selected = useLiveQuery(selectedVehicleIdQuery(db));
+  const failed = cars.error ?? selected.error;
+  if (failed) throw failed;
+  // First reads still running: [] here doesn't mean "no vehicle" yet.
+  if (!cars.updatedAt || !selected.updatedAt) return null;
+  // No pref (upgrade) or a removed car: fall back to the oldest.
+  const vehicle = cars.data.find((v) => v.id === selected.data[0]?.value) ?? cars.data[0];
+  if (!vehicle) return <Redirect href="/onboarding" />;
+
+  return (
+    <>
+      <Stack.Screen
+        options={{ title: vehicle.nickname, headerTitle: () => <CarSwitcher nickname={vehicle.nickname} /> }}
+      />
+      {/* Keyed: useLiveQuery keeps the previous car's data while it reloads, so a fresh mount
+          waits for the new car instead of rolling the drums between two cars' numbers. */}
+      <Garage key={vehicle.id} vehicle={vehicle} />
+    </>
+  );
+}
+
+function CarSwitcher({ nickname }: { nickname: string }) {
+  const { c } = useTheme();
+  return (
+    <Pressable
+      onPress={() => router.push('/vehicles')}
+      accessibilityRole="button"
+      accessibilityLabel={`Trocar de carro. Atual: ${nickname}`}
+      style={({ pressed }) => [styles.switcher, pressed && styles.pressed]}
+    >
+      <AppText variant="title" numberOfLines={1} style={styles.shrink}>
+        {nickname}
+      </AppText>
+      <Icon name="chevron-down" size={20} color={c.primary} />
+    </Pressable>
+  );
 }
 
 function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
@@ -43,6 +76,7 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
   const s = specs.data[0];
 
   const register = (itemId: string) => router.push({ pathname: '/register', params: { itemId } });
+  const params = { vehicleId: vehicle.id };
   const row = ({ item, due }: (typeof feed.ok)[number]) => {
     const label = dueLabel(due);
     return (
@@ -61,14 +95,22 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
   return (
     <Screen
       scroll
-      footer={<Button variant="secondary" label="Ver histórico" onPress={() => router.push('/history')} />}
+      footer={
+        <Button
+          variant="secondary"
+          label="Ver histórico"
+          onPress={() => router.push({ pathname: '/history', params })}
+        />
+      }
     >
-      <Stack.Screen options={{ title: vehicle.nickname }} />
-
       <View style={styles.block}>
         <Odometer km={projectOdometer(readings.data, vehicle.monthlyKmEstimate, today)} estimated />
         <View style={styles.start}>
-          <Button variant="quiet" label="Ajustar KM" onPress={() => router.push('/adjust-km')} />
+          <Button
+            variant="quiet"
+            label="Ajustar KM"
+            onPress={() => router.push({ pathname: '/adjust-km', params })}
+          />
         </View>
         {isProjectionStale(readings.data, today) ? (
           <AppText color="inkMuted">
@@ -85,7 +127,7 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
             { key: 'wipers', icon: 'wiper', label: 'Palhetas', value: formatPair(s?.wiperDriver, s?.wiperPassenger) },
             { key: 'battery', icon: 'car-battery', label: 'Bateria', value: s?.battery ?? null },
           ]}
-          onEdit={() => router.push('/specs')}
+          onEdit={() => router.push({ pathname: '/specs', params })}
         />
       </Section>
 
@@ -126,4 +168,7 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const styles = StyleSheet.create({
   block: { gap: space.s, marginBottom: space.xxl },
   start: { alignItems: 'flex-start' },
+  switcher: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 48 },
+  shrink: { flexShrink: 1 },
+  pressed: { opacity: 0.82 },
 });

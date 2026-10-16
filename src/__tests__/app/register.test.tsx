@@ -116,3 +116,15 @@ test('leaves for the garage when the item does not exist', async () => {
   await render(<Register />);
   expect(redirect).toHaveBeenCalledWith('/');
 });
+
+test("logs on the item's own car, not the first one", async () => {
+  const gol = await seedVehicle(db, todayISO(), { nickname: 'Meu Gol', odometerKm: 80000 });
+  params.itemId = gol.oilId;
+  await render(<Register />);
+
+  expect(kmField()).toHaveDisplayValue('80000');
+  await userEvent.setup().press(screen.getByRole('button', { name: 'Registrar troca' }));
+
+  expect(logsQuery(db, gol.vehicleId).all()).toEqual([expect.objectContaining({ itemId: gol.oilId, km: 80000 })]);
+  expect(logsQuery(db, vehicleId).all()).toEqual([]);
+});

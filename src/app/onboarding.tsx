@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { createVehicle } from '@/db/repo';
+import { createVehicle, vehiclesQuery } from '@/db/repo';
 import { intervalLabel, MAX_KM, MONTHLY_KM_OPTIONS, parseIntBR, PRESETS, presetSchedule, todayISO } from '@/domain';
 import { AppText, Button, ChipGroup, FormError, Icon, Screen, Section, TextField, space, radius, useTheme } from '@/ui';
 
@@ -16,6 +16,8 @@ type Errors = Partial<Record<'nickname' | 'km' | 'items' | 'form', string>>;
 export default function Onboarding() {
   const db = useDb();
   const { c } = useTheme();
+  // Read once: an extra car (not the first) is known when the form opens and doesn't change.
+  const [adding] = useState(() => vehiclesQuery(db).all().length > 0);
   const [nickname, setNickname] = useState('');
   const [km, setKm] = useState('');
   const [monthly, setMonthly] = useState(1000);
@@ -63,7 +65,9 @@ export default function Onboarding() {
         },
         todayISO(),
       );
-      router.replace('/'); // stays "saving" while the garage opens
+      // Back to the garage underneath (another car); on first run the redirect replaced it, and
+      // dismissTo then replaces this screen instead. Either way no stale screen stays in the stack.
+      router.dismissTo('/'); // stays "saving" while the garage opens
     } catch (e) {
       setSaving(false);
       setSaveError(e);
@@ -77,10 +81,11 @@ export default function Onboarding() {
         <>
           {errors.form ? <AppText color="critical">{errors.form}</AppText> : null}
           <FormError error={saveError} />
-          <Button label="Começar" loading={saving} onPress={start} />
+          <Button label={adding ? 'Adicionar carro' : 'Começar'} loading={saving} onPress={start} />
         </>
       }
     >
+      {adding ? <Stack.Screen options={{ title: 'Adicionar carro' }} /> : null}
       <View style={styles.fields}>
         <TextField
           label="Como você chama o carro?"

@@ -36,3 +36,18 @@ export function buildFeed<T extends ItemSchedule & { name: string }>(
   const ok = of('ok');
   return { critical: of('critical'), attention: of('attention'), ok, next: ok[0]?.due.dueDate ? ok[0] : null };
 }
+
+/** One line per car in the car list: its worst urgency and how many items are at that level. */
+export function vehicleStatus(feed: Feed<unknown>): { urgency: Urgency; label: string } {
+  const critical = feed.critical.length;
+  const attention = feed.attention.length;
+  if (critical > 0) {
+    return {
+      urgency: 'critical',
+      label: critical === 1 ? '1 troca vencida ou próxima' : `${critical} trocas vencidas ou próximas`,
+    };
+  }
+  // "em atenção" doesn't inflect, so one label covers 1 and many.
+  if (attention > 0) return { urgency: 'attention', label: `${attention} em atenção` };
+  return { urgency: 'ok', label: 'Tudo em dia' };
+}
