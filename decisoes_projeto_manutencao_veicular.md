@@ -2,7 +2,7 @@
 
 Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura, dados e segurança definidos para continuidade do desenvolvimento.
 
-**Última revisão:** 2026-10-15
+**Última revisão:** 2026-10-17
 
 ---
 
@@ -118,6 +118,9 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 | Notificações | `expo-notifications` (agendamento 100% local) |
 | PDF | `expo-print` (HTML → PDF no aparelho) |
 | Backend (v1) | **Supabase**: Auth, Postgres + RLS, Storage, Edge Functions |
+| Qualidade | Jest + React Native Testing Library + sql.js; ESLint (`eslint-config-expo`, com regras do React Compiler); TypeScript strict |
+
+*Versões em uso:* Expo SDK 58, React Native 0.88, React 19 (React Compiler ativo), expo-router 58, Drizzle 0.45. Ícones via `expo-symbols` (SF Symbols / Material Symbols) — `@expo/vector-icons` não vem mais no SDK.
 
 ### Arquitetura (local-first)
 
@@ -304,27 +307,52 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 | `src/domain` | Jest (jest-expo) | Todas as regras: datas, projeção, vencimento, urgência, presets, formatação. Casos de borda obrigatórios (fim de mês, ano bissexto, limites do semáforo). |
 | `src/db` | Jest + **sql.js** (SQLite em WASM) rodando as migrations reais | Repositório: criação, validações, constraints, transações e rollback, soft delete, ordenação. |
 | `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
-| `src/app` (telas) | Jest + RNTL | Fluxos principais com banco em memória: onboarding, registro de troca, ajuste de KM. |
+| `src/app` (telas) | Jest + RNTL | Fluxos com banco em memória: onboarding, registro de troca, ajuste/correção de KM, cola de bolso, histórico, troca/adição/remoção de carros. |
 
-* **Comando único:** `npm test` (mais `npm run typecheck`) — deve passar antes de todo commit.
-* **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store) e notificações. Validados manualmente em dev build.
+* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 28 suítes, 207 testes, lint sem avisos.
+* **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela e notificações. Validados manualmente no emulador Android.
 * `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
 
 ---
 
 ## 12. Próximos Passos
 
-### Feito (2026-10-16)
-* ~~Gestão de chave na nuvem~~ → **chave gerenciada pelo servidor** (8.3).
-* Scaffold Expo SDK 58 + TypeScript + Drizzle + SQLCipher; repositório git.
-* Camada `domain/`, esquema/migrations, design system e telas: onboarding, dashboard, registro de troca, ajuste de KM, cola de bolso, histórico — com testes (Jest + RNTL + sql.js).
-* Revisão completa e correções: limite de KM, correção de leituras via "Ajustar KM", verificação de que o SQLCipher está ativo (falha fechada), reset confirmado quando a chave não existe (restauração de iPhone), "hoje" atualizado ao voltar ao app.
+### Feito
+
+**Fundação (2026-10-16)**
+* Decisões fechadas: só carros, seed curado + manual, conta só na v1, criptografia local e na nuvem com **chave gerenciada pelo servidor** (8.3).
+* Projeto Expo SDK 58 + TypeScript + Drizzle + SQLCipher, com repositório git.
+* Camada `domain/` (projeção de KM, vencimentos, semáforo, presets, formatação e parsing pt-BR).
+* Banco local cifrado com chave no Keystore/Keychain; schema com campos de sync desde a v0; migrations geradas.
+* Design system com a identidade visual (hodômetro de tambores, azul Mercosul, Barlow) e componentes acessíveis.
+* Telas: onboarding, dashboard, registro de troca, ajuste de KM, cola de bolso e histórico com total gasto.
+* Testes desde o primeiro commit (domínio, banco com migrations reais, componentes, telas).
+
+**Revisão e correções (2026-10-16)**
+* Limite de KM e "Ajustar KM" capaz de corrigir uma leitura errada (com confirmação).
+* App se recusa a abrir se o SQLCipher não estiver ativo (falha fechada).
+* iPhone restaurado sem a chave: oferece apagar e recomeçar, com confirmação, só quando a chave realmente não existe.
+* "Hoje" atualizado ao voltar ao app; proteção contra toque duplo; teclado não cobre o botão de salvar; perguntas de múltipla escolha lidas pelo leitor de tela; mensagens de erro só em pt-BR.
+
+**Ambiente e validação (2026-10-16)**
+* ESLint configurado (inclui regras do React Compiler), sem avisos.
+* App rodando no emulador Android (dev build). Confirmado no aparelho: o arquivo do banco está cifrado.
+* Build Windows documentado no README (CMake 3.31.6 por causa do limite de 260 caracteres do ninja antigo).
+* Botões só de texto alinhados à coluna.
+
+**Múltiplos carros (2026-10-16)**
+* Seletor no topo, lista "Seus carros" com status de cada um, adicionar (reusa o onboarding) e remover com confirmação.
+* Carro selecionado lembrado na tabela local `device_prefs` (nunca sincronizada).
+* Testado no emulador: adicionar um segundo carro e alternar entre os dois.
 
 ### Pendente
-1. **Validar em dispositivo** (dev build): criptografia real do arquivo, teclado nas sheets, VoiceOver/TalkBack, splash.
-2. **Seed curado:** levantar os ~40 modelos mais vendidos e suas specs + busca no onboarding.
-3. **Notificações locais** (resumo semanal + item crítico; `buildDigest`, adiar 15 dias).
-4. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade.
-5. **Foto do comprovante** (anexo cifrado, sem EXIF).
-6. **Backup cifrado por arquivo** (exportar/importar com senha).
-7. Edição/exclusão de registros no histórico.
+1. **Validar o restante no emulador:** registrar troca, correção de KM, histórico, remover carro, modo escuro, teclado nas sheets, TalkBack.
+2. **Rótulo de item vencido por km:** hoje mostra "Vencido há 2813 dias" (estimativa a partir da média). Destacar "Passou N km" quando o vencimento vier do km.
+3. **Seed curado:** levantar os ~40 modelos mais vendidos e suas specs + busca no onboarding.
+4. **Notificações locais** (resumo semanal + item crítico; `buildDigest`, adiar 15 dias), agrupando os carros.
+5. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade.
+6. **Foto do comprovante** (anexo cifrado, sem EXIF).
+7. **Backup cifrado por arquivo** (exportar/importar com senha).
+8. Edição/exclusão de registros no histórico; renomear carro.
+9. **Rodar no iOS** (exige macOS ou EAS Build).
+10. Tratar os avisos do `npm audit` (vindos do template e das ferramentas de teste).
