@@ -41,7 +41,22 @@
           "useSQLCipher": true
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "color": "#0F3B9C"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Garagem usa suas fotos para guardar o comprovante de uma troca.",
+          "cameraPermission": "O Garagem usa a câmera para fotografar o comprovante de uma troca.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
