@@ -1,4 +1,4 @@
-import { addDays, addMonths, daysBetween, todayISO } from '../dates';
+import { addDays, addMonths, dayOfWeek, daysBetween, todayISO } from '../dates';
 
 describe('todayISO', () => {
   it('uses the local calendar date', () => {
@@ -55,5 +55,19 @@ describe('daysBetween', () => {
   it('is exact across DST ranges', () => {
     expect(daysBetween('2026-03-01', '2026-04-01')).toBe(31);
     expect(daysBetween('2026-10-01', '2026-11-30')).toBe(60);
+  });
+});
+
+describe('dayOfWeek', () => {
+  it('numbers days from Sunday (0) to Saturday (6)', () => {
+    expect(dayOfWeek('2026-10-17')).toBe(6);
+    expect(dayOfWeek('2026-10-18')).toBe(0);
+    expect(dayOfWeek('2026-10-14')).toBe(3);
+  });
+
+  it('holds across year ends and leap days', () => {
+    expect(dayOfWeek('2026-12-31')).toBe(4);
+    expect(dayOfWeek('2027-01-02')).toBe(6);
+    expect(dayOfWeek('2028-02-29')).toBe(2);
   });
 });
