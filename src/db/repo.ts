@@ -547,6 +547,42 @@ export async function setSnooze(db: Db, itemId: string, until: ISODate | null): 
     .run();
 }
 
+// --- Backup ---
+
+// Insert order: every table after the ones it references.
+const BACKUP_TABLES = {
+  vehicles,
+  maintenanceItems,
+  maintenanceLogs,
+  odometerReadings,
+  attachments,
+  vehicleSpecs,
+} as const;
+
+export type BackupRows = { [K in keyof typeof BACKUP_TABLES]: (typeof BACKUP_TABLES)[K]['$inferSelect'][] };
+
+/** Every synced row, soft-deleted ones included: v1 sync needs to know what went away. */
+export function backupRows(db: Db): BackupRows {
+  const rows = {} as Record<string, unknown[]>;
+  for (const [name, table] of Object.entries(BACKUP_TABLES)) rows[name] = db.select().from(table).all();
+  return rows as BackupRows;
+}
+
+/** Replaces all local data with a backup's, in one transaction. The caller confirms first. */
+export async function replaceAllData(db: Db, rows: BackupRows): Promise<void> {
+  const entries = Object.entries(BACKUP_TABLES) as [keyof BackupRows, (typeof BACKUP_TABLES)[keyof BackupRows]][];
+  db.transaction((tx) => {
+    for (const [, table] of [...entries].reverse()) tx.delete(table).run();
+    for (const [name, table] of entries) {
+      const list = rows[name];
+      if (!Array.isArray(list)) throw new ValidationError('Este arquivo não é um backup do Garagem.');
+      // SQLite caps bound parameters per statement (999 on older builds): 50 rows of ≤ 15 columns fit.
+      for (let i = 0; i < list.length; i += 50) tx.insert(table).values(list.slice(i, i + 50)).run();
+    }
+    tx.delete(devicePrefs).where(eq(devicePrefs.key, SELECTED_VEHICLE)).run();
+  });
+}
+
 export async function upsertSpecs(
   db: Db,
   vehicleId: string,

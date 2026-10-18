@@ -13,7 +13,7 @@ import {
   vehiclesQuery,
 } from '@/db/repo';
 import { buildFeed, formatKm, projectOdometer, todayISO, vehicleStatus } from '@/domain';
-import { Button, FormError, Icon, ItemRow, Screen, Section, useTheme } from '@/ui';
+import { Button, FormError, Icon, ItemRow, Screen, Section, space, useTheme } from '@/ui';
 
 export default function Vehicles() {
   const db = useDb();
@@ -118,6 +118,10 @@ export default function Vehicles() {
       <FormError error={error} />
       {/* Replace, not push: on iOS a pushed screen would open underneath this sheet. */}
       <Button variant="secondary" label="Adicionar carro" onPress={() => router.replace('/onboarding')} />
+      <View style={styles.backup}>
+        <Button variant="quiet" label="Fazer backup" onPress={() => router.replace('/backup')} />
+        <Button variant="quiet" label="Restaurar backup" onPress={() => router.replace('/restore')} />
+      </View>
     </Screen>
   );
 }
@@ -125,4 +129,5 @@ export default function Vehicles() {
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
   action: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  backup: { marginTop: space.l, alignItems: 'flex-start' },
 });

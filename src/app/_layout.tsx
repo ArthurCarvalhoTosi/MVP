@@ -56,6 +56,8 @@ function AppStack() {
         <Stack.Screen name="vehicles" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="rename-vehicle" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="dossier" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
+        <Stack.Screen name="backup" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+        <Stack.Screen name="restore" options={{ ...sheet, sheetAllowedDetents: [1] }} />
       </Stack>
     </>
   );

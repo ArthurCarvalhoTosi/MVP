@@ -25,6 +25,8 @@ type Props = {
   selectTextOnFocus?: boolean;
   /** Off for names the keyboard doesn't know (car models): Android would "fix" onix into onyx. */
   autoCorrect?: boolean;
+  /** Hidden characters and no keyboard suggestions, for passwords. */
+  secure?: boolean;
 };
 
 export function TextField({
@@ -40,6 +42,7 @@ export function TextField({
   maxLength,
   selectTextOnFocus,
   autoCorrect,
+  secure,
 }: Props) {
   const { c } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -81,7 +84,9 @@ export function TextField({
           placeholder={placeholder}
           maxLength={maxLength}
           selectTextOnFocus={selectTextOnFocus}
-          autoCorrect={autoCorrect}
+          autoCorrect={secure ? false : autoCorrect}
+          secureTextEntry={secure}
+          autoCapitalize={secure ? 'none' : undefined}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           accessibilityLabel={[label, prefix ?? suffix].filter(Boolean).join(', ')}

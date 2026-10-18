@@ -96,12 +96,20 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
   expect(items.every((i) => i.baselineKm === 46250 && i.baselineDate === todayISO())).toBe(true);
 });
 
+test('on first use offers to restore a backup instead', async () => {
+  await render(<Onboarding />);
+
+  await userEvent.setup().press(screen.getByRole('button', { name: 'Já usei o app: restaurar backup' }));
+  expect(router.push).toHaveBeenCalledWith('/restore');
+});
+
 test('adds another car and opens it in the garage', async () => {
   await seedVehicle(db);
   await render(<Onboarding />);
   const user = userEvent.setup();
 
   expect(screen.getByRole('header', { name: 'Adicionar carro' })).toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Já usei o app: restaurar backup' })).not.toBeOnTheScreen();
   await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Gol');
   await user.type(screen.getByLabelText('Hodômetro atual, km'), '80000');
   await user.press(screen.getByRole('button', { name: 'Adicionar carro' }));

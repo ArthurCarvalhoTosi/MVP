@@ -81,6 +81,14 @@ describe('TextField', () => {
     expect(input).toHaveProp('selectTextOnFocus', true);
   });
 
+  it('hides a password and keeps the keyboard from changing it', async () => {
+    await render(<TextField label="Senha" value="segredo1" onChangeText={jest.fn()} secure autoCorrect />);
+    const input = screen.getByLabelText('Senha');
+    expect(input).toHaveProp('secureTextEntry', true);
+    expect(input).toHaveProp('autoCorrect', false);
+    expect(input).toHaveProp('autoCapitalize', 'none');
+  });
+
   it('renders no error text without an error', async () => {
     await render(<TextField label="Hodômetro" value="" onChangeText={jest.fn()} error={null} />);
     expect(screen.queryByText('Menor que a última leitura')).not.toBeOnTheScreen();

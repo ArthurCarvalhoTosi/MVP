@@ -115,6 +115,11 @@ export default function Onboarding() {
       }
     >
       {adding ? <Stack.Screen options={{ title: 'Adicionar carro' }} /> : null}
+      {adding ? null : (
+        <View style={styles.start}>
+          <Button variant="quiet" label="Já usei o app: restaurar backup" onPress={() => router.push('/restore')} />
+        </View>
+      )}
       <View style={styles.fields}>
         <ModelField model={model} onChange={choose} />
         <TextField
