@@ -33,9 +33,9 @@ describe('seed file', () => {
   const inRange = (n: number | null, min: number, max: number) =>
     n === null || (Number.isInteger(n) && n >= min && n <= max);
 
-  it('has a version and about 40 models', () => {
+  it('has a version and the best sellers', () => {
     expect(Number.isInteger(SEED_VERSION) && SEED_VERSION >= 1).toBe(true);
-    expect(new Set(CAR_MODELS.map((m) => `${m.brand} ${m.model}`)).size).toBeGreaterThanOrEqual(30);
+    expect(new Set(CAR_MODELS.map((m) => `${m.brand} ${m.model}`)).size).toBeGreaterThanOrEqual(45);
   });
 
   it('has unique, slug-shaped ids', () => {
@@ -116,6 +116,7 @@ describe('searchModels', () => {
     expect(turbo.every((m) => m.model.startsWith('Onix') && m.engine.includes('turbo'))).toBe(true);
     expect(searchModels('chevrolet onix')).toEqual(onix);
     expect(new Set(searchModels('song').map((m) => m.model))).toEqual(new Set(['Song Plus', 'Song Pro']));
+    expect(new Set(searchModels('hb20').map((m) => m.model))).toEqual(new Set(['HB20', 'HB20S']));
     expect(searchModels('onix xyz')).toEqual([]);
   });
 
@@ -124,6 +125,9 @@ describe('searchModels', () => {
     expect(corolla2018.length).toBeGreaterThan(0);
     expect(corolla2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018))).toBe(true);
     expect(corolla2018.length).toBeLessThan(searchModels('corolla').length);
+    const onix2018 = searchModels('onix 2018');
+    expect(onix2018.length).toBeGreaterThan(0);
+    expect(onix2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018))).toBe(true);
   });
 
   it('keeps seed order, best sellers first', () => {
