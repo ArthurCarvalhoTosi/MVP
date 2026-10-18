@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { eq, isNull } from 'drizzle-orm';
 import * as ImagePicker from 'expo-image-picker';
 import Register from '@/app/register';
@@ -269,6 +269,25 @@ describe('editing a log', () => {
 
     expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ photo: null })]);
     expect(attachmentsMock.deleteRemovedPhotos).toHaveBeenCalled();
+  });
+
+  test('replaces the saved photo with a new one, even while the old one is still opening', async () => {
+    let open: (base64: string) => void = () => {};
+    attachmentsMock.readPhoto.mockReturnValueOnce(new Promise((resolve) => (open = resolve)));
+    await seedLog({ filePath: 'attachments/old.bin', mime: 'image/jpeg', sizeBytes: 1 });
+    await render(<Register />);
+    const user = userEvent.setup();
+
+    expect(screen.getByText('Abrindo a foto…')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Remover foto' }));
+    await user.press(screen.getByRole('button', { name: 'Escolher da galeria' }));
+    await act(async () => open('SAVED'));
+
+    expect(screen.getByRole('image', { name: 'Foto do comprovante' })).toHaveProp('source', [
+      { uri: 'data:image/jpeg;base64,PHOTO' },
+    ]);
+    await user.press(screen.getByRole('button', { name: 'Salvar alterações' }));
+    expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ photo: 'attachments/PHOTO.bin' })]);
   });
 
   test('keeps the saved photo when only the text changes, even if it could not be opened', async () => {

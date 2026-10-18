@@ -63,9 +63,11 @@ export default function Register() {
   const [cost, setCost] = useState(log?.costCents != null ? (log.costCents / 100).toFixed(2).replace('.', ',') : '');
   const [brandSpec, setBrandSpec] = useState(log?.brandSpec ?? '');
   const [notes, setNotes] = useState(log?.notes ?? '');
-  // Plain JPEG as base64, in memory only. Until the user picks or removes one, a saved photo is kept as is.
+  // Plain JPEGs as base64, in memory only: the one picked here, and the saved one, kept apart so a
+  // slow decrypt can't overwrite a newer pick. Until the user picks or removes, the saved one stays.
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoChanged, setPhotoChanged] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<unknown>(null);
   const [picking, setPicking] = useState<'camera' | 'library' | null>(null);
   const [errors, setErrors] = useState<Errors>({});
@@ -77,7 +79,7 @@ export default function Register() {
     if (!savedPhoto) return;
     let live = true;
     readPhoto(savedPhoto).then(
-      (base64) => live && setPhoto(base64),
+      (base64) => live && setSaved(base64),
       () => live && setPhotoError(new ValidationError('Não foi possível abrir a foto salva.')),
     );
     return () => {
@@ -160,6 +162,7 @@ export default function Register() {
   };
 
   const showsPhoto = photoChanged ? photo !== null : savedPhoto !== null;
+  const shown = photoChanged ? photo : saved;
 
   return (
     <Screen
@@ -225,9 +228,9 @@ export default function Register() {
             </AppText>
             {showsPhoto ? (
               <>
-                {photo ? (
+                {shown ? (
                   <Image
-                    source={{ uri: `data:image/jpeg;base64,${photo}` }}
+                    source={{ uri: `data:image/jpeg;base64,${shown}` }}
                     // Decrypted: never into the image cache on disk.
                     cachePolicy="none"
                     contentFit="contain"
