@@ -14,23 +14,29 @@ const urgencyStyle: Record<Urgency, { icon: IconName; text: ColorName; bar: Colo
   ok: { icon: 'check-circle-outline', text: 'ok', bar: 'ok', word: 'Em dia' },
 };
 
+type Action = { label: string; onPress: () => void };
+
 type Props = {
   name: string;
   urgency: Urgency;
   primary: string;
   secondary?: string | null;
   onPress?: () => void;
-  action?: { label: string; onPress: () => void };
+  /** Shown only on critical rows, so a feed stays calm. */
+  action?: Action;
+  /** Shown whatever the urgency, for lists where every row asks for a decision. The first is the primary one. */
+  actions?: Action[];
   /** For rows that pick one of a list: a check mark, plus the selected state for screen readers. */
   selected?: boolean;
   /** A separate control at the end of the row (e.g. remove), reachable on its own. */
   end?: ReactNode;
 };
 
-export function ItemRow({ name, urgency, primary, secondary, onPress, action, selected, end }: Props) {
+export function ItemRow({ name, urgency, primary, secondary, onPress, action, actions, selected, end }: Props) {
   const { c } = useTheme();
   const u = urgencyStyle[urgency];
   const critical = urgency === 'critical';
+  const buttons = actions ?? (critical && action ? [action] : []);
   const a11yLabel = [name, u.word, primary, secondary].filter(Boolean).join('. ');
 
   const content = (
@@ -77,9 +83,11 @@ export function ItemRow({ name, urgency, primary, secondary, onPress, action, se
           )}
           {end}
         </View>
-        {critical && action ? (
+        {buttons.length > 0 ? (
           <View style={styles.action}>
-            <Button label={action.label} onPress={action.onPress} />
+            {buttons.map((b, i) => (
+              <Button key={b.label} label={b.label} variant={i === 0 ? 'primary' : 'quiet'} onPress={b.onPress} />
+            ))}
           </View>
         ) : null}
       </View>
@@ -104,6 +112,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.l,
   },
   text: { flex: 1 },
-  // Aligns the compact button with the text column, not the icon.
-  action: { alignItems: 'flex-start', paddingLeft: space.l + 24 + ICON_GAP, paddingBottom: space.m },
+  // Aligns the compact buttons with the text column, not the icon; they wrap under large fonts.
+  action: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: space.xl,
+    paddingLeft: space.l + 24 + ICON_GAP,
+    paddingRight: space.l,
+    paddingBottom: space.m,
+  },
 });

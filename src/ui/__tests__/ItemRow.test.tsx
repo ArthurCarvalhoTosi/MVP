@@ -55,6 +55,28 @@ describe('ItemRow', () => {
     expect(screen.queryByRole('button', { name: 'Registrar troca' })).not.toBeOnTheScreen();
   });
 
+  it('shows a list of actions on any row, each with its own handler', async () => {
+    const register = jest.fn();
+    const snooze = jest.fn();
+    await render(
+      <ItemRow
+        name="Freios"
+        urgency="attention"
+        primary="Vence em 30 dias"
+        actions={[
+          { label: 'Registrar troca', onPress: register },
+          { label: 'Adiar 15 dias', onPress: snooze },
+        ]}
+      />,
+    );
+    const user = userEvent.setup();
+
+    await user.press(screen.getByRole('button', { name: 'Adiar 15 dias' }));
+    expect(snooze).toHaveBeenCalledTimes(1);
+    await user.press(screen.getByRole('button', { name: 'Registrar troca' }));
+    expect(register).toHaveBeenCalledTimes(1);
+  });
+
   it('marks the selected row with a check and the selected state', async () => {
     await render(<ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" selected onPress={jest.fn()} />);
 
