@@ -123,6 +123,10 @@ describe('searchModels', () => {
     );
     expect(new Set(searchModels('hb20').map((m) => m.model))).toEqual(new Set(['HB20', 'HB20S']));
     expect(searchModels('onix xyz')).toEqual([]);
+    const stepway = searchModels('stepway 2010');
+    expect(stepway.map((m) => m.id)).toEqual(['renault-sandero-stepway-1.6-2010']);
+    // The 2010 manual's rear cell says 32 psi and 2.4 bar at once. Front is 35 psi (2.4 bar).
+    expect(stepway[0]).toMatchObject({ tireFrontPsi: 35, tireRearPsi: null, oil: null });
   });
 
   it('narrows by model year', () => {

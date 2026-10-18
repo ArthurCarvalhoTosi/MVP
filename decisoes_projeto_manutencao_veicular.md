@@ -370,6 +370,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 
 **Seed preenchido (2026-10-17)**
 * Versão 2 do JSON: 51 modelos, 124 entradas (~41% dos valores preenchidos). Entrou o que a pesquisa já tinha coletado (Fiat, GM, Stellantis, Toyota/Honda, VW, Renault, Ford, BYD) mais HB20/HB20S, Creta, Kicks e Haval H6, a partir dos manuais oficiais brasileiros. Palhetas continuam quase todas vazias (os manuais mandam ver a etiqueta). Tiggo 7 ficou de fora: não houve fonte brasileira confiável no prazo.
+* Sandero Stepway 2010 1.6 (manual do proprietário da Renault, pág. 0.04): 35 psi na frente. A traseira impressa diz 32 psi e 2,4 bar na mesma célula, então ficou vazia. Óleo, palheta, bateria e prazo da correia não estão nesse manual.
 * Testes do seed de volta ao mínimo de 45 modelos e às buscas por "hb20" / "onix 2018".
 
 **Dossiê em PDF (2026-10-17)**
@@ -391,5 +392,5 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 
 ### Pendente
 1. **TalkBack** e o restante fino do QA no emulador (criar/restaurar o `.bkp` até o fim; conferir se o vencimento do item acompanha o registro depois de matar o app).
-2. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. Completar só com fonte brasileira; vazio continua melhor que chute.
+2. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. No Stepway 2010 a traseira ficou vazia de propósito (o manual contradiz psi e bar). Completar só com fonte brasileira; vazio continua melhor que chute.
 3. **Rodar no iOS** (exige macOS ou EAS Build).
