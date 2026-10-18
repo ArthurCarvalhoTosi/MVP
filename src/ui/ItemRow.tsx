@@ -8,7 +8,10 @@ import { space, useTheme, type ColorName } from './theme';
 export type Urgency = 'critical' | 'attention' | 'ok';
 
 // Distinct shapes (octagon / triangle / circle) so urgency never relies on color alone.
-const urgencyStyle: Record<Urgency, { icon: IconName; text: ColorName; bar: ColorName; word: string }> = {
+const urgencyStyle: Record<
+  Urgency,
+  { icon: IconName; text: ColorName; bar: ColorName; word: string }
+> = {
   critical: { icon: 'alert-octagon', text: 'critical', bar: 'critical', word: 'Crítico' },
   attention: { icon: 'alert', text: 'attention', bar: 'attentionBar', word: 'Atenção' },
   ok: { icon: 'check-circle-outline', text: 'ok', bar: 'ok', word: 'Em dia' },
@@ -32,7 +35,17 @@ type Props = {
   end?: ReactNode;
 };
 
-export function ItemRow({ name, urgency, primary, secondary, onPress, action, actions, selected, end }: Props) {
+export function ItemRow({
+  name,
+  urgency,
+  primary,
+  secondary,
+  onPress,
+  action,
+  actions,
+  selected,
+  end,
+}: Props) {
   const { c } = useTheme();
   const u = urgencyStyle[urgency];
   const critical = urgency === 'critical';
@@ -77,7 +90,12 @@ export function ItemRow({ name, urgency, primary, secondary, onPress, action, ac
               {content}
             </Pressable>
           ) : (
-            <View accessible accessibilityLabel={a11yLabel} accessibilityState={{ selected }} style={styles.info}>
+            <View
+              accessible
+              accessibilityLabel={a11yLabel}
+              accessibilityState={{ selected }}
+              style={styles.info}
+            >
               {content}
             </View>
           )}
@@ -86,7 +104,12 @@ export function ItemRow({ name, urgency, primary, secondary, onPress, action, ac
         {buttons.length > 0 ? (
           <View style={styles.action}>
             {buttons.map((b, i) => (
-              <Button key={b.label} label={b.label} variant={i === 0 ? 'primary' : 'quiet'} onPress={b.onPress} />
+              <Button
+                key={b.label}
+                label={b.label}
+                variant={i === 0 ? 'primary' : 'quiet'}
+                onPress={b.onPress}
+              />
             ))}
           </View>
         ) : null}

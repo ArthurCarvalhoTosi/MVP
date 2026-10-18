@@ -82,9 +82,9 @@ Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura
 * Ao salvar: grava leitura de hodômetro + recalcula o próximo vencimento imediatamente.
 
 ### Tela 4: Histórico & Dossiê
-* Linha do tempo reversa, total financeiro acumulado.
-* `[Exportar Dossiê]` → PDF (v0) / Link (v1).
-* Fotos **desligadas por padrão** no dossiê (notas fiscais contêm CPF e endereço); usuário liga explicitamente.
+* Linha do tempo reversa, total financeiro acumulado. Cada registro pode ser editado ou excluído.
+* `[Exportar histórico em PDF]` gera o dossiê no aparelho (`expo-print`) e abre o compartilhamento. Link web fica para a v1.
+* Fotos **desligadas por padrão** no dossiê (notas fiscais contêm CPF e endereço); usuário liga explicitamente. Observações, placa e chassi não entram.
 
 ---
 
@@ -118,7 +118,7 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 | Notificações | `expo-notifications` (agendamento 100% local) |
 | PDF | `expo-print` (HTML → PDF no aparelho) |
 | Backend (v1) | **Supabase**: Auth, Postgres + RLS, Storage, Edge Functions |
-| Qualidade | Jest + React Native Testing Library + sql.js; ESLint (`eslint-config-expo`, com regras do React Compiler); TypeScript strict |
+| Qualidade | Jest + React Native Testing Library + sql.js; ESLint (`eslint-config-expo`, com regras do React Compiler); Prettier (formata ao salvar); TypeScript strict |
 
 *Versões em uso:* Expo SDK 58, React Native 0.88, React 19 (React Compiler ativo), expo-router 58, Drizzle 0.45. Ícones via `expo-symbols` (SF Symbols / Material Symbols) — `@expo/vector-icons` não vem mais no SDK.
 
@@ -313,8 +313,8 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 | `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
 | `src/app` (telas) | Jest + RNTL | Fluxos com banco em memória: onboarding, registro de troca, ajuste/correção de KM, cola de bolso, histórico, troca/adição/remoção de carros. |
 
-* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 37 suítes, 552 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
-* **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela e notificações. Validados manualmente no emulador Android.
+* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 42 suítes, 728 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
+* **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela, câmera e notificações. Parte disso foi revalidada no emulador Android em 2026-10-17 (ver seção 12).
 * `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
 
 ---
@@ -339,7 +339,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 * "Hoje" atualizado ao voltar ao app; proteção contra toque duplo; teclado não cobre o botão de salvar; perguntas de múltipla escolha lidas pelo leitor de tela; mensagens de erro só em pt-BR.
 
 **Ambiente e validação (2026-10-16)**
-* ESLint configurado (inclui regras do React Compiler), sem avisos.
+* ESLint configurado (inclui regras do React Compiler), sem avisos. Prettier formata ao salvar e via `npm run format`.
 * App rodando no emulador Android (dev build). Confirmado no aparelho: o arquivo do banco está cifrado.
 * Build Windows documentado no README (CMake 3.31.6 por causa do limite de 260 caracteres do ninja antigo).
 * Botões só de texto alinhados à coluna.
@@ -368,13 +368,28 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 * Specs copiadas para `vehicle_specs` na criação: o que o usuário edita ou apaga vale; correção do seed só alcança carros novos.
 * O seed tira a correia dentada de motores com corrente e de elétricos e ajusta intervalos quando o manual diverge (ex.: VW severo 10.000 km / 6 m; correia VW 120.000 km / 5 anos). Aviso "Valores de referência" na cola de bolso de carros do seed.
 
+**Seed preenchido (2026-10-17)**
+* Versão 2 do JSON: 51 modelos, 124 entradas (~41% dos valores preenchidos). Entrou o que a pesquisa já tinha coletado (Fiat, GM, Stellantis, Toyota/Honda, VW, Renault, Ford, BYD) mais HB20/HB20S, Creta, Kicks e Haval H6, a partir dos manuais oficiais brasileiros. Palhetas continuam quase todas vazias (os manuais mandam ver a etiqueta). Tiggo 7 ficou de fora: não houve fonte brasileira confiável no prazo.
+* Testes do seed de volta ao mínimo de 45 modelos e às buscas por "hb20" / "onix 2018".
+
+**Dossiê em PDF (2026-10-17)**
+* `dossierHtml` no domínio monta a página com os sinais de credibilidade (data de registro, registros feitos depois do serviço, selo "Com comprovante"). Observações, placa e chassi não entram. Sheet em Histórico: fotos só se o dono ligar, com aviso de CPF/endereço. `expo-print` gera o PDF, o sistema compartilha, o arquivo em claro some em seguida.
+
+**Backup cifrado (2026-10-17)**
+* Arquivo `.bkp`: cabeçalho JSON autenticado + AES-256-GCM. Senha vira chave com Argon2id (19 MiB, 2 passes, mínimo OWASP). Inclui todas as linhas sincronizáveis (também as apagadas) e as fotos, recifradas com a chave deste aparelho na restauração. Restaurar substitui os dados locais, com confirmação se já houver carro. Entrada em "Seus carros" e no onboarding do primeiro uso.
+
+**Sheets e reset (2026-10-17)**
+* Em `formSheet` no Android o conteúdo continua em altura de tela cheia mesmo no detent de 50%: o `footer` do `Screen` fica abaixo da dobra. Ajustar KM, renomear, dossiê e as sheets curtas passam o botão para o conteúdo. Registro, backup e restauração abrem em tela cheia.
+* `resetDatabase` também apaga `documents/attachments`.
+
+**Validação no emulador Android (2026-10-17, segunda rodada)**
+* Confirmado: busca "hb20", apelido sugerido, cola de bolso do seed, Ajustar KM, permissão de notificação e lembrete de teste (`checkup-test` disparou com o texto certo), foto pela câmera (prévia, histórico "Com comprovante"/"Ver foto", arquivo `.bin` em `files/attachments`, cache do picker vazio), edição de registro, PDF (`Historico-Meu-HB20-….pdf` no compartilhamento), sheet de backup, modo escuro, botão visível com o teclado em Ajustar KM.
+* Não fechado nesta rodada: TalkBack; criar/restaurar o `.bkp` até o fim (a digitação da senha falhou na automação); conferir de novo se o vencimento do item acompanha o registro depois de um force-stop.
+
 **`npm audit` (2026-10-17): risco aceito**
 * As 67 ocorrências vêm de 5 pacotes-raiz, todos de ferramentas de build/teste (Metro, Jest, CLI do Expo, drizzle-kit); nada entra no app instalado. `braces`, `node-forge` e `sprintf-js` não têm versão corrigida; `uuid@7` só entra pelo `xcode` (prebuild iOS) e a falha é em v3/v5/v6; o `esbuild` 0.18 do drizzle-kit não usa o servidor de desenvolvimento vulnerável. As "correções" do npm são rebaixamentos (expo@44, react-native@0.72). Reavaliar a cada atualização do SDK.
 
 ### Pendente
-1. **Validar no emulador:** registrar troca, correção de KM, histórico (editar/excluir, foto), remover/renomear carro, busca de modelo, notificações (botão de teste do Check-up em `__DEV__`), modo escuro, teclado nas sheets, TalkBack. A primeira rodada de QA foi interrompida antes do relatório.
-2. **Completar o seed:** hoje 33 modelos, ~70% dos valores vazios (palhetas e calibragem quase todas). Faltam HB20/HB20S, Creta, Tracker, Montana, Spin, S10, HR-V, City, Yaris, Kicks, Kwid, Kardian, Duster, Sandero/Logan, Ranger, Haval H6, Tiggo 7. Os testes do seed usam mínimo de 30 modelos e buscas por "song"/"corolla 2018" por causa disso.
-3. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade; fotos opcionais via `readPhoto` de `src/attachments`.
-4. **Backup cifrado por arquivo** (exportar/importar com senha, Argon2id via `@noble/hashes`), incluindo as fotos.
-5. **Rodar no iOS** (exige macOS ou EAS Build).
-6. `resetDatabase` também apagar `documents/attachments`.
+1. **TalkBack** e o restante fino do QA no emulador (criar/restaurar o `.bkp` até o fim; conferir se o vencimento do item acompanha o registro depois de matar o app).
+2. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. Completar só com fonte brasileira; vazio continua melhor que chute.
+3. **Rodar no iOS** (exige macOS ou EAS Build).

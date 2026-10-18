@@ -28,6 +28,7 @@ Alternativa sem toolchain local: `eas build --profile development`.
 npm test            # Jest: domínio, banco (sql.js + migrations reais), componentes e telas
 npm run typecheck
 npm run lint        # ESLint (eslint-config-expo, inclui regras do React Compiler)
+npm run format      # Prettier (também roda ao salvar, no editor)
 ```
 
 Os três devem passar antes de todo commit.

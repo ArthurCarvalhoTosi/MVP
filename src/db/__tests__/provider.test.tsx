@@ -1,6 +1,12 @@
 import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { Alert, Text, type AlertButton } from 'react-native';
-import { DatabaseKeyError, EncryptionUnavailableError, openDatabase, resetDatabase, type Db } from '../client';
+import {
+  DatabaseKeyError,
+  EncryptionUnavailableError,
+  openDatabase,
+  resetDatabase,
+  type Db,
+} from '../client';
 import { DatabaseProvider, useDb } from '../provider';
 
 jest.mock('../client', () => ({
@@ -20,7 +26,10 @@ const mockUnreadableFile = {
   }),
   closeSync: jest.fn(),
 };
-jest.mock('expo-sqlite', () => ({ openDatabaseSync: () => mockUnreadableFile, deleteDatabaseSync: jest.fn() }));
+jest.mock('expo-sqlite', () => ({
+  openDatabaseSync: () => mockUnreadableFile,
+  deleteDatabaseSync: jest.fn(),
+}));
 jest.mock('expo-secure-store', () => ({
   AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 'AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY',
   getItemAsync: async () => mockStoredKey,
@@ -97,7 +106,9 @@ test('a generic failure shows a pt-BR message, never the raw error, and settles 
 
   const onSettled = await renderProvider();
 
-  expect(screen.getByText('Não foi possível abrir seus dados. Feche e abra o app de novo.')).toBeOnTheScreen();
+  expect(
+    screen.getByText('Não foi possível abrir seus dados. Feche e abra o app de novo.'),
+  ).toBeOnTheScreen();
   expect(screen.queryByText(/SQLITE/)).toBeNull();
   expect(screen.queryByRole('button')).toBeNull();
   expect(onSettled).toHaveBeenCalledTimes(1);
@@ -118,7 +129,9 @@ test('missing encryption shows its own message', async () => {
 
   await renderProvider();
 
-  expect(screen.getByText('A criptografia do banco não está disponível nesta versão do app.')).toBeOnTheScreen();
+  expect(
+    screen.getByText('A criptografia do banco não está disponível nesta versão do app.'),
+  ).toBeOnTheScreen();
   expect(screen.queryByRole('button')).toBeNull();
 });
 
@@ -127,7 +140,9 @@ test('a key error offers the reset, which deletes nothing when the user cancels'
 
   await renderProvider();
   expect(screen.getByText(/a chave de segurança deles não foi encontrada/)).toBeOnTheScreen();
-  await userEvent.setup().press(screen.getByRole('button', { name: 'Apagar dados e começar de novo' }));
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Apagar dados e começar de novo' }));
 
   expect(Alert.alert).toHaveBeenCalledWith(
     'Apagar dados?',
@@ -148,23 +163,31 @@ test.each([
   ['no stored key (iOS restore): the reset is offered', null, true],
 ])('real openDatabase, unreadable file with %s', async (_, key, offersReset) => {
   mockStoredKey = key;
-  open.mockImplementationOnce(jest.requireActual<typeof import('../client')>('../client').openDatabase);
+  open.mockImplementationOnce(
+    jest.requireActual<typeof import('../client')>('../client').openDatabase,
+  );
 
   await renderProvider();
 
   const resetButton = screen.queryByRole('button', { name: 'Apagar dados e começar de novo' });
   expect(resetButton !== null).toBe(offersReset);
   if (!offersReset) {
-    expect(screen.getByText('Não foi possível abrir seus dados. Feche e abra o app de novo.')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Não foi possível abrir seus dados. Feche e abra o app de novo.'),
+    ).toBeOnTheScreen();
   }
   expect(mockUnreadableFile.closeSync).toHaveBeenCalledTimes(1);
 });
 
 test('confirming the reset deletes the data and opens a fresh database (keep last: caches the open)', async () => {
-  open.mockRejectedValueOnce(new DatabaseKeyError('Database key missing or wrong')).mockResolvedValueOnce(fakeDb);
+  open
+    .mockRejectedValueOnce(new DatabaseKeyError('Database key missing or wrong'))
+    .mockResolvedValueOnce(fakeDb);
 
   const onSettled = await renderProvider();
-  await userEvent.setup().press(screen.getByRole('button', { name: 'Apagar dados e começar de novo' }));
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Apagar dados e começar de novo' }));
   expect(reset).not.toHaveBeenCalled();
   await act(async () => alertButtons.find((b) => b.text === 'Apagar')!.onPress!());
 

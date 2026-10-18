@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "ranking": "Fenabrave 2025 (automóveis e comerciais leves), lista da Webmotors de 30/12/2025: https://www.webmotors.com.br/wm1/mercado-automotivo/rankings/50-carros-mais-vendidos-2025-antes-2026/",
   "models": [
     {
@@ -10,13 +10,30 @@
       "yearFrom": 2024,
       "yearTo": null,
       "feminine": true,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-30 sintético, ACEA C2, 9.55535-GSI",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 60,
+      "sources": {
+        "oil": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf"
+        ],
+        "tires": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf"
+        ],
+        "battery": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf"
+        ],
+        "presets": [
+          "https://omecanico.com.br/procedimento-de-verificacao-do-sincronismo-do-motor-t200-no-citroen-basalt/",
+          "https://clickpetroleoegas.com.br/motores-turbo-flex-da-fiat-potencia-economia-e-robustez-em-um-dos-propulsores-mais-modernos-do-brasil-nmb91/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "fiat-strada-1.3-2021",
@@ -26,13 +43,33 @@
       "yearFrom": 2021,
       "yearTo": null,
       "feminine": true,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 60,
+      "sources": {
+        "oil": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "tires": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "battery": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb427309f8108b1febae?file_name=MANUAIS-DE-BORDO-STRADA_2026-2027-ED03-02-09-2026.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "presets": [
+          "https://autoentusiastas.com.br/2018/04/fiat-cronos-drive-13-no-uso/",
+          "https://omecanico.com.br/guia-tabela-de-torque-e-sequencia-de-aperto-motor-1-3-firefly-do-fiat-argo-e-pulse/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "fiat-strada-1.4-2014",
@@ -42,13 +79,32 @@
       "yearFrom": 2014,
       "yearTo": 2020,
       "feminine": true,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "5W-30 sintético, API SM, Fiat 9.55535-G1",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 50,
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "battery": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ],
+        "presets": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/281/2023/handbook-strada-2023_2023.pdf"
+        ]
+      },
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 60000, "months": 48 },
+          "severe": { "km": 60000, "months": 48 }
+        }
+      }
     },
     {
       "id": "vw-polo-1.0-2018",
@@ -62,7 +118,7 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "timing_belt": {
           "normal": { "km": 120000, "months": 60 },
@@ -82,6 +138,9 @@
           "https://www.vwbr.com.br/revisao",
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-novo-polo/my24/_Polo_BR_24B.5B1.POL_66_LOW.pdf",
           "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -97,11 +156,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -111,7 +174,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-novo-polo/my24/_Polo_BR_24B.5B1.POL_66_LOW.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -122,13 +189,28 @@
       "engine": "1.0",
       "yearFrom": 2018,
       "yearTo": null,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2024/handbook-argo-2024_2024.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2025/handbook-argo-2024_2025.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2024/handbook-argo-2024_2024.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2025/handbook-argo-2024_2025.pdf"
+        ],
+        "presets": [
+          "https://omecanico.com.br/ed-297-motor-desmontagem-do-motor-fiat-10-firefly/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "fiat-argo-1.3-2018",
@@ -137,13 +219,29 @@
       "engine": "1.3",
       "yearFrom": 2018,
       "yearTo": null,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2024/handbook-argo-2024_2024.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2025/handbook-argo-2024_2025.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2024/handbook-argo-2024_2024.pdf",
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/358/2025/handbook-argo-2024_2025.pdf"
+        ],
+        "presets": [
+          "https://autoentusiastas.com.br/2018/04/fiat-cronos-drive-13-no-uso/",
+          "https://omecanico.com.br/guia-tabela-de-torque-e-sequencia-de-aperto-motor-1-3-firefly-do-fiat-argo-e-pulse/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "vw-t-cross-1.0-turbo-2019",
@@ -157,11 +255,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -170,7 +272,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-t-cross/T-Cross_MY20_20C.5B1.TCR.66_Manual%20de%20instru%C3%A7%C3%B5es_v2.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -186,11 +292,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 60,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -199,7 +309,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-t-cross/T-Cross_MY20_20C.5B1.TCR.66_Manual%20de%20instru%C3%A7%C3%B5es_v2.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -351,19 +465,105 @@
       }
     },
     {
+      "id": "chevrolet-onix-1.0-2013",
+      "brand": "Chevrolet",
+      "model": "Onix",
+      "engine": "1.0",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "sources": {
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-onix-1.4-2013",
+      "brand": "Chevrolet",
+      "model": "Onix",
+      "engine": "1.4",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "sources": {
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ]
+      }
+    },
+    {
       "id": "fiat-mobi-1.0-2017",
       "brand": "Fiat",
       "model": "Mobi",
       "engine": "1.0",
       "yearFrom": 2017,
       "yearTo": null,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "5W-30 sintético, API SM, Fiat 9.55535-G1",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/341/2024/handbook-mobi-2024_2024.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/341/2024/handbook-mobi-2024_2024.pdf"
+        ],
+        "presets": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/341/2024/handbook-mobi-2024_2024.pdf"
+        ]
+      },
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 60000, "months": 48 },
+          "severe": { "km": 60000, "months": 48 }
+        }
+      }
+    },
+    {
+      "id": "fiat-mobi-1.0-firefly-2025",
+      "brand": "Fiat",
+      "model": "Mobi",
+      "engine": "1.0 Firefly",
+      "yearFrom": 2025,
+      "yearTo": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 35,
+      "tireRearPsi": 35,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fae47309f8108b1febaa?file_name=MANUAIS-DE-BORDO_MOBI_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "tires": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fae47309f8108b1febaa?file_name=MANUAIS-DE-BORDO_MOBI_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "battery": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fae47309f8108b1febaa?file_name=MANUAIS-DE-BORDO_MOBI_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "presets": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fae47309f8108b1febaa?file_name=MANUAIS-DE-BORDO_MOBI_2026-2027-ED02-02-09-2026.pdf",
+          "https://omecanico.com.br/ed-297-motor-desmontagem-do-motor-fiat-10-firefly/"
+        ]
+      }
     },
     {
       "id": "vw-saveiro-1.6-2017",
@@ -378,11 +578,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -392,7 +596,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-saveiro/Manual_instrucoes_Saveiro_27B.5B1.SAV_66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -459,7 +667,15 @@
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "presets": [
+          "https://garagem360.com.br/?p=39836",
+          "https://www.comprecar.com.br/revista/conheca-os-detalhes-do-novo-motor-2-0-tigershark-flex-do-jeep-compass"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "toyota-corolla-cross-2.0-flex-2022",
@@ -471,8 +687,8 @@
       "oil": "0W-20 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": 33,
       "tireRearPsi": 33,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 26,
+      "wiperPassenger": 16,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -489,7 +705,20 @@
           "https://media.toyota.com.ar/a5623299-39b4-46be-9c24-b418c14cf3d1.pdf",
           "https://media.toyota.com.br/43186da9-4047-4653-98c7-c6a25f76c239.pdf",
           "https://media.toyota.com.br//49ddf1a9-40ed-4f67-86a4-27b846015d3a.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.boschpecas.com.br/MLB-3488058328-limpador-parabrisa-palheta-original-bosch-corolla-cross-_JM",
+          "https://www.grupowinston.com.br/par-palhetas-para-brisa-bosch-corolla-cross-ano-2021-em-diante-encaixe-gancho"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -502,8 +731,8 @@
       "oil": "0W-20 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": 33,
       "tireRearPsi": 33,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 26,
+      "wiperPassenger": 16,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -517,7 +746,20 @@
         "battery": [
           "https://media.toyota.com.ar/a5623299-39b4-46be-9c24-b418c14cf3d1.pdf",
           "https://media.toyota.com.br/39017a3b-e8be-46a9-8671-8788607dbc4c.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.boschpecas.com.br/MLB-3488058328-limpador-parabrisa-palheta-original-bosch-corolla-cross-_JM",
+          "https://www.grupowinston.com.br/par-palhetas-para-brisa-bosch-corolla-cross-ano-2021-em-diante-encaixe-gancho"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -853,8 +1095,8 @@
       "oil": "5W-30 genuíno Toyota, ACEA C2",
       "tireFrontPsi": 29,
       "tireRearPsi": 29,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 21,
+      "wiperPassenger": 16,
       "batteryAh": 65,
       "sources": {
         "oil": [
@@ -867,7 +1109,19 @@
         "battery": [
           "https://media.toyota.com.ar/4e3f7a05-ac48-41f0-9df0-db3e85bd434e.pdf",
           "https://media.toyota.com.br/3677d7ea-80d3-41fe-bef2-18743025b6df.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://produto.mercadolivre.com.br/MLB-1793095200-kit-palheta-toyota-hilux-2016-a-2021-parabrisa-dyna-original-_JM"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-fortuner-gun156-hilux-gun126-gun136-1gdftv-bk1225-2_p1094961",
+          "https://www.fridayparts.com/engine-timing-chain-kit-13506-0e010-for-toyota-1gd-ftv-2gd-ftv-land-cruiser-prado-hilux-fortuner-hiace"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -881,8 +1135,8 @@
       "oil": "5W-30 genuíno Toyota, API CF",
       "tireFrontPsi": 29,
       "tireRearPsi": 29,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 21,
+      "wiperPassenger": 16,
       "batteryAh": 65,
       "sources": {
         "oil": [
@@ -895,7 +1149,19 @@
         "battery": [
           "https://media.toyota.com.ar/08d42bc3-c3e3-4500-94b0-2af834e29e61.pdf",
           "https://media.toyota.com.ar/b536abb9-8379-4ca7-a5c9-e7a3d1504a5d.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://produto.mercadolivre.com.br/MLB-1793095200-kit-palheta-toyota-hilux-2016-a-2021-parabrisa-dyna-original-_JM"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-fortuner-gun156-hilux-gun126-gun136-1gdftv-bk1225-2_p1094961",
+          "https://www.fridayparts.com/engine-timing-chain-kit-13506-0e010-for-toyota-1gd-ftv-2gd-ftv-land-cruiser-prado-hilux-fortuner-hiace"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -910,11 +1176,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -923,7 +1193,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-nivus/Nivus_MY2021_21D.5B1.NIV.66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -939,11 +1213,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -952,7 +1230,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-tera/Manual_de_instrucoes_Tera_26A.5B1.TER.66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -968,11 +1250,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -981,7 +1267,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-tera/Manual_de_instrucoes_Tera_26A.5B1.TER.66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -999,7 +1289,11 @@
       "wiperPassenger": null,
       "batteryAh": 72,
       "presets": {
-        "timing_belt": null
+        "timing_belt": null,
+        "oil": {
+          "normal": { "km": 12000, "months": 12 },
+          "severe": { "km": 5000, "months": 6 }
+        }
       },
       "sources": {
         "oil": [
@@ -1012,7 +1306,8 @@
         ],
         "presets": [
           "https://www.comprecar.com.br/revista/nova-fiat-toro-estreia-inedito-motor-13-litro-turbo-flex-batizado-de-t270",
-          "https://clickpetroleoegas.com.br/motores-turbo-flex-da-fiat-potencia-economia-e-robustez-em-um-dos-propulsores-mais-modernos-do-brasil-nmb91/"
+          "https://clickpetroleoegas.com.br/motores-turbo-flex-da-fiat-potencia-economia-e-robustez-em-um-dos-propulsores-mais-modernos-do-brasil-nmb91/",
+          "https://omecanico.com.br/raio-x-confira-a-manutencao-do-jeep-renegade-trailhawk-flex/"
         ]
       }
     },
@@ -1146,7 +1441,16 @@
         "tires": [
           "https://www.byd.com/material/byd-site/br/manuais-auto-byd/updates-mai-2026/SONG_PLUS_MP_260412_Site.pdf",
           "https://www.byd.com/material/byd-site/br/manuais-auto-byd/updates-27-05-2025/SONG_PP_MP_25053_Site.pdf"
+        ],
+        "presets": [
+          "https://www.byd.com/material/__CN/byd-site/br/manuais-p%C3%B3s-vendas/updates-27-07-2026/DM_MG_26078_scr_Site.pdf"
         ]
+      },
+      "presets": {
+        "oil": {
+          "normal": { "km": 12000, "months": 12 },
+          "severe": { "km": 5000, "months": 6 }
+        }
       }
     },
     {
@@ -1172,7 +1476,16 @@
           "https://www.byd.com/material/__CN/byd-site/br/manuais-p%C3%B3s-vendas/updates-10-08-2026/SONG_PRO_MP_260812_Site.pdf",
           "https://www.byd.com/material/byd-site/br/manuais-auto-byd/updates-22-10-2021/SONG_PRO_MP_24103_Site.pdf",
           "https://www.byd.com/material/__CN/byd-site/br/manuais-p%C3%B3s-vendas/updates-19-08-2026/SONG_PRO_FLEX_MP_26061_Site.pdf"
+        ],
+        "presets": [
+          "https://www.byd.com/material/__CN/byd-site/br/manuais-p%C3%B3s-vendas/updates-27-07-2026/DM_MG_26078_scr_Site.pdf"
         ]
+      },
+      "presets": {
+        "oil": {
+          "normal": { "km": 12000, "months": 12 },
+          "severe": { "km": 5000, "months": 6 }
+        }
       }
     },
     {
@@ -1196,7 +1509,16 @@
         "tires": [
           "https://www.byd.com/material/byd-site/br/manuais-auto-byd/manual-do-propriet%C3%A1rio-03-10-2024/SONG_MP_24103_Site.pdf",
           "https://www.byd.com/material/byd-site/br/manuais-auto-byd/updates-27-05-2025/SONG_MP_250511_Site.pdf"
+        ],
+        "presets": [
+          "https://www.byd.com/material/__CN/byd-site/br/manuais-p%C3%B3s-vendas/updates-27-07-2026/DM_MG_26078_scr_Site.pdf"
         ]
+      },
+      "presets": {
+        "oil": {
+          "normal": { "km": 12000, "months": 12 },
+          "severe": { "km": 5000, "months": 6 }
+        }
       }
     },
     {
@@ -1211,11 +1533,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -1225,7 +1551,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-virtus/Virtus_Manual_de_instrucoes_23A.5B1.VIR.66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -1241,11 +1571,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -1254,7 +1588,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-virtus/MY%202019_D192.5B1.VIR.66.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -1324,8 +1662,8 @@
       "oil": "0W-20 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": 32,
       "tireRearPsi": 32,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 28,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1339,7 +1677,19 @@
         "battery": [
           "https://media.toyota.com.ar/94d07cd9-fbca-44b4-97b6-36263ccb0841.pdf",
           "https://media.toyota.com.br/1a3770f0-cadb-43d2-8fd1-9733aec5af85.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.boschautopecas.com.br/MLB-5034283278-palheta-parabrisa-corolla-2020-2021-2022-2023-2024-_JM"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1352,8 +1702,8 @@
       "oil": "0W-20 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": null,
       "tireRearPsi": null,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 28,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1363,7 +1713,19 @@
         "battery": [
           "https://media.toyota.com.ar/94d07cd9-fbca-44b4-97b6-36263ccb0841.pdf",
           "https://media.toyota.com.br/1a3770f0-cadb-43d2-8fd1-9733aec5af85.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.boschautopecas.com.br/MLB-5034283278-palheta-parabrisa-corolla-2020-2021-2022-2023-2024-_JM"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1376,8 +1738,8 @@
       "oil": "5W-30 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": 30,
       "tireRearPsi": 30,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 26,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1391,7 +1753,19 @@
         ],
         "battery": [
           "https://media.toyota.com.ar/8eec8c36-a8ab-4653-b838-70efed70777c.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.enviapecas.com.br/palheta-dianteira-26pol-corolla---2014-ate-2019-dyna-h626/p"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1404,8 +1778,8 @@
       "oil": "5W-30 genuíno Toyota, API SL ou superior",
       "tireFrontPsi": 30,
       "tireRearPsi": 30,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 26,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1419,7 +1793,19 @@
         ],
         "battery": [
           "https://media.toyota.com.ar/8eec8c36-a8ab-4653-b838-70efed70777c.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.enviapecas.com.br/palheta-dianteira-26pol-corolla---2014-ate-2019-dyna-h626/p"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.go-parts.com/garage/ps-2014-2022-toyota-corolla-engine-timing-chain-kit",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-c-hr-zyx10-corolla-zre152-zre172-zre182-2zrfe-2zrfxe_p1052641"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1455,13 +1841,28 @@
       "engine": "1.0",
       "yearFrom": 2023,
       "yearTo": null,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/359/2024/handbook-cronos-2024_2024.pdf",
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb2b7309f8108b1febad?file_name=MANUAIS-DE-BORDO-CRONOS_2026-2027-ED02-12-08-2026.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/359/2024/handbook-cronos-2024_2024.pdf",
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb2b7309f8108b1febad?file_name=MANUAIS-DE-BORDO-CRONOS_2026-2027-ED02-12-08-2026.pdf"
+        ],
+        "presets": [
+          "https://omecanico.com.br/ed-297-motor-desmontagem-do-motor-fiat-10-firefly/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "fiat-cronos-1.3-2018",
@@ -1470,13 +1871,29 @@
       "engine": "1.3",
       "yearFrom": 2018,
       "yearTo": null,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 32,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/359/2024/handbook-cronos-2024_2024.pdf",
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb2b7309f8108b1febad?file_name=MANUAIS-DE-BORDO-CRONOS_2026-2027-ED02-12-08-2026.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/359/2024/handbook-cronos-2024_2024.pdf",
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7fb2b7309f8108b1febad?file_name=MANUAIS-DE-BORDO-CRONOS_2026-2027-ED02-12-08-2026.pdf"
+        ],
+        "presets": [
+          "https://autoentusiastas.com.br/2018/04/fiat-cronos-drive-13-no-uso/",
+          "https://omecanico.com.br/guia-tabela-de-torque-e-sequencia-de-aperto-motor-1-3-firefly-do-fiat-argo-e-pulse/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "ram-rampage-2.2-turbodiesel-2025",
@@ -1502,13 +1919,17 @@
       "yearFrom": 2024,
       "yearTo": null,
       "feminine": true,
-      "oil": null,
+      "oil": "5W-30 sintético, API SP",
       "tireFrontPsi": null,
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://omecanico.com.br/raio-x-jeep-compass-overland/"
+        ]
+      }
     },
     {
       "id": "ram-rampage-2.0-turbodiesel-2024",
@@ -1534,13 +1955,30 @@
       "yearFrom": 2025,
       "yearTo": null,
       "feminine": true,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "0W-20 sintético, Fiat 9.55535-GSX",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 44,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 50,
+      "sources": {
+        "oil": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7face7309f8108b1feba9?file_name=MANUAIS-DE-BORDO_FIORINO_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "tires": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7face7309f8108b1feba9?file_name=MANUAIS-DE-BORDO_FIORINO_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "battery": [
+          "https://document-uploader-service.k8s.fcalatam.com.br/v1/file/download/MANUAL_SERVICE/6aa7face7309f8108b1feba9?file_name=MANUAIS-DE-BORDO_FIORINO_2026-2027-ED02-02-09-2026.pdf"
+        ],
+        "presets": [
+          "https://autoentusiastas.com.br/2018/04/fiat-cronos-drive-13-no-uso/",
+          "https://omecanico.com.br/guia-tabela-de-torque-e-sequencia-de-aperto-motor-1-3-firefly-do-fiat-argo-e-pulse/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "fiat-fiorino-1.4-2014",
@@ -1550,13 +1988,32 @@
       "yearFrom": 2014,
       "yearTo": 2024,
       "feminine": true,
-      "oil": null,
-      "tireFrontPsi": null,
-      "tireRearPsi": null,
+      "oil": "5W-30 sintético, API SM, Fiat 9.55535-G1",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 44,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 50,
+      "sources": {
+        "oil": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/255/2024/handbook-fiorino-2024_2024.pdf"
+        ],
+        "tires": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/255/2024/handbook-fiorino-2024_2024.pdf"
+        ],
+        "battery": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/255/2024/handbook-fiorino-2024_2024.pdf"
+        ],
+        "presets": [
+          "https://www.fiat.com.br/content/dam/fiat/products/handbooks/255/2024/handbook-fiorino-2024_2024.pdf"
+        ]
+      },
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 60000, "months": 48 },
+          "severe": { "km": 60000, "months": 48 }
+        }
+      }
     },
     {
       "id": "citroen-basalt-1.0-2024",
@@ -1565,13 +2022,24 @@
       "engine": "1.0",
       "yearFrom": 2024,
       "yearTo": null,
-      "oil": null,
+      "oil": "0W-20 sintético, API SP",
       "tireFrontPsi": null,
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/",
+          "https://omecanico.com.br/?p=112677"
+        ],
+        "presets": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "citroen-basalt-1.0-turbo-2024",
@@ -1580,13 +2048,23 @@
       "engine": "1.0 turbo",
       "yearFrom": 2024,
       "yearTo": null,
-      "oil": null,
+      "oil": "0W-30 sintético, ACEA C2, 9.55535-GS1",
       "tireFrontPsi": null,
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://omecanico.com.br/?p=112677"
+        ],
+        "presets": [
+          "https://omecanico.com.br/procedimento-de-verificacao-do-sincronismo-do-motor-t200-no-citroen-basalt/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "jeep-commander-2.2-turbodiesel-2025",
@@ -1642,7 +2120,18 @@
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "presets": [
+          "https://omecanico.com.br/saiba-substituir-a-correia-dentada-do-motor-2-0-multijet-turbodiesel-do-jeep-commander/",
+          "https://omecanico.com.br/substituicao-da-correia-de-sincronismo-multijet-ii/"
+        ]
+      },
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 80000, "months": 48 },
+          "severe": { "km": 80000, "months": 48 }
+        }
+      }
     },
     {
       "id": "toyota-hilux-sw4-2.8-turbodiesel-2021",
@@ -1656,7 +2145,7 @@
       "tireFrontPsi": 29,
       "tireRearPsi": 29,
       "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperPassenger": 16,
       "batteryAh": 65,
       "sources": {
         "oil": [
@@ -1668,7 +2157,19 @@
         ],
         "battery": [
           "https://media.toyota.com.br/2318f476-5857-4de2-8ce9-ef16208926ae.pdf"
+        ],
+        "wipers": [
+          "https://www.w8acessorios.com.br/par-palheta-limpador-parabrisa-hilux-e-sw4-2016-a-2020-silicone",
+          "https://www.boschpecas.com.br/palhetas-e-limpeza/palheta-limpador-dianteira-parabrisa/par-palheta-parabrisa-bosch-eco-toyota-hilux-sw4-2017-ate-2025"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-fortuner-gun156-hilux-gun126-gun136-1gdftv-bk1225-2_p1094961",
+          "https://www.fridayparts.com/engine-timing-chain-kit-13506-0e010-for-toyota-1gd-ftv-2gd-ftv-land-cruiser-prado-hilux-fortuner-hiace"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1683,7 +2184,7 @@
       "tireFrontPsi": 29,
       "tireRearPsi": 29,
       "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperPassenger": 16,
       "batteryAh": 65,
       "sources": {
         "oil": [
@@ -1694,7 +2195,19 @@
         ],
         "battery": [
           "https://media.toyota.com.ar/e653e559-6d71-4781-9a27-7f9b759a8ee6.pdf"
+        ],
+        "wipers": [
+          "https://www.w8acessorios.com.br/par-palheta-limpador-parabrisa-hilux-e-sw4-2016-a-2020-silicone",
+          "https://www.boschpecas.com.br/palhetas-e-limpeza/palheta-limpador-dianteira-parabrisa/par-palheta-parabrisa-bosch-eco-toyota-hilux-sw4-2017-ate-2025"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.bunnings.com.au/timing-chain-kit-for-toyota-fortuner-gun156-hilux-gun126-gun136-1gdftv-bk1225-2_p1094961",
+          "https://www.fridayparts.com/engine-timing-chain-kit-13506-0e010-for-toyota-1gd-ftv-2gd-ftv-land-cruiser-prado-hilux-fortuner-hiace"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1704,13 +2217,23 @@
       "engine": "1.0 turbo",
       "yearFrom": 2025,
       "yearTo": null,
-      "oil": null,
+      "oil": "0W-30 sintético, ACEA C2, 9.55535-GS1",
       "tireFrontPsi": null,
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
       "batteryAh": null,
-      "sources": {}
+      "sources": {
+        "oil": [
+          "https://omecanico.com.br/?p=112677"
+        ],
+        "presets": [
+          "https://omecanico.com.br/procedimento-de-verificacao-do-sincronismo-do-motor-t200-no-citroen-basalt/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
     },
     {
       "id": "citroen-c3-1.0-2023",
@@ -1724,7 +2247,7 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 60,
       "presets": {
         "timing_belt": null
       },
@@ -1733,6 +2256,9 @@
           "https://omecanico.com.br/raio-x-citroen-c3-2023/"
         ],
         "presets": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/"
+        ],
+        "battery": [
           "https://omecanico.com.br/raio-x-citroen-c3-2023/"
         ]
       }
@@ -1744,13 +2270,29 @@
       "engine": "1.6",
       "yearFrom": 2023,
       "yearTo": null,
-      "oil": null,
+      "oil": "0W-30 sintético",
       "tireFrontPsi": null,
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
-      "sources": {}
+      "batteryAh": 60,
+      "sources": {
+        "oil": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/"
+        ],
+        "battery": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/"
+        ],
+        "presets": [
+          "https://omecanico.com.br/raio-x-citroen-c3-2023/"
+        ]
+      },
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 80000, "months": 48 },
+          "severe": { "km": 80000, "months": 48 }
+        }
+      }
     },
     {
       "id": "vw-gol-1.0-2017",
@@ -1764,11 +2306,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -1778,7 +2324,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-gol/23A.5B1.GOL_66_Manual%20de%20Instru%C3%A7%C3%B5es_Gol.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -1794,11 +2344,15 @@
       "tireRearPsi": null,
       "wiperDriver": null,
       "wiperPassenger": null,
-      "batteryAh": null,
+      "batteryAh": 50,
       "presets": {
         "oil": {
           "normal": { "km": 10000, "months": 12 },
           "severe": { "km": 10000, "months": 6 }
+        },
+        "timing_belt": {
+          "normal": { "km": 120000, "months": 60 },
+          "severe": { "km": 120000, "months": 60 }
         }
       },
       "sources": {
@@ -1808,7 +2362,11 @@
         ],
         "presets": [
           "https://www.vw.com.br/idhub/content/dam/onehub_pkw/importers/br/literatura-de-bordo/manual-gol/23A.5B1.GOL_66_Manual%20de%20Instru%C3%A7%C3%B5es_Gol.pdf",
-          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html"
+          "https://www.vw.com.br/pt/servicos-e-acessorios/servicos-e-produtos/Revisoes.html",
+          "https://www.vwbr.com.br/revisao"
+        ],
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
         ]
       }
     },
@@ -1822,8 +2380,8 @@
       "oil": "5W-30 genuíno Toyota, API SN ou superior",
       "tireFrontPsi": 32,
       "tireRearPsi": 30,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 24,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1835,7 +2393,19 @@
         ],
         "battery": [
           "https://media.toyota.com.ar/81a72821-63c9-4f6c-b652-11135760dde3.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://magazineriopreto.com.br/produtos/palhetas-dyna-diant-toyota-yaris-2018/",
+          "https://www.defalco.com.br/produtos/palheta-limpador-yaris-hatch-sedan-hibrida-dyna-h614-h624/"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://turbonoticias.com.br/corrente-de-comando-do-toyota-yaris/"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1848,8 +2418,8 @@
       "oil": "5W-30 genuíno Toyota, API SN ou superior",
       "tireFrontPsi": 32,
       "tireRearPsi": 30,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 24,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1863,7 +2433,19 @@
         "battery": [
           "https://media.toyota.com.ar/81a72821-63c9-4f6c-b652-11135760dde3.pdf",
           "https://media.toyota.com.br/2a116c54-215a-4608-821d-0d9bc254620f.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://magazineriopreto.com.br/produtos/palhetas-dyna-diant-toyota-yaris-2018/",
+          "https://www.defalco.com.br/produtos/palheta-limpador-yaris-hatch-sedan-hibrida-dyna-h614-h624/"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://turbonoticias.com.br/corrente-de-comando-do-toyota-yaris/"
         ]
+      },
+      "presets": {
+        "timing_belt": null
       }
     },
     {
@@ -1876,8 +2458,8 @@
       "oil": "5W-30 genuíno Toyota, API SN ou superior",
       "tireFrontPsi": 32,
       "tireRearPsi": 30,
-      "wiperDriver": null,
-      "wiperPassenger": null,
+      "wiperDriver": 24,
+      "wiperPassenger": 14,
       "batteryAh": 45,
       "sources": {
         "oil": [
@@ -1891,6 +2473,1150 @@
         "battery": [
           "https://media.toyota.com.ar/81a72821-63c9-4f6c-b652-11135760dde3.pdf",
           "https://media.toyota.com.br/2a116c54-215a-4608-821d-0d9bc254620f.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.defalco.com.br/produtos/palheta-limpador-yaris-hatch-sedan-hibrida-dyna-h614-h624/"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://turbonoticias.com.br/corrente-de-comando-do-toyota-yaris/"
+        ]
+      },
+      "presets": {
+        "timing_belt": null
+      }
+    },
+    {
+      "id": "chevrolet-tracker-1.0-turbo-2020",
+      "brand": "Chevrolet",
+      "model": "Tracker",
+      "engine": "1.0 turbo",
+      "yearFrom": 2020,
+      "yearTo": 2025,
+      "oil": "5W-30 sintético, dexos1",
+      "tireFrontPsi": 35,
+      "tireRearPsi": 35,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf",
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-tracker-1.0-turbo-2026",
+      "brand": "Chevrolet",
+      "model": "Tracker",
+      "engine": "1.0 turbo",
+      "yearFrom": 2026,
+      "yearTo": null,
+      "oil": "0W-20 sintético, dexos1",
+      "tireFrontPsi": 30,
+      "tireRearPsi": 30,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2026/tracker-2026-manual-do-propieatrio.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2026/tracker-2026-manual-do-propieatrio.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-tracker-1.2-turbo-2020",
+      "brand": "Chevrolet",
+      "model": "Tracker",
+      "engine": "1.2 turbo",
+      "yearFrom": 2020,
+      "yearTo": 2025,
+      "oil": "5W-30 sintético, dexos1",
+      "tireFrontPsi": 35,
+      "tireRearPsi": 35,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf",
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2025/tracker-2025-manual-do-propietario.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-tracker-1.2-turbo-2026",
+      "brand": "Chevrolet",
+      "model": "Tracker",
+      "engine": "1.2 turbo",
+      "yearFrom": 2026,
+      "yearTo": null,
+      "oil": "0W-20 sintético, dexos1",
+      "tireFrontPsi": 30,
+      "tireRearPsi": 30,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2026/tracker-2026-manual-do-propieatrio.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/01-pdfs/2026/tracker-2026-manual-do-propieatrio.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/tracker/2027/27_CHEV_Tracker_OM_pt_BR_52209840_2026FEB23_site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-montana-1.2-turbo-2023",
+      "brand": "Chevrolet",
+      "model": "Montana",
+      "engine": "1.2 turbo",
+      "yearFrom": 2023,
+      "yearTo": 2025,
+      "feminine": true,
+      "oil": "5W-30 sintético, dexos1",
+      "tireFrontPsi": 30,
+      "tireRearPsi": 30,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2025/montana-2025-manual-do-propietario.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2025/montana-2025-manual-do-propietario.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2025/montana-2025-manual-do-propietario.pdf",
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2025/montana-2025-manual-do-propietario.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-montana-1.2-turbo-2026",
+      "brand": "Chevrolet",
+      "model": "Montana",
+      "engine": "1.2 turbo",
+      "yearFrom": 2026,
+      "yearTo": null,
+      "feminine": true,
+      "oil": "0W-20 sintético, dexos1",
+      "tireFrontPsi": 30,
+      "tireRearPsi": 30,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": 180 },
+          "severe": { "km": 240000, "months": 180 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2026/montana-2026-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/2027/27_CHEV_Montana_OM_pt_BR_B_BR__2026FEB10_site.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/01-pdfs/2026/montana-2026-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/2027/27_CHEV_Montana_OM_pt_BR_B_BR__2026FEB10_site.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/2027/27_CHEV_Montana_OM_pt_BR_B_BR__2026FEB10_site.pdf",
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/montana/2027/27_CHEV_Montana_OM_pt_BR_B_BR__2026FEB10_site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-spin-1.8-2025",
+      "brand": "Chevrolet",
+      "model": "Spin",
+      "engine": "1.8",
+      "yearFrom": 2025,
+      "yearTo": null,
+      "feminine": true,
+      "oil": "0W-20 sintético, dexos1",
+      "tireFrontPsi": 35,
+      "tireRearPsi": 35,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 60000, "months": 72 },
+          "severe": { "km": 60000, "months": 72 }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/01-pdfs/2025/spin-2025-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/2027/27_CHEV_SPIN_OM_pt_BR_B_BR_52208595_2026FEB10_site.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/01-pdfs/2025/spin-2025-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/2027/27_CHEV_SPIN_OM_pt_BR_B_BR_52208595_2026FEB10_site.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/01-pdfs/2025/spin-2025-manual-do-propietario.pdf",
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/01-pdfs/2025/spin-2025-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/spin/2027/27_CHEV_SPIN_OM_pt_BR_B_BR_52208595_2026FEB10_site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-spin-1.8-2013",
+      "brand": "Chevrolet",
+      "model": "Spin",
+      "engine": "1.8",
+      "yearFrom": 2013,
+      "yearTo": 2024,
+      "feminine": true,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "sources": {
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-s10-2.8-turbodiesel-2025",
+      "brand": "Chevrolet",
+      "model": "S10",
+      "engine": "2.8 turbodiesel",
+      "yearFrom": 2025,
+      "yearTo": null,
+      "feminine": true,
+      "oil": "5W-30, dexos D ou dexos2",
+      "tireFrontPsi": 35,
+      "tireRearPsi": 35,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 70,
+      "presets": {
+        "timing_belt": {
+          "normal": { "km": 240000, "months": null },
+          "severe": { "km": 240000, "months": null }
+        }
+      },
+      "sources": {
+        "oil": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/01-pdfs/2025/s10-2025-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/2027/27_CHEV_S10_Trailblazer_OM_pt_BR_B_BR_52208726_2026FEB24_Site.pdf"
+        ],
+        "tires": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/01-pdfs/2025/s10-2025-manual-do-propietario.pdf"
+        ],
+        "battery": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/01-pdfs/2025/s10-2025-manual-do-propietario.pdf"
+        ],
+        "presets": [
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/01-pdfs/2025/s10-2025-manual-do-propietario.pdf",
+          "https://www.chevrolet.com.br/content/dam/chevrolet/south-america/brazil/portuguese/index/visid/services/manuals/pdfs/s10/2027/27_CHEV_S10_Trailblazer_OM_pt_BR_B_BR_52208726_2026FEB24_Site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-s10-2.8-turbodiesel-2012",
+      "brand": "Chevrolet",
+      "model": "S10",
+      "engine": "2.8 turbodiesel",
+      "yearFrom": 2012,
+      "yearTo": 2024,
+      "feminine": true,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 75,
+      "sources": {
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ]
+      }
+    },
+    {
+      "id": "chevrolet-onix-joy-1.0-2017",
+      "brand": "Chevrolet",
+      "model": "Onix Joy",
+      "engine": "1.0",
+      "yearFrom": 2017,
+      "yearTo": 2021,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": 50,
+      "sources": {
+        "battery": [
+          "https://www.moura.com.br/descubra-qual-a-sua-bateria"
+        ]
+      }
+    },
+    {
+      "id": "renault-kwid-1.0-2018",
+      "brand": "Renault",
+      "model": "Kwid",
+      "engine": "1.0",
+      "yearFrom": 2018,
+      "yearTo": null,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/",
+          "https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/2025/manual/mar/manual-XBB-PH2-NU1401-6-PTB-Preview.pdf"
+        ]
+      }
+    },
+    {
+      "id": "renault-kardian-1.0-turbo-2025",
+      "brand": "Renault",
+      "model": "Kardian",
+      "engine": "1.0 turbo",
+      "yearFrom": 2025,
+      "yearTo": null,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://omecanico.com.br/renault-kardian-tem-nova-plataforma-novo-motor-e-cambio-de-dupla-embreagem-para-se-afastar-do-sandero/",
+          "https://www.fichacompleta.com.br/carros/comparativo/kardian-iconic-1-0-2026-vs-kardian-evolution-1-0-at-2026-vs-kardian-techno-1-0-2026"
+        ]
+      }
+    },
+    {
+      "id": "renault-duster-1.6-2021",
+      "brand": "Renault",
+      "model": "Duster",
+      "engine": "1.6",
+      "yearFrom": 2021,
+      "yearTo": null,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/"
+        ]
+      }
+    },
+    {
+      "id": "renault-duster-1.3-turbo-2023",
+      "brand": "Renault",
+      "model": "Duster",
+      "engine": "1.3 turbo",
+      "yearFrom": 2023,
+      "yearTo": null,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://autoentusiastas.com.br/2022/02/duster-iconic-2023-ganha-motor-turbo-13-flex/",
+          "https://parabrisas.perfil.com/noticias/novedades/renault-duster-2021-nuevo-motor-13-tce-turbo-suv-mercedes-benz.phtml"
+        ]
+      }
+    },
+    {
+      "id": "renault-sandero-1.0-2015",
+      "brand": "Renault",
+      "model": "Sandero",
+      "engine": "1.0",
+      "yearFrom": 2015,
+      "yearTo": 2016,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "renault-sandero-1.0-2017",
+      "brand": "Renault",
+      "model": "Sandero",
+      "engine": "1.0",
+      "yearFrom": 2017,
+      "yearTo": 2023,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/",
+          "https://motorshow.com.br/sandero-1-0-ganha-motor-3-cilindros-e-agora-faz-142-kml-na-cidade"
+        ]
+      }
+    },
+    {
+      "id": "renault-sandero-1.6-2015",
+      "brand": "Renault",
+      "model": "Sandero",
+      "engine": "1.6",
+      "yearFrom": 2015,
+      "yearTo": 2016,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "renault-sandero-1.6-2017",
+      "brand": "Renault",
+      "model": "Sandero",
+      "engine": "1.6",
+      "yearFrom": 2017,
+      "yearTo": 2023,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/"
+        ]
+      }
+    },
+    {
+      "id": "renault-logan-1.0-2015",
+      "brand": "Renault",
+      "model": "Logan",
+      "engine": "1.0",
+      "yearFrom": 2015,
+      "yearTo": 2016,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "renault-logan-1.0-2017",
+      "brand": "Renault",
+      "model": "Logan",
+      "engine": "1.0",
+      "yearFrom": 2017,
+      "yearTo": 2024,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/"
+        ]
+      }
+    },
+    {
+      "id": "renault-logan-1.6-2015",
+      "brand": "Renault",
+      "model": "Logan",
+      "engine": "1.6",
+      "yearFrom": 2015,
+      "yearTo": 2016,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "renault-logan-1.6-2017",
+      "brand": "Renault",
+      "model": "Logan",
+      "engine": "1.6",
+      "yearFrom": 2017,
+      "yearTo": 2024,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "presets": [
+          "https://www.comprecar.com.br/revista/renault-lanca-novos-motores-1-0-e-1-6-litro-para-quase-toda-linha",
+          "https://autoentusiastas.com.br/2016/12/novos-motores-renault/"
+        ]
+      }
+    },
+    {
+      "id": "honda-hr-v-1.5-2023",
+      "brand": "Honda",
+      "model": "HR-V",
+      "engine": "1.5",
+      "yearFrom": 2023,
+      "yearTo": null,
+      "oil": "0W-20 Pro Honda, API SM ou superior",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 30,
+      "wiperDriver": 22,
+      "wiperPassenger": 18,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "tires": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.mercadolivre.com.br/par-palheta-dianteira-original-bosch-honda-hrv-2023-a-2025/up/MLBU3046673237",
+          "https://www.girarrolamentos.com.br/MLB-4071061085-palheta-limpador-parabrisa-honda-hr-v-2023-a-2026-original-_JM"
+        ],
+        "battery": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://new.rolling.hu/catalog/SCHAEFFLER/honda-hr-v-ru-18-i-vtec-flexone",
+          "https://www.winparts.co.uk/engine-parts-accessories/timing-and-belts/timing-chain/c1175/timing-chain-kit/p2164462.html"
+        ]
+      }
+    },
+    {
+      "id": "honda-hr-v-1.5-turbo-2023",
+      "brand": "Honda",
+      "model": "HR-V",
+      "engine": "1.5 turbo",
+      "yearFrom": 2023,
+      "yearTo": null,
+      "oil": "0W-20 Pro Honda, API SM ou superior",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 30,
+      "wiperDriver": 22,
+      "wiperPassenger": 18,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "tires": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://www.mercadolivre.com.br/par-palheta-dianteira-original-bosch-honda-hrv-2023-a-2025/up/MLBU3046673237",
+          "https://www.girarrolamentos.com.br/MLB-4071061085-palheta-limpador-parabrisa-honda-hr-v-2023-a-2026-original-_JM"
+        ],
+        "battery": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-hr-v_2023_c4f33a7a1f58bc6c81ca.pdf"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://new.rolling.hu/catalog/SCHAEFFLER/honda-hr-v-ru-18-i-vtec-flexone",
+          "https://www.winparts.co.uk/engine-parts-accessories/timing-and-belts/timing-chain/c1175/timing-chain-kit/p2164462.html"
+        ]
+      }
+    },
+    {
+      "id": "honda-hr-v-1.8-2016",
+      "brand": "Honda",
+      "model": "HR-V",
+      "engine": "1.8",
+      "yearFrom": 2016,
+      "yearTo": 2022,
+      "oil": "0W-20 Pro Honda, API SM ou superior",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 30,
+      "wiperDriver": 26,
+      "wiperPassenger": null,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2016_pt_BR_de64d7bbc2.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2021_pt_BR_c14411f63d.pdf"
+        ],
+        "tires": [
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2016_pt_BR_de64d7bbc2.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2021_pt_BR_c14411f63d.pdf"
+        ],
+        "wipers": [
+          "https://www.authomix.com.br/wp-content/uploads/2025/01/AUT-009-24-Adaptacao-Catalogo-de-Palhetas-DIGITAL.pdf",
+          "https://lista.mercadolivre.com.br/palheta-26-15-original-bosch-aerofit-par-honda-hrv-15-16-17"
+        ],
+        "battery": [
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2016_pt_BR_de64d7bbc2.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-HR-V_2021_pt_BR_c14411f63d.pdf"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://new.rolling.hu/catalog/SCHAEFFLER/honda-hr-v-ru-18-i-vtec-flexone",
+          "https://www.winparts.co.uk/engine-parts-accessories/timing-and-belts/timing-chain/c1175/timing-chain-kit/p2164462.html"
+        ]
+      }
+    },
+    {
+      "id": "honda-city-1.5-2022",
+      "brand": "Honda",
+      "model": "City",
+      "engine": "1.5",
+      "yearFrom": 2022,
+      "yearTo": null,
+      "oil": "0W-20 Pro Honda, API SM ou superior",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 32,
+      "wiperDriver": 24,
+      "wiperPassenger": 14,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://manuals.opinautos.com.br/published/Honda-City_2022_pt_BR_ac55ac08f6.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-City_2025_PT_BR_2fd9618d9e.pdf"
+        ],
+        "tires": [
+          "https://manuals.opinautos.com.br/published/Honda-City_2022_pt_BR_ac55ac08f6.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-City_2025_PT_BR_2fd9618d9e.pdf"
+        ],
+        "wipers": [
+          "https://www.boschautopecas.com.br/MLB-1070098511-palheta-honda-novo-city-2022-original-bosch-aerofit-_JM",
+          "https://www.boschpecas.com.br/palhetas-e-limpeza/palheta-limpador-dianteira-parabrisa/par-palheta-parabrisa-bosch-eco-honda-new-city-2022-ate-2025"
+        ],
+        "battery": [
+          "https://manuals.opinautos.com.br/published/Honda-City_2022_pt_BR_ac55ac08f6.pdf",
+          "https://manuals.opinautos.com.br/published/Honda-City_2025_PT_BR_2fd9618d9e.pdf"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.winparts.co.uk/engine-parts-accessories/timing-and-belts/timing-chain/c1175/timing-chain-kit/p2164462.html"
+        ]
+      }
+    },
+    {
+      "id": "honda-city-hatchback-1.5-2022",
+      "brand": "Honda",
+      "model": "City Hatchback",
+      "engine": "1.5",
+      "yearFrom": 2022,
+      "yearTo": null,
+      "oil": "0W-20 Pro Honda, API SM ou superior",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 32,
+      "wiperDriver": 24,
+      "wiperPassenger": 14,
+      "batteryAh": 60,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-city%20hatchback_2023_c62f7b7df72863d470d7.pdf"
+        ],
+        "tires": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-city%20hatchback_2023_c62f7b7df72863d470d7.pdf"
+        ],
+        "wipers": [
+          "https://www.mozbr.com.br/palheta-limpador-parabrisa-honda-new-city-hatchback-2022-ate-em-diante-original-bosch",
+          "https://www.boschautopecas.com.br/MLB-1070098511-palheta-honda-novo-city-2022-original-bosch-aerofit-_JM"
+        ],
+        "battery": [
+          "https://www.manualdocarro.com.br/wp-content/uploads/2023/02/honda-city%20hatchback_2023_c62f7b7df72863d470d7.pdf"
+        ],
+        "presets": [
+          "https://autopapo.com.br/noticia/carros-sem-correia-dentada/",
+          "https://www.winparts.co.uk/engine-parts-accessories/timing-and-belts/timing-chain/c1175/timing-chain-kit/p2164462.html"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-hb20-1.0-2020",
+      "brand": "Hyundai",
+      "model": "HB20",
+      "engine": "1.0",
+      "yearFrom": 2020,
+      "yearTo": null,
+      "oil": "5W-30 sintético, API SL",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 33,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf",
+          "https://omecanico.com.br/qual-o-oleo-e-filtros-corretos-do-hyundai-hb20-1-0-kappa-e-1-0-tgdi/"
+        ],
+        "tires": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-hb20-1.0-turbo-2020",
+      "brand": "Hyundai",
+      "model": "HB20",
+      "engine": "1.0 turbo",
+      "yearFrom": 2020,
+      "yearTo": null,
+      "oil": "5W-30 sintético, API SL",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 33,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf",
+          "https://omecanico.com.br/qual-o-oleo-e-filtros-corretos-do-hyundai-hb20-1-0-kappa-e-1-0-tgdi/"
+        ],
+        "tires": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-hb20-1.6-2020",
+      "brand": "Hyundai",
+      "model": "HB20",
+      "engine": "1.6",
+      "yearFrom": 2020,
+      "yearTo": 2022,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-hb20-1.0-2013",
+      "brand": "Hyundai",
+      "model": "HB20",
+      "engine": "1.0",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-hb20-1.6-2013",
+      "brand": "Hyundai",
+      "model": "HB20",
+      "engine": "1.6",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-hb20s-1.0-2020",
+      "brand": "Hyundai",
+      "model": "HB20S",
+      "engine": "1.0",
+      "yearFrom": 2020,
+      "yearTo": null,
+      "oil": "5W-30 sintético, API SL",
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf",
+          "https://omecanico.com.br/qual-o-oleo-e-filtros-corretos-do-hyundai-hb20-1-0-kappa-e-1-0-tgdi/"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-hb20s-1.0-turbo-2020",
+      "brand": "Hyundai",
+      "model": "HB20S",
+      "engine": "1.0 turbo",
+      "yearFrom": 2020,
+      "yearTo": null,
+      "oil": "5W-30 sintético, API SL",
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/manual-hb20-v2.pdf",
+          "https://omecanico.com.br/qual-o-oleo-e-filtros-corretos-do-hyundai-hb20-1-0-kappa-e-1-0-tgdi/"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-hb20s-1.6-2020",
+      "brand": "Hyundai",
+      "model": "HB20S",
+      "engine": "1.6",
+      "yearFrom": 2020,
+      "yearTo": 2022,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-hb20s-1.0-2013",
+      "brand": "Hyundai",
+      "model": "HB20S",
+      "engine": "1.0",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-hb20s-1.6-2013",
+      "brand": "Hyundai",
+      "model": "HB20S",
+      "engine": "1.6",
+      "yearFrom": 2013,
+      "yearTo": 2019,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-creta-1.0-turbo-2022",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "engine": "1.0 turbo",
+      "yearFrom": 2022,
+      "yearTo": null,
+      "oil": "0W-30 sintético, API SN+",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 33,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/MP_Creta_A1UO-PB2603A_Site.pdf",
+          "https://www.hyundai.com.br/universo-hyundai/dicas/oleo-do-motor-troca-suv.html"
+        ],
+        "tires": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/MP_Creta_A1UO-PB2603A_Site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-creta-1.6-turbo-2025",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "engine": "1.6 turbo",
+      "yearFrom": 2025,
+      "yearTo": null,
+      "oil": "0W-30 sintético, API SN+",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 33,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/MP_Creta_A1UO-PB2603A_Site.pdf"
+        ],
+        "tires": [
+          "https://www.hyundai.com.br/content/dam/hmb/download-manuais/MP_Creta_A1UO-PB2603A_Site.pdf"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-creta-2.0-2022",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "engine": "2.0",
+      "yearFrom": 2022,
+      "yearTo": 2024,
+      "oil": "5W-30, API SP",
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.hyundai.com.br/universo-hyundai/dicas/oleo-do-motor-troca-suv.html"
+        ]
+      }
+    },
+    {
+      "id": "hyundai-creta-1.6-2017",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "engine": "1.6",
+      "yearFrom": 2017,
+      "yearTo": 2021,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "hyundai-creta-2.0-2017",
+      "brand": "Hyundai",
+      "model": "Creta",
+      "engine": "2.0",
+      "yearFrom": 2017,
+      "yearTo": 2021,
+      "oil": null,
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {}
+    },
+    {
+      "id": "nissan-kicks-1.0-turbo-2026",
+      "brand": "Nissan",
+      "model": "Kicks",
+      "engine": "1.0 turbo",
+      "yearFrom": 2026,
+      "yearTo": null,
+      "oil": "0W-20, API SL",
+      "tireFrontPsi": 33,
+      "tireRearPsi": 33,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/site/servicos/manuais/kicks/2026/Manual_de_Propriet%C3%A1rio_-_Kicks_2026_v3.pdf"
+        ],
+        "tires": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/site/servicos/manuais/kicks/2026/Manual_de_Propriet%C3%A1rio_-_Kicks_2026_v3.pdf"
+        ],
+        "presets": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/site/servicos/manuais/kicks/2026/Manual_de_Propriet%C3%A1rio_-_Kicks_2026_v3.pdf"
+        ]
+      }
+    },
+    {
+      "id": "nissan-kicks-1.6-2017",
+      "brand": "Nissan",
+      "model": "Kicks",
+      "engine": "1.6",
+      "yearFrom": 2017,
+      "yearTo": null,
+      "oil": "5W-30, API SN",
+      "tireFrontPsi": 32,
+      "tireRearPsi": 29,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "presets": {
+        "timing_belt": null
+      },
+      "sources": {
+        "oil": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/manuais/kicks/2019/20190617/Manual%20do%20Propriet%C3%A1rio,%20%20Nissan%20Way%20Assistance%20e%20Manual%20de%20Garantia%20e%20Manuten%C3%A7%C3%A3o_MP1P-P02F09.pdf"
+        ],
+        "tires": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/manuais/kicks/2019/20190617/Manual%20do%20Propriet%C3%A1rio,%20%20Nissan%20Way%20Assistance%20e%20Manual%20de%20Garantia%20e%20Manuten%C3%A7%C3%A3o_MP1P-P02F09.pdf"
+        ],
+        "presets": [
+          "https://www.nissan.com.br/content/dam/Nissan/br/manuais/kicks/2019/20190617/Manual%20do%20Propriet%C3%A1rio,%20%20Nissan%20Way%20Assistance%20e%20Manual%20de%20Garantia%20e%20Manuten%C3%A7%C3%A3o_MP1P-P02F09.pdf"
+        ]
+      }
+    },
+    {
+      "id": "haval-h6-1.5-turbo-hibrido-2023",
+      "brand": "Haval",
+      "model": "H6",
+      "engine": "1.5 turbo híbrido",
+      "yearFrom": 2023,
+      "yearTo": null,
+      "oil": "0W-20 sintético, API SP",
+      "tireFrontPsi": null,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "oil": [
+          "https://www.gwmmotors.com.br/content/dam/gwm/pages/br/pt/service/manuais/haval-h6-hev-one/PN_H6HEV202405V0.pdf"
         ]
       }
     }

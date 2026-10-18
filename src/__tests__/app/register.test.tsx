@@ -6,17 +6,32 @@ import type { Db } from '@/db/client';
 import { logsQuery, readingsQuery, registerMaintenance } from '@/db/repo';
 import { attachments, maintenanceItems } from '@/db/schema';
 import { addDays, projectOdometer, todayISO } from '@/domain';
-import { attachmentsMock, params, redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import {
+  attachmentsMock,
+  params,
+  redirect,
+  router,
+  seedVehicle,
+  setupScreen,
+} from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: jest.fn(async () => ({ granted: true })),
-  launchCameraAsync: jest.fn(async () => ({ canceled: false, assets: [{ uri: 'file:///cache/ImagePicker/camera.jpg' }] })),
-  launchImageLibraryAsync: jest.fn(async () => ({ canceled: false, assets: [{ uri: 'file:///cache/ImagePicker/pick.jpg' }] })),
+  launchCameraAsync: jest.fn(async () => ({
+    canceled: false,
+    assets: [{ uri: 'file:///cache/ImagePicker/camera.jpg' }],
+  })),
+  launchImageLibraryAsync: jest.fn(async () => ({
+    canceled: false,
+    assets: [{ uri: 'file:///cache/ImagePicker/pick.jpg' }],
+  })),
 }));
 
 let db: Db;
@@ -59,7 +74,9 @@ test('saves the log, moves the item baseline to it and closes', async () => {
     }),
   ]);
   const item = db.select().from(maintenanceItems).where(eq(maintenanceItems.id, oilId)).get();
-  expect(item).toEqual(expect.objectContaining({ baselineKm: projected, baselineDate: todayISO() }));
+  expect(item).toEqual(
+    expect.objectContaining({ baselineKm: projected, baselineDate: todayISO() }),
+  );
 });
 
 test('rejects a KM below an earlier reading', async () => {
@@ -132,12 +149,15 @@ test("logs on the item's own car, not the first one", async () => {
   expect(kmField()).toHaveDisplayValue('80000');
   await userEvent.setup().press(screen.getByRole('button', { name: 'Registrar troca' }));
 
-  expect(logsQuery(db, gol.vehicleId).all()).toEqual([expect.objectContaining({ itemId: gol.oilId, km: 80000 })]);
+  expect(logsQuery(db, gol.vehicleId).all()).toEqual([
+    expect.objectContaining({ itemId: gol.oilId, km: 80000 }),
+  ]);
   expect(logsQuery(db, vehicleId).all()).toEqual([]);
 });
 
 describe('receipt photo', () => {
-  const liveAttachments = () => db.select().from(attachments).where(isNull(attachments.deletedAt)).all();
+  const liveAttachments = () =>
+    db.select().from(attachments).where(isNull(attachments.deletedAt)).all();
 
   test('takes a photo, previews it and saves it with the log', async () => {
     await render(<Register />);
@@ -146,13 +166,20 @@ describe('receipt photo', () => {
     expect(screen.getByText('Foto do comprovante (opcional)')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: 'Tirar foto' }));
 
-    expect(ImagePicker.launchCameraAsync).toHaveBeenCalledWith({ mediaTypes: 'images', quality: 1 });
-    expect(attachmentsMock.preparePhoto).toHaveBeenCalledWith('file:///cache/ImagePicker/camera.jpg');
+    expect(ImagePicker.launchCameraAsync).toHaveBeenCalledWith({
+      mediaTypes: 'images',
+      quality: 1,
+    });
+    expect(attachmentsMock.preparePhoto).toHaveBeenCalledWith(
+      'file:///cache/ImagePicker/camera.jpg',
+    );
     expect(screen.getByRole('image', { name: 'Foto do comprovante' })).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Tirar foto' })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: 'Registrar troca' }));
-    expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ photo: 'attachments/PHOTO.bin' })]);
+    expect(logsQuery(db, vehicleId).all()).toEqual([
+      expect.objectContaining({ photo: 'attachments/PHOTO.bin' }),
+    ]);
     expect(router.back).toHaveBeenCalled();
   });
 
@@ -170,14 +197,20 @@ describe('receipt photo', () => {
   });
 
   test('says how to allow the camera when it is denied, and keeps a cancelled pick out', async () => {
-    jest.mocked(ImagePicker.requestCameraPermissionsAsync).mockResolvedValueOnce({ granted: false } as never);
-    jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({ canceled: true, assets: null });
+    jest
+      .mocked(ImagePicker.requestCameraPermissionsAsync)
+      .mockResolvedValueOnce({ granted: false } as never);
+    jest
+      .mocked(ImagePicker.launchImageLibraryAsync)
+      .mockResolvedValueOnce({ canceled: true, assets: null });
     await render(<Register />);
     const user = userEvent.setup();
 
     await user.press(screen.getByRole('button', { name: 'Tirar foto' }));
     expect(
-      screen.getByText('Para fotografar o comprovante, permita o uso da câmera nas configurações do aparelho.'),
+      screen.getByText(
+        'Para fotografar o comprovante, permita o uso da câmera nas configurações do aparelho.',
+      ),
     ).toBeOnTheScreen();
     expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
 
@@ -230,9 +263,13 @@ describe('editing a log', () => {
     expect(kmField()).toHaveDisplayValue('52000');
     expect(screen.queryByText('Valor estimado. Confira no painel do carro.')).not.toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Outra data' })).toBeChecked();
-    expect(screen.getByLabelText('Data (DD/MM/AAAA)')).toHaveDisplayValue(tenDaysAgo.split('-').reverse().join('/'));
+    expect(screen.getByLabelText('Data (DD/MM/AAAA)')).toHaveDisplayValue(
+      tenDaysAgo.split('-').reverse().join('/'),
+    );
     expect(screen.getByLabelText('Custo (opcional), R$')).toHaveDisplayValue('150,00');
-    expect(screen.getByLabelText('Marca ou especificação (opcional)')).toHaveDisplayValue('Mobil 5W-30');
+    expect(screen.getByLabelText('Marca ou especificação (opcional)')).toHaveDisplayValue(
+      'Mobil 5W-30',
+    );
     expect(screen.getByLabelText('Observações (opcional)')).toHaveDisplayValue('Oficina do bairro');
 
     await user.clear(kmField());
@@ -243,7 +280,12 @@ describe('editing a log', () => {
 
     expect(router.back).toHaveBeenCalled();
     expect(logsQuery(db, vehicleId).all()).toEqual([
-      expect.objectContaining({ id: log.id, km: 51500, performedAt: addDays(todayISO(), -1), costCents: null }),
+      expect.objectContaining({
+        id: log.id,
+        km: 51500,
+        performedAt: addDays(todayISO(), -1),
+        costCents: null,
+      }),
     ]);
     // Its reading moved with it; the item's baseline too.
     expect(readingsQuery(db, vehicleId).all()).toEqual([
@@ -251,7 +293,9 @@ describe('editing a log', () => {
       { km: 51500, readAt: addDays(todayISO(), -1) },
     ]);
     const item = db.select().from(maintenanceItems).where(eq(maintenanceItems.id, oilId)).get();
-    expect(item).toEqual(expect.objectContaining({ baselineKm: 51500, baselineDate: addDays(todayISO(), -1) }));
+    expect(item).toEqual(
+      expect.objectContaining({ baselineKm: 51500, baselineDate: addDays(todayISO(), -1) }),
+    );
   });
 
   test('shows the saved photo and removes it on save', async () => {
@@ -287,7 +331,9 @@ describe('editing a log', () => {
       { uri: 'data:image/jpeg;base64,PHOTO' },
     ]);
     await user.press(screen.getByRole('button', { name: 'Salvar alterações' }));
-    expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ photo: 'attachments/PHOTO.bin' })]);
+    expect(logsQuery(db, vehicleId).all()).toEqual([
+      expect.objectContaining({ photo: 'attachments/PHOTO.bin' }),
+    ]);
   });
 
   test('keeps the saved photo when only the text changes, even if it could not be opened', async () => {

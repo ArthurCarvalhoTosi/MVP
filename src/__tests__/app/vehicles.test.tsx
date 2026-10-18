@@ -11,7 +11,9 @@ jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let sandero: string;
@@ -27,7 +29,10 @@ beforeEach(async () => {
   db = await setupScreen();
   ({ vehicleId: sandero } = await seedVehicle(db, since));
   // Created last, so selected.
-  ({ vehicleId: gol } = await seedVehicle(db, todayISO(), { nickname: 'Meu Gol', odometerKm: 80000 }));
+  ({ vehicleId: gol } = await seedVehicle(db, todayISO(), {
+    nickname: 'Meu Gol',
+    odometerKm: 80000,
+  }));
 });
 
 const MESSAGE = 'O histórico deste carro será apagado deste aparelho. Isso não pode ser desfeito.';
@@ -50,7 +55,10 @@ test('opens the rename sheet for the tapped car', async () => {
   await userEvent.setup().press(screen.getByRole('button', { name: 'Renomear Meu Sandero' }));
 
   // Replace, not push: on iOS a pushed screen would open underneath this sheet.
-  expect(router.replace).toHaveBeenCalledWith({ pathname: '/rename-vehicle', params: { vehicleId: sandero } });
+  expect(router.replace).toHaveBeenCalledWith({
+    pathname: '/rename-vehicle',
+    params: { vehicleId: sandero },
+  });
 });
 
 test('opens the tapped car and closes', async () => {
@@ -75,8 +83,18 @@ test('removes a car only after confirming', async () => {
   await press('Remover');
 
   // Soft delete: the row stays, marked deleted.
-  expect(vehiclesQuery(db).all().map((v) => v.id)).toEqual([sandero]);
-  expect(db.select().from(vehicles).all().find((v) => v.id === gol)?.deletedAt).toEqual(expect.any(String));
+  expect(
+    vehiclesQuery(db)
+      .all()
+      .map((v) => v.id),
+  ).toEqual([sandero]);
+  expect(
+    db
+      .select()
+      .from(vehicles)
+      .all()
+      .find((v) => v.id === gol)?.deletedAt,
+  ).toEqual(expect.any(String));
   // Its receipt photos leave the disk right away.
   expect(attachmentsMock.deleteRemovedPhotos).toHaveBeenCalledWith(db);
   // Other cars remain, so the sheet stays open; the remaining car becomes the open one.
@@ -117,8 +135,20 @@ test('adds a car through onboarding', async () => {
   expect(router.replace).toHaveBeenCalledWith('/onboarding');
 });
 
+test('opens the backup and restore sheets', async () => {
+  await render(<Vehicles />);
+  const user = userEvent.setup();
+
+  await user.press(screen.getByRole('button', { name: 'Fazer backup' }));
+  expect(router.replace).toHaveBeenLastCalledWith('/backup');
+  await user.press(screen.getByRole('button', { name: 'Restaurar backup' }));
+  expect(router.replace).toHaveBeenLastCalledWith('/restore');
+});
+
 test('shows a plain message when switching fails', async () => {
-  const select = jest.spyOn(repo, 'selectVehicle').mockRejectedValueOnce(new Error('disk I/O error'));
+  const select = jest
+    .spyOn(repo, 'selectVehicle')
+    .mockRejectedValueOnce(new Error('disk I/O error'));
   await render(<Vehicles />);
 
   await userEvent.setup().press(screen.getByRole('button', { name: SANDERO }));

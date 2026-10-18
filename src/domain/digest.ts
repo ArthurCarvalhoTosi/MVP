@@ -87,14 +87,19 @@ export function buildDigest(
 ): DigestNotification[] {
   return upcomingSaturdays(now).flatMap((date): DigestNotification[] => {
     const groups = pendingByVehicle(vehicles, items, readings, date);
-    const entries = groups.flatMap(({ vehicle, entries }) => entries.map((e) => ({ ...e, vehicle })));
+    const entries = groups.flatMap(({ vehicle, entries }) =>
+      entries.map((e) => ({ ...e, vehicle })),
+    );
     if (entries.length === 0) return [];
     const critical = entries.filter((e) => e.due.urgency === 'critical');
 
     if (critical.length === 1) {
       const { item, due, vehicle } = critical[0];
       const { primary, secondary } = dueLabel(due);
-      const status = [primary, secondary].filter((s) => s !== null).map(lowerFirst).join(', ');
+      const status = [primary, secondary]
+        .filter((s) => s !== null)
+        .map(lowerFirst)
+        .join(', ');
       const others = entries.length - 1;
       return [
         {
@@ -110,11 +115,19 @@ export function buildDigest(
 
     // Critical first, so a cut list never hides one behind an attention item.
     const ordered = [...critical, ...entries.filter((e) => e.due.urgency !== 'critical')];
-    const names = ordered.map((e) => (groups.length > 1 ? `${e.item.name} (${e.vehicle.nickname})` : e.item.name));
+    const names = ordered.map((e) =>
+      groups.length > 1 ? `${e.item.name} (${e.vehicle.nickname})` : e.item.name,
+    );
     const rest = names.length - MAX_NAMES;
-    const list = rest > 0 ? `${names.slice(0, MAX_NAMES).join(', ')} e mais ${rest}` : names.join(', ');
-    const count = names.length === 1 ? '1 troca precisa de atenção' : `${names.length} trocas precisam de atenção`;
+    const list =
+      rest > 0 ? `${names.slice(0, MAX_NAMES).join(', ')} e mais ${rest}` : names.join(', ');
+    const count =
+      names.length === 1
+        ? '1 troca precisa de atenção'
+        : `${names.length} trocas precisam de atenção`;
     const where = groups.length > 1 ? ` em ${groups.length} carros` : '';
-    return [{ kind: 'summary', date, title: 'Check-up da semana', body: `${count}${where}: ${list}.` }];
+    return [
+      { kind: 'summary', date, title: 'Check-up da semana', body: `${count}${where}: ${list}.` },
+    ];
   });
 }

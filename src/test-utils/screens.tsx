@@ -9,7 +9,12 @@ import { createVehicle, itemsQuery, type NewAttachment } from '@/db/repo';
 import { createTestDb } from '@/db/test-utils/testDb';
 import { todayISO, type ISODate } from '@/domain';
 
-export const router = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), dismissTo: jest.fn() };
+export const router = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  dismissTo: jest.fn(),
+};
 export const redirect = jest.fn();
 export const params: Record<string, string> = {};
 
@@ -34,7 +39,11 @@ export const expoRouterMock = {
 // No expo-sqlite change listeners under jest: run the query on every render instead,
 // so a rerender after a write shows fresh data.
 export const liveQueryMock = {
-  useLiveQuery: (query: { all: () => unknown }) => ({ data: query.all(), error: undefined, updatedAt: new Date() }),
+  useLiveQuery: (query: { all: () => unknown }) => ({
+    data: query.all(),
+    error: undefined,
+    updatedAt: new Date(),
+  }),
 };
 
 // No native crypto or files under jest. A photo "PHOTO" is saved as attachments/PHOTO.bin; a saved
@@ -45,8 +54,15 @@ export const attachmentsMock = {
   readPhoto: jest.fn(async (_filePath: string) => 'SAVED'),
   deleteRemovedPhotos: jest.fn(),
   saveWithPhoto: jest.fn(
-    async (photo: string | null | undefined, save: (a: NewAttachment | null | undefined) => Promise<void>) =>
-      save(photo == null ? photo : { filePath: `attachments/${photo}.bin`, mime: 'image/jpeg', sizeBytes: 1 }),
+    async (
+      photo: string | null | undefined,
+      save: (a: NewAttachment | null | undefined) => Promise<void>,
+    ) =>
+      save(
+        photo == null
+          ? photo
+          : { filePath: `attachments/${photo}.bin`, mime: 'image/jpeg', sizeBytes: 1 },
+      ),
   ),
 };
 
@@ -71,7 +87,12 @@ export function spyAlert() {
   return { alert, press };
 }
 
-export const OIL = { templateKey: 'oil', name: 'Troca de óleo e filtro', intervalKm: 10000, intervalMonths: 12 };
+export const OIL = {
+  templateKey: 'oil',
+  name: 'Troca de óleo e filtro',
+  intervalKm: 10000,
+  intervalMonths: 12,
+};
 
 /** "Meu Sandero" at 40.000 km on `since`, ~1.000 km/month, tracking oil only. Selected, like a new car. */
 export async function seedVehicle(
@@ -81,7 +102,14 @@ export async function seedVehicle(
 ) {
   const vehicleId = await createVehicle(
     target,
-    { nickname: 'Meu Sandero', odometerKm: 40000, monthlyKmEstimate: 1000, severeUse: false, items: [OIL], ...over },
+    {
+      nickname: 'Meu Sandero',
+      odometerKm: 40000,
+      monthlyKmEstimate: 1000,
+      severeUse: false,
+      items: [OIL],
+      ...over,
+    },
     since,
   );
   return { vehicleId, oilId: itemsQuery(target, vehicleId).all()[0].id };

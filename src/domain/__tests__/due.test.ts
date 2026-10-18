@@ -14,7 +14,9 @@ const item = (over: Partial<ItemSchedule>): ItemSchedule => ({
 // monthlyEstimate 1500 → 50 km/day, so km dates are exact.
 describe('computeDue', () => {
   it('picks the time limit when it comes first', () => {
-    expect(computeDue(item({ intervalKm: 10000, intervalMonths: 6 }), atToday, 1500, today)).toEqual({
+    expect(
+      computeDue(item({ intervalKm: 10000, intervalMonths: 6 }), atToday, 1500, today),
+    ).toEqual({
       dueDate: '2027-04-15',
       daysLeft: 182,
       dueKm: 50000,
@@ -25,7 +27,9 @@ describe('computeDue', () => {
   });
 
   it('picks the km limit when it comes first', () => {
-    expect(computeDue(item({ intervalKm: 5000, intervalMonths: 12 }), atToday, 1500, today)).toEqual({
+    expect(
+      computeDue(item({ intervalKm: 5000, intervalMonths: 12 }), atToday, 1500, today),
+    ).toEqual({
       dueDate: '2027-01-23',
       daysLeft: 100,
       dueKm: 45000,
@@ -37,11 +41,15 @@ describe('computeDue', () => {
 
   it('gives a tie to the km limit, and the day after it to the calendar', () => {
     // 2026-10-15 + 6 months = 2027-04-15, 182 days; 182 days at 50 km/day = 9.100 km.
-    expect(computeDue(item({ intervalKm: 9100, intervalMonths: 6 }), atToday, 1500, today)).toMatchObject({
+    expect(
+      computeDue(item({ intervalKm: 9100, intervalMonths: 6 }), atToday, 1500, today),
+    ).toMatchObject({
       dueDate: '2027-04-15',
       dueBy: 'km',
     });
-    expect(computeDue(item({ intervalKm: 9150, intervalMonths: 6 }), atToday, 1500, today)).toMatchObject({
+    expect(
+      computeDue(item({ intervalKm: 9150, intervalMonths: 6 }), atToday, 1500, today),
+    ).toMatchObject({
       dueDate: '2027-04-15',
       dueBy: 'time',
     });
@@ -50,12 +58,22 @@ describe('computeDue', () => {
   it('says the km set an overdue date estimated from the km/day', () => {
     // 5.000 km past the limit at 50 km/day reads as 100 days ago; the 12-month limit is still ahead.
     expect(
-      computeDue(item({ baselineKm: 30000, intervalKm: 5000, intervalMonths: 12 }), atToday, 1500, today),
+      computeDue(
+        item({ baselineKm: 30000, intervalKm: 5000, intervalMonths: 12 }),
+        atToday,
+        1500,
+        today,
+      ),
     ).toMatchObject({ daysLeft: -100, kmLeft: -5000, dueBy: 'km' });
     // An older calendar limit wins and keeps its exact count.
     expect(
       computeDue(
-        item({ baselineKm: 30000, baselineDate: '2026-01-01', intervalKm: 5000, intervalMonths: 6 }),
+        item({
+          baselineKm: 30000,
+          baselineDate: '2026-01-01',
+          intervalKm: 5000,
+          intervalMonths: 6,
+        }),
         atToday,
         1500,
         today,
@@ -95,15 +113,25 @@ describe('computeDue', () => {
 
   it('never reaches the km with rate 0 and km still ahead', () => {
     const due = computeDue(item({ intervalKm: 10000 }), atToday, 0, today);
-    expect(due).toMatchObject({ dueDate: null, daysLeft: null, kmLeft: 10000, dueBy: null, urgency: 'ok' });
-    expect(computeDue(item({ intervalKm: 10000, intervalMonths: 6 }), atToday, 0, today)).toMatchObject({
+    expect(due).toMatchObject({
+      dueDate: null,
+      daysLeft: null,
+      kmLeft: 10000,
+      dueBy: null,
+      urgency: 'ok',
+    });
+    expect(
+      computeDue(item({ intervalKm: 10000, intervalMonths: 6 }), atToday, 0, today),
+    ).toMatchObject({
       dueDate: '2027-04-15',
       dueBy: 'time',
     });
   });
 
   it('is due today with rate 0 and km already reached', () => {
-    expect(computeDue(item({ baselineKm: 30000, intervalKm: 10000 }), atToday, 0, today)).toMatchObject({
+    expect(
+      computeDue(item({ baselineKm: 30000, intervalKm: 10000 }), atToday, 0, today),
+    ).toMatchObject({
       dueDate: today,
       daysLeft: 0,
       kmLeft: 0,
@@ -111,29 +139,48 @@ describe('computeDue', () => {
     });
     // Past the km with a calendar limit still ahead: the km sets the due date.
     expect(
-      computeDue(item({ baselineKm: 29500, intervalKm: 10000, intervalMonths: 6 }), atToday, 0, today),
+      computeDue(
+        item({ baselineKm: 29500, intervalKm: 10000, intervalMonths: 6 }),
+        atToday,
+        0,
+        today,
+      ),
     ).toMatchObject({ dueDate: today, kmLeft: -500, dueBy: 'km' });
   });
 
   it('dates an overdue km item in the past, rounded down', () => {
-    expect(computeDue(item({ baselineKm: 30000, intervalKm: 5000 }), atToday, 1500, today)).toMatchObject({
+    expect(
+      computeDue(item({ baselineKm: 30000, intervalKm: 5000 }), atToday, 1500, today),
+    ).toMatchObject({
       dueDate: addDays(today, -100),
       daysLeft: -100,
       kmLeft: -5000,
       urgency: 'critical',
     });
-    expect(computeDue(item({ baselineKm: 30000, intervalKm: 4990 }), atToday, 1500, today).daysLeft).toBe(-101);
+    expect(
+      computeDue(item({ baselineKm: 30000, intervalKm: 4990 }), atToday, 1500, today).daysLeft,
+    ).toBe(-101);
   });
 
   it('flags an overdue time item', () => {
-    const due = computeDue(item({ baselineDate: '2026-01-15', intervalMonths: 6 }), atToday, 1500, today);
+    const due = computeDue(
+      item({ baselineDate: '2026-01-15', intervalMonths: 6 }),
+      atToday,
+      1500,
+      today,
+    );
     expect(due.dueDate).toBe('2026-07-15');
     expect(due.daysLeft).toBe(-92);
     expect(due.urgency).toBe('critical');
   });
 
   it('uses the projected odometer, not the last reading', () => {
-    const due = computeDue(item({ intervalKm: 5000 }), [{ km: 40000, readAt: '2026-10-05' }], 1500, today);
+    const due = computeDue(
+      item({ intervalKm: 5000 }),
+      [{ km: 40000, readAt: '2026-10-05' }],
+      1500,
+      today,
+    );
     expect(due.kmLeft).toBe(4500);
     expect(due.daysLeft).toBe(90);
   });

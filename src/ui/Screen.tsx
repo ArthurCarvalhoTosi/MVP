@@ -15,7 +15,11 @@ export function Screen({ children, scroll = false, footer }: Props) {
       {/* 'padding' on both platforms: Android is edge-to-edge since SDK 54, so adjustResize no longer
           shrinks the window and the view has to make room itself, like on iOS (Expo's edge-to-edge
           guidance). Not 'height': it keeps the first measured height, which breaks when a sheet changes detent. */}
-      <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={headerHeight} style={styles.root}>
+      <KeyboardAvoidingView
+        behavior="padding"
+        keyboardVerticalOffset={headerHeight}
+        style={styles.root}
+      >
         {scroll ? (
           <ScrollView
             style={styles.root}

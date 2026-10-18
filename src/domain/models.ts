@@ -38,7 +38,10 @@ const compact = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
-const searchable = CAR_MODELS.map((m) => ({ m, text: compact(`${m.brand} ${m.model} ${m.engine}`) }));
+const searchable = CAR_MODELS.map((m) => ({
+  m,
+  text: compact(`${m.brand} ${m.model} ${m.engine}`),
+}));
 
 /** Models matching every word typed, in seed order (best sellers first); a year like "2018" also narrows by model year. */
 export function searchModels(query: string): CarModel[] {

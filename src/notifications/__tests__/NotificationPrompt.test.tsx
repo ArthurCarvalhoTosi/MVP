@@ -29,13 +29,17 @@ test('explains the reminder before asking, then asks and schedules once granted'
   await render(<NotificationPrompt />);
   expect(await screen.findByText(QUESTION)).toBeOnTheScreen();
   expect(
-    screen.getByText(/Aos sábados, às 9h, o Garagem avisa quais trocas estão chegando nos seus carros/),
+    screen.getByText(
+      /Aos sábados, às 9h, o Garagem avisa quais trocas estão chegando nos seus carros/,
+    ),
   ).toBeOnTheScreen();
   expect(N.requestPermissionsAsync).not.toHaveBeenCalled();
 
   await userEvent.setup().press(screen.getByRole('button', { name: 'Ativar lembretes' }));
 
-  expect(N.requestPermissionsAsync).toHaveBeenCalledWith({ ios: { allowAlert: true, allowSound: true } });
+  expect(N.requestPermissionsAsync).toHaveBeenCalledWith({
+    ios: { allowAlert: true, allowSound: true },
+  });
   expect(rescheduleDigest).toHaveBeenCalled();
   expect(screen.queryByText(QUESTION)).not.toBeOnTheScreen();
   expect(notificationPromptQuery(db).all()).toHaveLength(1);

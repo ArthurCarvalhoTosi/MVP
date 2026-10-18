@@ -9,7 +9,8 @@ export const ACTION_DONE = 'done';
 export const ACTION_SNOOZE = 'snooze';
 
 /** What a scheduled notification carries for its response. */
-export type NotificationData = { kind: 'summary' } | { kind: 'critical'; itemId: string; vehicleId: string };
+export type NotificationData =
+  { kind: 'summary' } | { kind: 'critical'; itemId: string; vehicleId: string };
 
 let setup: Promise<void> | undefined;
 
@@ -36,7 +37,11 @@ export function setupNotifications(): Promise<void> {
     // isn't reliable; in the app, the write runs on the open database and the user sees the result.
     await Notifications.setNotificationCategoryAsync(CRITICAL_CATEGORY, [
       { identifier: ACTION_DONE, buttonTitle: 'Feito', options: { opensAppToForeground: true } },
-      { identifier: ACTION_SNOOZE, buttonTitle: 'Adiar 15 dias', options: { opensAppToForeground: true } },
+      {
+        identifier: ACTION_SNOOZE,
+        buttonTitle: 'Adiar 15 dias',
+        options: { opensAppToForeground: true },
+      },
     ]);
   })().catch((error: unknown) => {
     setup = undefined;
@@ -51,7 +56,9 @@ function fireDate(date: string): Date {
 
 function content(n: DigestNotification): Notifications.NotificationContentInput {
   const data: NotificationData =
-    n.kind === 'critical' ? { kind: 'critical', itemId: n.itemId, vehicleId: n.vehicleId } : { kind: 'summary' };
+    n.kind === 'critical'
+      ? { kind: 'critical', itemId: n.itemId, vehicleId: n.vehicleId }
+      : { kind: 'summary' };
   return {
     title: n.title,
     body: n.body,
@@ -82,7 +89,11 @@ async function apply(plan: DigestNotification[]): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         identifier: `checkup-${n.date}`,
         content: content(n),
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date, channelId: CHANNEL },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date,
+          channelId: CHANNEL,
+        },
       });
     }
   }
@@ -112,7 +123,11 @@ export async function sendTestDigest(): Promise<boolean> {
   await Notifications.scheduleNotificationAsync({
     identifier: 'checkup-test',
     content: content(next),
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10, channelId: CHANNEL },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 10,
+      channelId: CHANNEL,
+    },
   });
   return true;
 }

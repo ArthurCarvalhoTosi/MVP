@@ -9,7 +9,18 @@ describe('parseIntBR', () => {
   });
 
   it('rejects empty, negative, decimal and garbage input', () => {
-    for (const s of ['', '  ', '-5', '46,5', '46.25', '4.6250', '12a', 'abc', '1 000', '99999999999999999999']) {
+    for (const s of [
+      '',
+      '  ',
+      '-5',
+      '46,5',
+      '46.25',
+      '4.6250',
+      '12a',
+      'abc',
+      '1 000',
+      '99999999999999999999',
+    ]) {
       expect(parseIntBR(s)).toBeNull();
     }
   });
@@ -33,7 +44,19 @@ describe('parseBRL', () => {
   });
 
   it('rejects garbage', () => {
-    for (const s of ['', 'abc', '-5', '1,2,3', '12,345', '1.23,4', '1.234.5', 'R$ 150', '150,', ',50', '1e3']) {
+    for (const s of [
+      '',
+      'abc',
+      '-5',
+      '1,2,3',
+      '12,345',
+      '1.23,4',
+      '1.234.5',
+      'R$ 150',
+      '150,',
+      ',50',
+      '1e3',
+    ]) {
       expect(parseBRL(s)).toBeNull();
     }
   });
@@ -49,7 +72,15 @@ describe('parseBRDate', () => {
   });
 
   it('rejects dates that do not exist', () => {
-    for (const s of ['31/02/2026', '29/02/2025', '00/01/2026', '32/01/2026', '15/13/2026', '15/00/2026', '01/01/0099']) {
+    for (const s of [
+      '31/02/2026',
+      '29/02/2025',
+      '00/01/2026',
+      '32/01/2026',
+      '15/13/2026',
+      '15/00/2026',
+      '01/01/0099',
+    ]) {
       expect(parseBRDate(s, today)).toBeNull();
     }
   });

@@ -27,7 +27,11 @@ function latestReading(readings: OdometerReading[]): OdometerReading | undefined
   );
 }
 
-export function dailyRate(readings: OdometerReading[], monthlyEstimate: number, today: ISODate): number {
+export function dailyRate(
+  readings: OdometerReading[],
+  monthlyEstimate: number,
+  today: ISODate,
+): number {
   const from = addDays(today, -WINDOW_DAYS);
   const recent = readings.filter((r) => r.readAt >= from && r.readAt <= today);
   const xs = recent.map((r) => daysBetween(from, r.readAt));
@@ -46,7 +50,11 @@ export function dailyRate(readings: OdometerReading[], monthlyEstimate: number, 
   return Math.max(0, num / den);
 }
 
-export function projectOdometer(readings: OdometerReading[], monthlyEstimate: number, today: ISODate): number {
+export function projectOdometer(
+  readings: OdometerReading[],
+  monthlyEstimate: number,
+  today: ISODate,
+): number {
   const latest = latestReading(readings);
   if (!latest) return 0;
   const elapsed = Math.max(0, daysBetween(latest.readAt, today));
@@ -65,7 +73,11 @@ export const READING_ERRORS: Record<Exclude<ReadingCheck, 'ok'>, string> = {
   above_next: 'Esse KM é maior que uma leitura de data posterior. Confira o valor ou a data.',
 };
 
-export function checkReading(readings: OdometerReading[], km: number, readAt: ISODate): ReadingCheck {
+export function checkReading(
+  readings: OdometerReading[],
+  km: number,
+  readAt: ISODate,
+): ReadingCheck {
   // Math.max() of nothing is -Infinity and Math.min() is Infinity, so empty sides never fail.
   const prevMax = Math.max(...readings.filter((r) => r.readAt <= readAt).map((r) => r.km));
   if (km < prevMax) return 'below_previous';

@@ -31,10 +31,18 @@ export function buildFeed<T extends ItemSchedule & { name: string }>(
 ): Feed<T> {
   const entries = items
     .map((item) => ({ item, due: computeDue(item, readings, monthlyEstimate, today) }))
-    .sort((a, b) => byDueDate(a.due.dueDate, b.due.dueDate) || a.item.name.localeCompare(b.item.name, 'pt-BR'));
+    .sort(
+      (a, b) =>
+        byDueDate(a.due.dueDate, b.due.dueDate) || a.item.name.localeCompare(b.item.name, 'pt-BR'),
+    );
   const of = (u: Urgency) => entries.filter((e) => e.due.urgency === u);
   const ok = of('ok');
-  return { critical: of('critical'), attention: of('attention'), ok, next: ok[0]?.due.dueDate ? ok[0] : null };
+  return {
+    critical: of('critical'),
+    attention: of('attention'),
+    ok,
+    next: ok[0]?.due.dueDate ? ok[0] : null,
+  };
 }
 
 /** One line per car in the car list: its worst urgency and how many items are at that level. */
@@ -44,7 +52,8 @@ export function vehicleStatus(feed: Feed<unknown>): { urgency: Urgency; label: s
   if (critical > 0) {
     return {
       urgency: 'critical',
-      label: critical === 1 ? '1 troca vencida ou próxima' : `${critical} trocas vencidas ou próximas`,
+      label:
+        critical === 1 ? '1 troca vencida ou próxima' : `${critical} trocas vencidas ou próximas`,
     };
   }
   // "em atenção" doesn't inflect, so one label covers 1 and many.

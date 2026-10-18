@@ -8,7 +8,9 @@ import { params, redirect, router, seedVehicle, setupScreen } from '@/test-utils
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let vehicleId: string;
@@ -24,10 +26,14 @@ test('prefills saved values, saves edits and stores emptied fields as null', asy
   const user = userEvent.setup();
 
   expect(screen.getByRole('header', { name: 'Cola de bolso' })).toBeOnTheScreen();
-  expect(screen.getByText('Valores de referência. Confira no manual do proprietário.')).toBeOnTheScreen();
+  expect(
+    screen.getByText('Valores de referência. Confira no manual do proprietário.'),
+  ).toBeOnTheScreen();
   expect(screen.getByLabelText('Óleo')).toHaveDisplayValue('5W-30 sintético');
   // Manual fallback: where to find the pressure when the seed has none.
-  expect(screen.getByText(/etiqueta na porta do motorista ou na tampa do tanque/)).toBeOnTheScreen();
+  expect(
+    screen.getByText(/etiqueta na porta do motorista ou na tampa do tanque/),
+  ).toBeOnTheScreen();
 
   await user.clear(screen.getByLabelText('Bateria'));
   await user.type(screen.getByLabelText('Pneu dianteiro, psi'), '32');

@@ -90,7 +90,9 @@ test('runs replacements one at a time, in order', async () => {
 test('skips a Saturday whose time already passed', async () => {
   await scheduler.scheduleDigest([{ ...summary, date: '2020-01-04' }, critical]);
   expect(N.scheduleNotificationAsync).toHaveBeenCalledTimes(1);
-  expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(expect.objectContaining({ identifier: 'checkup-2099-10-31' }));
+  expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
+    expect.objectContaining({ identifier: 'checkup-2099-10-31' }),
+  );
 });
 
 test('schedules nothing without permission, and catches up once it is granted', async () => {
@@ -99,9 +101,16 @@ test('schedules nothing without permission, and catches up once it is granted', 
   expect(N.cancelAllScheduledNotificationsAsync).toHaveBeenCalledTimes(1);
   expect(N.scheduleNotificationAsync).not.toHaveBeenCalled();
 
-  N.getPermissionsAsync.mockResolvedValue({ status: 'granted', granted: true, canAskAgain: true, expires: 'never' });
+  N.getPermissionsAsync.mockResolvedValue({
+    status: 'granted',
+    granted: true,
+    canAskAgain: true,
+    expires: 'never',
+  });
   await scheduler.rescheduleDigest();
-  expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(expect.objectContaining({ identifier: 'checkup-2099-10-24' }));
+  expect(N.scheduleNotificationAsync).toHaveBeenCalledWith(
+    expect.objectContaining({ identifier: 'checkup-2099-10-24' }),
+  );
 });
 
 test('never rejects on a native failure, and retries the same plan next time', async () => {

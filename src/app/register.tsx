@@ -26,7 +26,18 @@ import {
   ValidationError,
   type ISODate,
 } from '@/domain';
-import { AppText, Button, ChipGroup, FormError, Screen, Section, TextField, radius, space, useTheme } from '@/ui';
+import {
+  AppText,
+  Button,
+  ChipGroup,
+  FormError,
+  Screen,
+  Section,
+  TextField,
+  radius,
+  space,
+  useTheme,
+} from '@/ui';
 
 const DATE_OPTIONS = [
   { label: 'Hoje', value: 'today' },
@@ -41,26 +52,55 @@ type Errors = Partial<Record<'km' | 'date' | 'cost', string>>;
 export default function Register() {
   const db = useDb();
   const { c } = useTheme();
-  const { itemId, logId, vehicleId } = useLocalSearchParams<{ itemId?: string; logId?: string; vehicleId?: string }>();
+  const { itemId, logId, vehicleId } = useLocalSearchParams<{
+    itemId?: string;
+    logId?: string;
+    vehicleId?: string;
+  }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
     const today = todayISO();
     if (logId) {
-      const log = logsQuery(db, vehicleId ?? '').all().find((l) => l.id === logId);
+      const log = logsQuery(db, vehicleId ?? '')
+        .all()
+        .find((l) => l.id === logId);
       if (!log) return null;
-      return { vehicleId: log.vehicleId, itemId: log.itemId, title: log.itemName ?? 'Manutenção', log, km: log.km, date: log.performedAt };
+      return {
+        vehicleId: log.vehicleId,
+        itemId: log.itemId,
+        title: log.itemName ?? 'Manutenção',
+        log,
+        km: log.km,
+        date: log.performedAt,
+      };
     }
-    const item = allItemsQuery(db).all().find((i) => i.id === itemId);
-    const vehicle = item && vehiclesQuery(db).all().find((v) => v.id === item.vehicleId);
+    const item = allItemsQuery(db)
+      .all()
+      .find((i) => i.id === itemId);
+    const vehicle =
+      item &&
+      vehiclesQuery(db)
+        .all()
+        .find((v) => v.id === item.vehicleId);
     if (!vehicle || !item) return null;
-    const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, today);
+    const km = projectOdometer(
+      readingsQuery(db, vehicle.id).all(),
+      vehicle.monthlyKmEstimate,
+      today,
+    );
     return { vehicleId: vehicle.id, itemId: item.id, title: item.name, log: null, km, date: today };
   });
   const log = start?.log;
   const [km, setKm] = useState(start ? String(start.km) : '');
-  const [dateChoice, setDateChoice] = useState<DateChoice>(() => (start ? choiceFor(start.date) : 'today'));
-  const [otherDate, setOtherDate] = useState(() => (start && choiceFor(start.date) === 'other' ? toBR(start.date) : ''));
-  const [cost, setCost] = useState(log?.costCents != null ? (log.costCents / 100).toFixed(2).replace('.', ',') : '');
+  const [dateChoice, setDateChoice] = useState<DateChoice>(() =>
+    start ? choiceFor(start.date) : 'today',
+  );
+  const [otherDate, setOtherDate] = useState(() =>
+    start && choiceFor(start.date) === 'other' ? toBR(start.date) : '',
+  );
+  const [cost, setCost] = useState(
+    log?.costCents != null ? (log.costCents / 100).toFixed(2).replace('.', ',') : '',
+  );
   const [brandSpec, setBrandSpec] = useState(log?.brandSpec ?? '');
   const [notes, setNotes] = useState(log?.notes ?? '');
   // Plain JPEGs as base64, in memory only: the one picked here, and the saved one, kept apart so a
@@ -96,11 +136,14 @@ export default function Register() {
     try {
       if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
         setPhotoError(
-          new ValidationError('Para fotografar o comprovante, permita o uso da câmera nas configurações do aparelho.'),
+          new ValidationError(
+            'Para fotografar o comprovante, permita o uso da câmera nas configurações do aparelho.',
+          ),
         );
         return;
       }
-      const launch = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
+      const launch =
+        source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
       const result = await launch({ mediaTypes: 'images', quality: 1 });
       if (result.canceled) return;
       setPhoto(await preparePhoto(result.assets[0].uri));
@@ -123,7 +166,11 @@ export default function Register() {
     const today = todayISO();
     const kmValue = parseIntBR(km);
     const performedAt =
-      dateChoice === 'today' ? today : dateChoice === 'yesterday' ? addDays(today, -1) : parseBRDate(otherDate, today);
+      dateChoice === 'today'
+        ? today
+        : dateChoice === 'yesterday'
+          ? addDays(today, -1)
+          : parseBRDate(otherDate, today);
     const costCents = cost.trim() ? parseBRL(cost) : null;
     const next: Errors = {
       km:
@@ -133,7 +180,10 @@ export default function Register() {
             ? 'Confira o KM: o valor parece alto demais.'
             : undefined,
       date: performedAt === null ? 'Use uma data até hoje, no formato DD/MM/AAAA.' : undefined,
-      cost: cost.trim() && costCents === null ? 'Digite o valor em reais, por exemplo 150,00.' : undefined,
+      cost:
+        cost.trim() && costCents === null
+          ? 'Digite o valor em reais, por exemplo 150,00.'
+          : undefined,
     };
     setErrors(next);
     setSaveError(null);
@@ -148,7 +198,12 @@ export default function Register() {
         deleteRemovedPhotos(db);
       } else {
         await saveWithPhoto(photo, (attachment) =>
-          registerMaintenance(db, { ...fields, vehicleId: start.vehicleId, itemId: start.itemId, attachment }),
+          registerMaintenance(db, {
+            ...fields,
+            vehicleId: start.vehicleId,
+            itemId: start.itemId,
+            attachment,
+          }),
         );
       }
       router.back(); // stays "saving" while the sheet closes
@@ -156,7 +211,10 @@ export default function Register() {
       setSaving(false);
       if (!(e instanceof OdometerError)) return setSaveError(e);
       // Fixing an earlier reading discards data, so it only happens in Ajustar KM, after a confirmation.
-      const fix = e.check === 'below_previous' ? ' Se o KM salvo antes estava errado, corrija em Ajustar KM.' : '';
+      const fix =
+        e.check === 'below_previous'
+          ? ' Se o KM salvo antes estava errado, corrija em Ajustar KM.'
+          : '';
       setErrors({ km: READING_ERRORS[e.check] + fix });
     }
   };
@@ -190,9 +248,16 @@ export default function Register() {
             value={km}
             onChangeText={setKm}
             error={errors.km}
-            hint={!log && km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
+            hint={
+              !log && km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null
+            }
           />
-          <ChipGroup label="Data da troca" options={DATE_OPTIONS} value={dateChoice} onChange={setDateChoice} />
+          <ChipGroup
+            label="Data da troca"
+            options={DATE_OPTIONS}
+            value={dateChoice}
+            onChange={setDateChoice}
+          />
           {dateChoice === 'other' ? (
             <TextField
               label="Data (DD/MM/AAAA)"

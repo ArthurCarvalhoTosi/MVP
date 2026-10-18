@@ -32,7 +32,13 @@ function AppStack() {
   useNotifications();
 
   // Sheets draw their own title: native headers aren't reliable inside formSheet on Android.
-  const sheet = { presentation: 'formSheet', headerShown: false, sheetGrabberVisible: true } as const;
+  // The content keeps full-screen height at a lower detent, so a Screen footer only shows at detent 1:
+  // shorter sheets put their button inline instead.
+  const sheet = {
+    presentation: 'formSheet',
+    headerShown: false,
+    sheetGrabberVisible: true,
+  } as const;
 
   return (
     <>
@@ -50,11 +56,14 @@ function AppStack() {
         <Stack.Screen name="onboarding" options={{ title: 'Seu carro' }} />
         <Stack.Screen name="history" options={{ title: 'Histórico' }} />
         <Stack.Screen name="checkup" options={{ title: 'Check-up da semana' }} />
-        <Stack.Screen name="register" options={{ ...sheet, sheetAllowedDetents: [0.75, 1] }} />
+        <Stack.Screen name="register" options={{ ...sheet, sheetAllowedDetents: [1] }} />
         <Stack.Screen name="adjust-km" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="specs" options={{ ...sheet, sheetAllowedDetents: [1] }} />
         <Stack.Screen name="vehicles" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="rename-vehicle" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
+        <Stack.Screen name="dossier" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
+        <Stack.Screen name="backup" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+        <Stack.Screen name="restore" options={{ ...sheet, sheetAllowedDetents: [1] }} />
       </Stack>
     </>
   );

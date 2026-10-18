@@ -21,7 +21,9 @@ describe('ItemRow', () => {
   });
 
   it('omits a missing secondary from the label', async () => {
-    await render(<ItemRow name="Rodízio de pneus" urgency="ok" primary="Em ~4 meses" secondary={null} />);
+    await render(
+      <ItemRow name="Rodízio de pneus" urgency="ok" primary="Em ~4 meses" secondary={null} />,
+    );
 
     expect(screen.getByLabelText('Rodízio de pneus. Em dia. Em ~4 meses')).toBeOnTheScreen();
   });
@@ -32,9 +34,9 @@ describe('ItemRow', () => {
       <ItemRow name="Freios" urgency="attention" primary="Vence em 30 dias" onPress={onPress} />,
     );
 
-    await userEvent.setup().press(
-      screen.getByRole('button', { name: 'Freios. Atenção. Vence em 30 dias' }),
-    );
+    await userEvent
+      .setup()
+      .press(screen.getByRole('button', { name: 'Freios. Atenção. Vence em 30 dias' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
@@ -50,7 +52,12 @@ describe('ItemRow', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
 
     await screen.rerender(
-      <ItemRow name="Troca de óleo" urgency="attention" primary="Vence em 30 dias" action={action} />,
+      <ItemRow
+        name="Troca de óleo"
+        urgency="attention"
+        primary="Vence em 30 dias"
+        action={action}
+      />,
     );
     expect(screen.queryByRole('button', { name: 'Registrar troca' })).not.toBeOnTheScreen();
   });
@@ -78,13 +85,25 @@ describe('ItemRow', () => {
   });
 
   it('marks the selected row with a check and the selected state', async () => {
-    await render(<ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" selected onPress={jest.fn()} />);
+    await render(
+      <ItemRow
+        name="Meu Sandero"
+        urgency="ok"
+        primary="Tudo em dia"
+        selected
+        onPress={jest.fn()}
+      />,
+    );
 
     expect(screen.getByRole('button', { name: 'Meu Sandero. Em dia. Tudo em dia' })).toBeSelected();
     expect(screen.getByTestId('icon-check', hidden)).toBeOnTheScreen();
 
-    await screen.rerender(<ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" onPress={jest.fn()} />);
-    expect(screen.getByRole('button', { name: 'Meu Sandero. Em dia. Tudo em dia' })).not.toBeSelected();
+    await screen.rerender(
+      <ItemRow name="Meu Sandero" urgency="ok" primary="Tudo em dia" onPress={jest.fn()} />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Meu Sandero. Em dia. Tudo em dia' }),
+    ).not.toBeSelected();
     expect(screen.queryByTestId('icon-check', hidden)).not.toBeOnTheScreen();
   });
 

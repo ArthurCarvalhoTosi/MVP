@@ -34,10 +34,15 @@ export function SpecStrip({ items, onEdit }: Props) {
       <View style={styles.grid}>
         {items.map((item) => {
           const { value } = item;
-          const plaqueStyle = ({ pressed }: { pressed: boolean }) => [
-            styles.plaque,
-            { flexBasis: basis, borderColor: c.line, backgroundColor: pressed ? c.line : c.surface },
-          ] as const;
+          const plaqueStyle = ({ pressed }: { pressed: boolean }) =>
+            [
+              styles.plaque,
+              {
+                flexBasis: basis,
+                borderColor: c.line,
+                backgroundColor: pressed ? c.line : c.surface,
+              },
+            ] as const;
           const icon = <Icon name={item.icon} size={20} color={c.inkMuted} />;
 
           if (!value) {

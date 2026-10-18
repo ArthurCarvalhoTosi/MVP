@@ -13,7 +13,7 @@ import {
   vehiclesQuery,
 } from '@/db/repo';
 import { buildFeed, formatKm, projectOdometer, todayISO, vehicleStatus } from '@/domain';
-import { Button, FormError, Icon, ItemRow, Screen, Section, useTheme } from '@/ui';
+import { Button, FormError, Icon, ItemRow, Screen, Section, space, useTheme } from '@/ui';
 
 export default function Vehicles() {
   const db = useDb();
@@ -27,7 +27,8 @@ export default function Vehicles() {
 
   const failed = cars.error ?? selected.error ?? items.error ?? readings.error;
   if (failed) throw failed;
-  if (!cars.updatedAt || !selected.updatedAt || !items.updatedAt || !readings.updatedAt) return null;
+  if (!cars.updatedAt || !selected.updatedAt || !items.updatedAt || !readings.updatedAt)
+    return null;
 
   // Same fallback as the dashboard, so the check mark is on the car it shows.
   const current = cars.data.find((v) => v.id === selected.data[0]?.value) ?? cars.data[0];
@@ -94,7 +95,9 @@ export default function Vehicles() {
                 <View style={styles.actions}>
                   <Pressable
                     // Replace, not push: on iOS a pushed screen would open underneath this sheet.
-                    onPress={() => router.replace({ pathname: '/rename-vehicle', params: { vehicleId: v.id } })}
+                    onPress={() =>
+                      router.replace({ pathname: '/rename-vehicle', params: { vehicleId: v.id } })
+                    }
                     accessibilityRole="button"
                     accessibilityLabel={`Renomear ${v.nickname}`}
                     style={({ pressed }) => [styles.action, pressed && { backgroundColor: c.line }]}
@@ -117,7 +120,19 @@ export default function Vehicles() {
       </Section>
       <FormError error={error} />
       {/* Replace, not push: on iOS a pushed screen would open underneath this sheet. */}
-      <Button variant="secondary" label="Adicionar carro" onPress={() => router.replace('/onboarding')} />
+      <Button
+        variant="secondary"
+        label="Adicionar carro"
+        onPress={() => router.replace('/onboarding')}
+      />
+      <View style={styles.backup}>
+        <Button variant="quiet" label="Fazer backup" onPress={() => router.replace('/backup')} />
+        <Button
+          variant="quiet"
+          label="Restaurar backup"
+          onPress={() => router.replace('/restore')}
+        />
+      </View>
     </Screen>
   );
 }
@@ -125,4 +140,5 @@ export default function Vehicles() {
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
   action: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  backup: { marginTop: space.l, alignItems: 'flex-start' },
 });

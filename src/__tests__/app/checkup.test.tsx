@@ -12,7 +12,9 @@ jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 beforeEach(async () => {
@@ -40,7 +42,9 @@ test('lists what needs attention in every car, under each car, and nothing that 
   expect(screen.queryByRole('header', { name: 'Meu Gol' })).not.toBeOnTheScreen();
   expect(screen.queryByText(EMPTY)).not.toBeOnTheScreen();
 
-  await userEvent.setup().press(inSection('Meu Sandero').getByRole('button', { name: 'Registrar troca' }));
+  await userEvent
+    .setup()
+    .press(inSection('Meu Sandero').getByRole('button', { name: 'Registrar troca' }));
   expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { itemId: oilId } });
 });
 
@@ -51,10 +55,14 @@ test('snoozes an item for 15 days: it leaves the list and the date is confirmed'
   await userEvent.setup().press(screen.getByRole('button', { name: 'Adiar 15 dias' }));
 
   const until = addDays(todayISO(), 15);
-  expect(db.select().from(maintenanceItems).where(eq(maintenanceItems.id, oilId)).get()?.snoozedUntil).toBe(until);
+  expect(
+    db.select().from(maintenanceItems).where(eq(maintenanceItems.id, oilId)).get()?.snoozedUntil,
+  ).toBe(until);
   await screen.rerender(<Checkup />);
   expect(screen.queryByRole('button', { name: OIL_ROW })).not.toBeOnTheScreen();
-  expect(screen.getByText(`Troca de óleo e filtro: lembrete adiado até ${formatDate(until)}.`)).toBeOnTheScreen();
+  expect(
+    screen.getByText(`Troca de óleo e filtro: lembrete adiado até ${formatDate(until)}.`),
+  ).toBeOnTheScreen();
   expect(screen.getByText(EMPTY)).toBeOnTheScreen();
 });
 
@@ -65,7 +73,9 @@ test('confirms a snooze made from the notification', async () => {
   params.snoozed = oilId;
   await render(<Checkup />);
 
-  expect(screen.getByText(`Troca de óleo e filtro: lembrete adiado até ${formatDate(until)}.`)).toBeOnTheScreen();
+  expect(
+    screen.getByText(`Troca de óleo e filtro: lembrete adiado até ${formatDate(until)}.`),
+  ).toBeOnTheScreen();
 });
 
 test('ignores a snoozed id that no longer exists', async () => {
@@ -81,7 +91,9 @@ test('explains the reminder when nothing is pending', async () => {
 
   expect(screen.getByText(EMPTY)).toBeOnTheScreen();
   expect(
-    screen.getByText('Quando uma troca estiver perto de vencer, ela aparece aqui e no lembrete de sábado, às 9h.'),
+    screen.getByText(
+      'Quando uma troca estiver perto de vencer, ela aparece aqui e no lembrete de sábado, às 9h.',
+    ),
   ).toBeOnTheScreen();
 });
 
@@ -100,7 +112,9 @@ test('offers a test reminder in development builds', async () => {
   const { alert } = spyAlert();
   await render(<Checkup />);
 
-  await userEvent.setup().press(screen.getByRole('button', { name: 'Testar lembrete (desenvolvimento)' }));
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Testar lembrete (desenvolvimento)' }));
 
   // Nothing was planned in this test run, so there is nothing to send.
   expect(alert).toHaveBeenCalledWith('Lembrete de teste', 'Nada pendente para testar.');

@@ -17,7 +17,19 @@ import {
   todayISO,
   type CarModel,
 } from '@/domain';
-import { AppText, Button, ChipGroup, FormError, Icon, Screen, Section, TextField, space, radius, useTheme } from '@/ui';
+import {
+  AppText,
+  Button,
+  ChipGroup,
+  FormError,
+  Icon,
+  Screen,
+  Section,
+  TextField,
+  space,
+  radius,
+  useTheme,
+} from '@/ui';
 
 const SEVERE_OPTIONS = [
   { label: 'Sim', value: true },
@@ -115,6 +127,15 @@ export default function Onboarding() {
       }
     >
       {adding ? <Stack.Screen options={{ title: 'Adicionar carro' }} /> : null}
+      {adding ? null : (
+        <View style={styles.start}>
+          <Button
+            variant="quiet"
+            label="Já usei o app: restaurar backup"
+            onPress={() => router.push('/restore')}
+          />
+        </View>
+      )}
       <View style={styles.fields}>
         <ModelField model={model} onChange={choose} />
         <TextField
@@ -161,7 +182,9 @@ export default function Onboarding() {
           return (
             <Pressable
               key={p.key}
-              onPress={() => setPicked(checked ? picked.filter((k) => k !== p.key) : [...picked, p.key])}
+              onPress={() =>
+                setPicked(checked ? picked.filter((k) => k !== p.key) : [...picked, p.key])
+              }
               accessibilityRole="checkbox"
               accessibilityLabel={`${p.name}. ${interval}`}
               accessibilityState={{ checked }}
@@ -175,7 +198,10 @@ export default function Onboarding() {
                 style={[
                   styles.box,
                   // inkMuted keeps the empty box boundary at >= 3:1, like the other controls.
-                  { borderColor: checked ? c.primary : c.inkMuted, backgroundColor: checked ? c.primary : c.surface },
+                  {
+                    borderColor: checked ? c.primary : c.inkMuted,
+                    backgroundColor: checked ? c.primary : c.surface,
+                  },
                 ]}
               >
                 {checked ? <Icon name="check" size={18} color={c.onPrimary} /> : null}
@@ -201,7 +227,13 @@ export default function Onboarding() {
 // null while searching; 'none' once the user says the car isn't listed.
 type ModelChoice = CarModel | 'none' | null;
 
-function ModelField({ model, onChange }: { model: ModelChoice; onChange: (m: ModelChoice) => void }) {
+function ModelField({
+  model,
+  onChange,
+}: {
+  model: ModelChoice;
+  onChange: (m: ModelChoice) => void;
+}) {
   const { c } = useTheme();
   const [query, setQuery] = useState('');
 
@@ -213,7 +245,9 @@ function ModelField({ model, onChange }: { model: ModelChoice; onChange: (m: Mod
           <AppText variant="caption" color="inkMuted">
             Modelo
           </AppText>
-          <AppText variant="bodyStrong">{m ? `${m.brand} ${m.model} ${m.engine}` : 'Não está na lista'}</AppText>
+          <AppText variant="bodyStrong">
+            {m ? `${m.brand} ${m.model} ${m.engine}` : 'Não está na lista'}
+          </AppText>
           <AppText variant="caption" color="inkMuted">
             {m ? modelYears(m) : 'Depois você preenche óleo, calibragem, palhetas e bateria.'}
           </AppText>
@@ -240,11 +274,18 @@ function ModelField({ model, onChange }: { model: ModelChoice; onChange: (m: Mod
             onPress={() => onChange(m)}
             accessibilityRole="button"
             accessibilityLabel={`${m.brand} ${m.model} ${m.engine}, ${modelYears(m)}`}
-            style={({ pressed }) => [styles.check, { borderBottomColor: c.line }, pressed && { backgroundColor: c.line }]}
+            style={({ pressed }) => [
+              styles.check,
+              { borderBottomColor: c.line },
+              pressed && { backgroundColor: c.line },
+            ]}
           >
             <View style={styles.flex}>
               <AppText variant="bodyStrong">{`${m.brand} ${m.model}`}</AppText>
-              <AppText variant="caption" color="inkMuted">{`${m.engine} · ${modelYears(m)}`}</AppText>
+              <AppText
+                variant="caption"
+                color="inkMuted"
+              >{`${m.engine} · ${modelYears(m)}`}</AppText>
             </View>
             <Icon name="chevron-right" size={20} color={c.inkMuted} />
           </Pressable>
@@ -256,7 +297,11 @@ function ModelField({ model, onChange }: { model: ModelChoice; onChange: (m: Mod
         </AppText>
       ) : null}
       <View style={styles.start}>
-        <Button variant="quiet" label="Meu carro não está na lista" onPress={() => onChange('none')} />
+        <Button
+          variant="quiet"
+          label="Meu carro não está na lista"
+          onPress={() => onChange('none')}
+        />
       </View>
     </View>
   );

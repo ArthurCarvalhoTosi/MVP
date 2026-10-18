@@ -19,7 +19,11 @@ describe('FormError', () => {
     expect(screen.getByText('Data inválida.')).toBeOnTheScreen();
 
     await screen.rerender(<FormError error={new OdometerError('above_next')} />);
-    expect(screen.getByText('Esse KM é maior que uma leitura de data posterior. Confira o valor ou a data.')).toBeOnTheScreen();
+    expect(
+      screen.getByText(
+        'Esse KM é maior que uma leitura de data posterior. Confira o valor ou a data.',
+      ),
+    ).toBeOnTheScreen();
   });
 
   it('hides anything else behind a generic message', async () => {

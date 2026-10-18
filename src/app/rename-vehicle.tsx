@@ -1,14 +1,19 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { renameVehicle, vehiclesQuery } from '@/db/repo';
-import { Button, FormError, Screen, Section, TextField } from '@/ui';
+import { Button, FormError, Screen, Section, TextField, space } from '@/ui';
 
 export default function RenameVehicle() {
   const db = useDb();
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs the starting name.
-  const [vehicle] = useState(() => vehiclesQuery(db).all().find((v) => v.id === vehicleId));
+  const [vehicle] = useState(() =>
+    vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId),
+  );
   const [nickname, setNickname] = useState(vehicle?.nickname ?? '');
   const [error, setError] = useState<string>();
   const [saveError, setSaveError] = useState<unknown>(null);
@@ -33,24 +38,25 @@ export default function RenameVehicle() {
   };
 
   return (
-    <Screen
-      scroll
-      footer={
-        <>
+    // Button inline, not in the footer: a pinned footer falls below the fold at the half-height detent.
+    <Screen scroll>
+      <Section title="Renomear carro">
+        <View style={styles.body}>
+          <TextField
+            label="Como você chama o carro?"
+            placeholder="Meu Sandero 2018"
+            value={nickname}
+            onChangeText={setNickname}
+            error={error}
+          />
           <FormError error={saveError} />
           <Button label="Salvar nome" loading={saving} onPress={save} />
-        </>
-      }
-    >
-      <Section title="Renomear carro">
-        <TextField
-          label="Como você chama o carro?"
-          placeholder="Meu Sandero 2018"
-          value={nickname}
-          onChangeText={setNickname}
-          error={error}
-        />
+        </View>
       </Section>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  body: { gap: space.l },
+});

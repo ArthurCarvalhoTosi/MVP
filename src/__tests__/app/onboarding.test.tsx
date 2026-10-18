@@ -1,14 +1,29 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import Onboarding from '@/app/onboarding';
 import type { Db } from '@/db/client';
-import { itemsQuery, readingsQuery, selectedVehicleIdQuery, specsQuery, vehiclesQuery } from '@/db/repo';
-import { CAR_MODELS, modelSpecs, modelYears, suggestedNickname, todayISO, type CarModel } from '@/domain';
+import {
+  itemsQuery,
+  readingsQuery,
+  selectedVehicleIdQuery,
+  specsQuery,
+  vehiclesQuery,
+} from '@/db/repo';
+import {
+  CAR_MODELS,
+  modelSpecs,
+  modelYears,
+  suggestedNickname,
+  todayISO,
+  type CarModel,
+} from '@/domain';
 import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 beforeEach(async () => {
@@ -17,7 +32,8 @@ beforeEach(async () => {
 
 const checkbox = (name: RegExp) => screen.getByRole('checkbox', { name });
 const search = () => screen.getByLabelText('Qual é o modelo?');
-const result = (m: CarModel) => screen.getByRole('button', { name: `${m.brand} ${m.model} ${m.engine}, ${modelYears(m)}` });
+const result = (m: CarModel) =>
+  screen.getByRole('button', { name: `${m.brand} ${m.model} ${m.engine}, ${modelYears(m)}` });
 // A timing-chain engine: its manual has no belt to replace.
 const chainModel = CAR_MODELS.find((m) => m.presets?.timing_belt === null)!;
 
@@ -80,7 +96,11 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
   expect(router.dismissTo).toHaveBeenCalledWith('/');
   const [vehicle] = vehiclesQuery(db).all();
   expect(vehicle).toEqual(
-    expect.objectContaining({ nickname: 'Meu Sandero 2018', monthlyKmEstimate: 1600, severeUse: true }),
+    expect.objectContaining({
+      nickname: 'Meu Sandero 2018',
+      monthlyKmEstimate: 1600,
+      severeUse: true,
+    }),
   );
   expect(readingsQuery(db, vehicle.id).all()).toEqual([{ km: 46250, readAt: todayISO() }]);
   const items = itemsQuery(db, vehicle.id).all();
@@ -96,12 +116,24 @@ test('creates the vehicle with the chosen pace, severe intervals and items, then
   expect(items.every((i) => i.baselineKm === 46250 && i.baselineDate === todayISO())).toBe(true);
 });
 
+test('on first use offers to restore a backup instead', async () => {
+  await render(<Onboarding />);
+
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Já usei o app: restaurar backup' }));
+  expect(router.push).toHaveBeenCalledWith('/restore');
+});
+
 test('adds another car and opens it in the garage', async () => {
   await seedVehicle(db);
   await render(<Onboarding />);
   const user = userEvent.setup();
 
   expect(screen.getByRole('header', { name: 'Adicionar carro' })).toBeOnTheScreen();
+  expect(
+    screen.queryByRole('button', { name: 'Já usei o app: restaurar backup' }),
+  ).not.toBeOnTheScreen();
   await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Gol');
   await user.type(screen.getByLabelText('Hodômetro atual, km'), '80000');
   await user.press(screen.getByRole('button', { name: 'Adicionar carro' }));
@@ -121,8 +153,12 @@ test('finds the model, suggests a nickname, skips what the engine lacks and fill
   await user.press(result(chainModel));
 
   expect(screen.queryByLabelText('Qual é o modelo?')).not.toBeOnTheScreen();
-  expect(screen.getByText(`${chainModel.brand} ${chainModel.model} ${chainModel.engine}`)).toBeOnTheScreen();
-  expect(screen.getByLabelText('Como você chama o carro?')).toHaveDisplayValue(suggestedNickname(chainModel));
+  expect(
+    screen.getByText(`${chainModel.brand} ${chainModel.model} ${chainModel.engine}`),
+  ).toBeOnTheScreen();
+  expect(screen.getByLabelText('Como você chama o carro?')).toHaveDisplayValue(
+    suggestedNickname(chainModel),
+  );
   expect(screen.queryByRole('checkbox', { name: /^Correia dentada/ })).not.toBeOnTheScreen();
 
   await user.type(screen.getByLabelText('Hodômetro atual, km'), '30000');
@@ -130,9 +166,17 @@ test('finds the model, suggests a nickname, skips what the engine lacks and fill
 
   expect(router.dismissTo).toHaveBeenCalledWith('/');
   const [vehicle] = vehiclesQuery(db).all();
-  expect(vehicle).toEqual(expect.objectContaining({ modelRef: chainModel.id, nickname: suggestedNickname(chainModel) }));
-  expect(specsQuery(db, vehicle.id).all()[0]).toEqual(expect.objectContaining(modelSpecs(chainModel)));
-  expect(itemsQuery(db, vehicle.id).all().map((i) => i.templateKey)).not.toContain('timing_belt');
+  expect(vehicle).toEqual(
+    expect.objectContaining({ modelRef: chainModel.id, nickname: suggestedNickname(chainModel) }),
+  );
+  expect(specsQuery(db, vehicle.id).all()[0]).toEqual(
+    expect.objectContaining(modelSpecs(chainModel)),
+  );
+  expect(
+    itemsQuery(db, vehicle.id)
+      .all()
+      .map((i) => i.templateKey),
+  ).not.toContain('timing_belt');
 });
 
 test('never overwrites a nickname the user typed, only its own suggestion', async () => {
@@ -169,7 +213,9 @@ test('goes on without a model when the car is not listed, leaving the cola de bo
   await user.press(screen.getByRole('button', { name: 'Meu carro não está na lista' }));
 
   expect(screen.getByText('Não está na lista')).toBeOnTheScreen();
-  expect(screen.getByText('Depois você preenche óleo, calibragem, palhetas e bateria.')).toBeOnTheScreen();
+  expect(
+    screen.getByText('Depois você preenche óleo, calibragem, palhetas e bateria.'),
+  ).toBeOnTheScreen();
   expect(checkbox(/^Correia dentada/)).toBeChecked();
 
   await user.type(screen.getByLabelText('Como você chama o carro?'), 'Meu Fusca');
@@ -178,6 +224,8 @@ test('goes on without a model when the car is not listed, leaving the cola de bo
 
   const [vehicle] = vehiclesQuery(db).all();
   expect(vehicle.modelRef).toBeNull();
-  expect(specsQuery(db, vehicle.id).all()[0]).toEqual(expect.objectContaining({ oilSpec: null, tireFrontPsi: null, battery: null }));
+  expect(specsQuery(db, vehicle.id).all()[0]).toEqual(
+    expect.objectContaining({ oilSpec: null, tireFrontPsi: null, battery: null }),
+  );
   expect(itemsQuery(db, vehicle.id).all()).toHaveLength(5);
 });

@@ -41,7 +41,9 @@ export function NotificationPrompt() {
     setAsking(true);
     try {
       await setupNotifications();
-      const p = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowSound: true } });
+      const p = await Notifications.requestPermissionsAsync({
+        ios: { allowAlert: true, allowSound: true },
+      });
       if (p.granted) await rescheduleDigest();
     } catch {
       // The app works the same without reminders.
@@ -53,8 +55,8 @@ export function NotificationPrompt() {
     <View style={styles.block}>
       <AppText variant="bodyStrong">Quer um lembrete aos sábados?</AppText>
       <AppText color="inkMuted">
-        Aos sábados, às 9h, o Garagem avisa quais trocas estão chegando nos seus carros. Se estiver tudo em dia, ele
-        não avisa.
+        Aos sábados, às 9h, o Garagem avisa quais trocas estão chegando nos seus carros. Se estiver
+        tudo em dia, ele não avisa.
       </AppText>
       <View style={styles.actions}>
         <Button variant="secondary" label="Ativar lembretes" loading={asking} onPress={enable} />

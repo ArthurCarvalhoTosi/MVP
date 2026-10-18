@@ -38,7 +38,11 @@ describe('buildFeed', () => {
 
   it('breaks due-date ties by name in pt-BR order (accents included)', () => {
     const feed = buildFeed(
-      [item('Pneus', { intervalKm: 5000 }), item('Óleo', { intervalKm: 5000 }), item('Filtro', { intervalKm: 5000 })],
+      [
+        item('Pneus', { intervalKm: 5000 }),
+        item('Óleo', { intervalKm: 5000 }),
+        item('Filtro', { intervalKm: 5000 }),
+      ],
       readings,
       1500,
       today,
@@ -49,7 +53,11 @@ describe('buildFeed', () => {
   it('puts items without a forecast last, then by name', () => {
     // Rate 0: km-only items never come due, so they have no date.
     const feed = buildFeed(
-      [item('Zeta', { intervalKm: 5000 }), item('Alfa', { intervalKm: 5000 }), item('Meio', { intervalMonths: 6 })],
+      [
+        item('Zeta', { intervalKm: 5000 }),
+        item('Alfa', { intervalKm: 5000 }),
+        item('Meio', { intervalMonths: 6 }),
+      ],
       readings,
       0,
       today,
@@ -65,11 +73,21 @@ describe('buildFeed', () => {
   });
 
   it('returns empty groups for no items', () => {
-    expect(buildFeed([], readings, 1500, today)).toEqual({ critical: [], attention: [], ok: [], next: null });
+    expect(buildFeed([], readings, 1500, today)).toEqual({
+      critical: [],
+      attention: [],
+      ok: [],
+      next: null,
+    });
   });
 
   it('keeps the caller item shape', () => {
-    const feed = buildFeed([{ ...item('Óleo', { intervalMonths: 12 }), id: 'abc' }], readings, 1500, today);
+    const feed = buildFeed(
+      [{ ...item('Óleo', { intervalMonths: 12 }), id: 'abc' }],
+      readings,
+      1500,
+      today,
+    );
     expect(feed.ok[0].item.id).toBe('abc');
   });
 });
@@ -78,10 +96,14 @@ describe('vehicleStatus', () => {
   const critical = item('Overdue', { intervalKm: 5000, baselineKm: 30000 });
   const attention = item('Attention', { intervalKm: 1000 }); // 20 days
   const ok = item('Ok', { intervalMonths: 12 });
-  const status = (items: ReturnType<typeof item>[]) => vehicleStatus(buildFeed(items, readings, 1500, today));
+  const status = (items: ReturnType<typeof item>[]) =>
+    vehicleStatus(buildFeed(items, readings, 1500, today));
 
   it('reports the critical count first, even with attention items', () => {
-    expect(status([critical, attention, ok])).toEqual({ urgency: 'critical', label: '1 troca vencida ou próxima' });
+    expect(status([critical, attention, ok])).toEqual({
+      urgency: 'critical',
+      label: '1 troca vencida ou próxima',
+    });
     expect(status([critical, { ...critical, name: 'Overdue 2' }])).toEqual({
       urgency: 'critical',
       label: '2 trocas vencidas ou próximas',

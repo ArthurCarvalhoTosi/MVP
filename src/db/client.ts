@@ -2,6 +2,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { getRandomBytes } from 'expo-crypto';
+import { Directory, Paths } from 'expo-file-system';
 import * as SecureStore from 'expo-secure-store';
 import { deleteDatabaseSync, openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import migrations from '../../drizzle/migrations';
@@ -26,7 +27,8 @@ let openHandle: SQLiteDatabase | undefined;
 
 export async function openDatabase(): Promise<Db> {
   const stored = await SecureStore.getItemAsync(KEY_NAME);
-  const key = stored ?? Array.from(getRandomBytes(32), (b) => b.toString(16).padStart(2, '0')).join('');
+  const key =
+    stored ?? Array.from(getRandomBytes(32), (b) => b.toString(16).padStart(2, '0')).join('');
 
   const sqlite = openDatabaseSync(DB_NAME, { enableChangeListener: true });
   try {
@@ -67,7 +69,9 @@ function unlock(sqlite: SQLiteDatabase, key: string, keyIsNew: boolean) {
     // The original error is dropped on purpose: it could echo the PRAGMA key statement.
     // Only a missing key means the file can never be read (and may be reset); with a stored key the
     // failure may be transient (I/O, busy) and the data intact.
-    throw keyIsNew ? new DatabaseKeyError('Database key missing') : new Error('Database could not be read');
+    throw keyIsNew
+      ? new DatabaseKeyError('Database key missing')
+      : new Error('Database could not be read');
   }
 }
 
@@ -86,4 +90,11 @@ export async function resetDatabase(): Promise<void> {
     if (!(e instanceof Error && /not found/i.test(e.message))) throw e;
   }
   await SecureStore.deleteItemAsync(KEY_NAME);
+  // Same folder src/attachments writes to. Files stay encrypted, but they are still the user's data.
+  try {
+    const dir = new Directory(Paths.document, 'attachments');
+    if (dir.exists) dir.delete();
+  } catch {
+    // Best effort: leftovers are unreadable without the photo key, which is also device-only.
+  }
 }
