@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
-import { MAX_KM, READING_ERRORS, ValidationError } from '@/domain';
+import { CAR_MODELS, MAX_KM, modelSpecs, READING_ERRORS, ValidationError } from '@/domain';
 import type { Db } from '../client';
 import {
   addOdometerReading,
@@ -95,7 +95,7 @@ describe('createVehicle', () => {
 
     expect(selectedVehicleIdQuery(db).all()).toEqual([{ value: vehicleId }]);
     expect(vehiclesQuery(db).all()).toEqual([
-      expect.objectContaining({ id: vehicleId, nickname: 'Meu carro', vehicleType: 'car', monthlyKmEstimate: 1000, severeUse: false }),
+      expect.objectContaining({ id: vehicleId, nickname: 'Meu carro', vehicleType: 'car', modelRef: null, monthlyKmEstimate: 1000, severeUse: false }),
     ]);
     expect(db.select().from(odometerReadings).all()).toEqual([
       expect.objectContaining({ vehicleId, km: 50000, readAt: TODAY, source: 'onboarding' }),
@@ -131,6 +131,20 @@ describe('createVehicle', () => {
     await expectValidation(seed(overrides), message);
     expect(db.select().from(vehicles).all()).toEqual([]);
     expect(db.select().from(devicePrefs).all()).toEqual([]);
+  });
+
+  test('with a seed model, stores its id and copies its specs into the cola de bolso', async () => {
+    const model = CAR_MODELS.find((m) => m.oil && m.tireFrontPsi && m.batteryAh)!;
+    const vehicleId = await seed({ modelRef: model.id });
+
+    expect(vehiclesQuery(db).all()[0].modelRef).toBe(model.id);
+    expect(specsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ vehicleId, ...modelSpecs(model) })]);
+  });
+
+  test('rejects a model missing from the seed and writes nothing', async () => {
+    await expectValidation(seed({ modelRef: 'carro-que-nao-existe' }), 'Modelo não encontrado.');
+    expect(db.select().from(vehicles).all()).toEqual([]);
+    expect(db.select().from(vehicleSpecs).all()).toEqual([]);
   });
 
   test('a second vehicle becomes the selected one', async () => {

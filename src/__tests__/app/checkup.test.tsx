@@ -19,7 +19,7 @@ beforeEach(async () => {
   db = await setupScreen();
 });
 
-const OIL_ROW = /^Troca de óleo e filtro\. Crítico\. Vencido/;
+const OIL_ROW = /^Troca de óleo e filtro\. Crítico\. Passou/;
 const EMPTY = 'Nenhum lembrete para esta semana.';
 const inSection = (car: string) => {
   // A car's rows follow its header; the header's parent holds both.

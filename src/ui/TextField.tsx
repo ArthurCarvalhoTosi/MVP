@@ -23,6 +23,8 @@ type Props = {
   placeholder?: string;
   maxLength?: number;
   selectTextOnFocus?: boolean;
+  /** Off for names the keyboard doesn't know (car models): Android would "fix" onix into onyx. */
+  autoCorrect?: boolean;
 };
 
 export function TextField({
@@ -37,6 +39,7 @@ export function TextField({
   placeholder,
   maxLength,
   selectTextOnFocus,
+  autoCorrect,
 }: Props) {
   const { c } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -78,6 +81,7 @@ export function TextField({
           placeholder={placeholder}
           maxLength={maxLength}
           selectTextOnFocus={selectTextOnFocus}
+          autoCorrect={autoCorrect}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           accessibilityLabel={[label, prefix ?? suffix].filter(Boolean).join(', ')}
