@@ -19,6 +19,7 @@ const glyphs = {
   speedometer: { ios: 'speedometer', android: 'speed' },
   calendar: { ios: 'calendar', android: 'calendar_today' },
   camera: { ios: 'camera', android: 'photo_camera' },
+  'image-multiple': { ios: 'photo.on.rectangle', android: 'photo_library' },
   'share-variant': { ios: 'square.and.arrow.up', android: 'share' },
   'file-pdf-box': { ios: 'doc.richtext', android: 'picture_as_pdf' },
   car: { ios: 'car.fill', android: 'directions_car' },
