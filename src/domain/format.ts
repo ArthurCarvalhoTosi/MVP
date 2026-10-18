@@ -4,7 +4,12 @@ import type { Due } from './due';
 const kmFormat = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 const brlFormat = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 // timeZone UTC pairs with the UTC midnight below so the calendar day never shifts.
-const dateFormat = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const dateFormat = new Intl.DateTimeFormat('pt-BR', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 export function formatKm(km: number): string {
   return `${kmFormat.format(km)} km`;
@@ -43,7 +48,11 @@ export function intervalLabel(intervalKm: number | null, intervalMonths: number 
 }
 
 /** "32 / 30 psi"; a missing side shows "–", both missing is null. */
-export function formatPair(a?: string | number | null, b?: string | number | null, unit?: string): string | null {
+export function formatPair(
+  a?: string | number | null,
+  b?: string | number | null,
+  unit?: string,
+): string | null {
   if (a == null && b == null) return null;
   return `${a ?? '–'} / ${b ?? '–'}${unit ? ` ${unit}` : ''}`;
 }

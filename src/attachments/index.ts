@@ -1,6 +1,12 @@
 // Receipt photos: re-encoded without metadata, then kept only as AES-256-GCM files in the app's
 // documents folder. The plain JPEG lives in memory (base64) and never stays on disk.
-import { AESEncryptionKey, AESKeySize, AESSealedData, aesDecryptAsync, aesEncryptAsync } from 'expo-crypto';
+import {
+  AESEncryptionKey,
+  AESKeySize,
+  AESSealedData,
+  aesDecryptAsync,
+  aesEncryptAsync,
+} from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as SecureStore from 'expo-secure-store';
@@ -21,8 +27,15 @@ const QUALITY = 0.7;
 export async function preparePhoto(pickedUri: string): Promise<string> {
   let savedUri: string | undefined;
   try {
-    const image = await ImageManipulator.manipulate(pickedUri, { maxWidth: MAX_SIDE, maxHeight: MAX_SIDE }).renderAsync();
-    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: QUALITY, base64: true });
+    const image = await ImageManipulator.manipulate(pickedUri, {
+      maxWidth: MAX_SIDE,
+      maxHeight: MAX_SIDE,
+    }).renderAsync();
+    const saved = await image.saveAsync({
+      format: SaveFormat.JPEG,
+      compress: QUALITY,
+      base64: true,
+    });
     savedUri = saved.uri;
     if (!saved.base64) throw new Error('Photo came back without data');
     return saved.base64;
@@ -75,7 +88,8 @@ export async function saveWithPhoto(
  */
 export function deleteRemovedPhotos(db: Db): void {
   try {
-    for (const { filePath } of removedAttachmentsQuery(db).all()) discard(new File(Paths.document, filePath));
+    for (const { filePath } of removedAttachmentsQuery(db).all())
+      discard(new File(Paths.document, filePath));
   } catch {
     // Best effort, see above.
   }

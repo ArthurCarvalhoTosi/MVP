@@ -25,6 +25,7 @@ Importe pelo alias `@/` (`@/domain`, `@/db/repo`, `@/ui`). `src/domain` não imp
 npm test             # Jest: domínio, banco (sql.js + migrations reais), componentes e telas
 npm run typecheck
 npm run lint         # inclui as regras do React Compiler
+npm run format       # Prettier; o editor também formata ao salvar
 npm run db:generate  # depois de mudar src/db/schema.ts
 npx expo run:android # dev build; o Expo Go não funciona (SQLCipher exige build nativo)
 ```

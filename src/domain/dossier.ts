@@ -36,7 +36,12 @@ export function dossierFileName(nickname: string, generatedOn: ISODate): string 
 }
 
 const escape = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 /**
  * The resale dossier as a self-contained HTML page for expo-print. Leaves out notes, plate and VIN

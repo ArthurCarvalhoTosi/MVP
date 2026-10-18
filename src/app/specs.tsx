@@ -13,7 +13,9 @@ export default function Specs() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
-    const vehicle = vehiclesQuery(db).all().find((v) => v.id === vehicleId);
+    const vehicle = vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId);
     return vehicle ? { vehicleId: vehicle.id, specs: specsQuery(db, vehicle.id).all()[0] } : null;
   });
   const s = start?.specs;
@@ -78,15 +80,33 @@ export default function Specs() {
     >
       <Section title="Cola de bolso">
         <View style={styles.fields}>
-          <AppText color="inkMuted">Valores de referência. Confira no manual do proprietário.</AppText>
+          <AppText color="inkMuted">
+            Valores de referência. Confira no manual do proprietário.
+          </AppText>
           <TextField label="Óleo" placeholder="5W-30 sintético" {...bind('oil')} />
-          <TextField label="Pneu dianteiro" suffix="psi" keyboardType="number-pad" error={errors.front} {...bind('front')} />
-          <TextField label="Pneu traseiro" suffix="psi" keyboardType="number-pad" error={errors.rear} {...bind('rear')} />
+          <TextField
+            label="Pneu dianteiro"
+            suffix="psi"
+            keyboardType="number-pad"
+            error={errors.front}
+            {...bind('front')}
+          />
+          <TextField
+            label="Pneu traseiro"
+            suffix="psi"
+            keyboardType="number-pad"
+            error={errors.rear}
+            {...bind('rear')}
+          />
           <AppText variant="caption" color="inkMuted">
             A calibragem fica numa etiqueta na porta do motorista ou na tampa do tanque.
           </AppText>
           <TextField label="Palheta do motorista" placeholder='Ex.: 22"' {...bind('wiperDriver')} />
-          <TextField label="Palheta do passageiro" placeholder='Ex.: 16"' {...bind('wiperPassenger')} />
+          <TextField
+            label="Palheta do passageiro"
+            placeholder='Ex.: 16"'
+            {...bind('wiperPassenger')}
+          />
           <TextField label="Bateria" placeholder="60 Ah" {...bind('battery')} />
         </View>
       </Section>

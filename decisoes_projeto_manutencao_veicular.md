@@ -118,7 +118,7 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 | Notificações | `expo-notifications` (agendamento 100% local) |
 | PDF | `expo-print` (HTML → PDF no aparelho) |
 | Backend (v1) | **Supabase**: Auth, Postgres + RLS, Storage, Edge Functions |
-| Qualidade | Jest + React Native Testing Library + sql.js; ESLint (`eslint-config-expo`, com regras do React Compiler); TypeScript strict |
+| Qualidade | Jest + React Native Testing Library + sql.js; ESLint (`eslint-config-expo`, com regras do React Compiler); Prettier (formata ao salvar); TypeScript strict |
 
 *Versões em uso:* Expo SDK 58, React Native 0.88, React 19 (React Compiler ativo), expo-router 58, Drizzle 0.45. Ícones via `expo-symbols` (SF Symbols / Material Symbols) — `@expo/vector-icons` não vem mais no SDK.
 
@@ -339,7 +339,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 * "Hoje" atualizado ao voltar ao app; proteção contra toque duplo; teclado não cobre o botão de salvar; perguntas de múltipla escolha lidas pelo leitor de tela; mensagens de erro só em pt-BR.
 
 **Ambiente e validação (2026-10-16)**
-* ESLint configurado (inclui regras do React Compiler), sem avisos.
+* ESLint configurado (inclui regras do React Compiler), sem avisos. Prettier formata ao salvar e via `npm run format`.
 * App rodando no emulador Android (dev build). Confirmado no aparelho: o arquivo do banco está cifrado.
 * Build Windows documentado no README (CMake 3.31.6 por causa do limite de 260 caracteres do ninja antigo).
 * Botões só de texto alinhados à coluna.

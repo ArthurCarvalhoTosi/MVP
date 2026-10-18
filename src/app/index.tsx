@@ -3,11 +3,35 @@ import { Redirect, router, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
-import { itemsQuery, readingsQuery, selectedVehicleIdQuery, specsQuery, vehiclesQuery } from '@/db/repo';
+import {
+  itemsQuery,
+  readingsQuery,
+  selectedVehicleIdQuery,
+  specsQuery,
+  vehiclesQuery,
+} from '@/db/repo';
 import type { vehicles } from '@/db/schema';
-import { buildFeed, dueLabel, formatPair, isProjectionStale, projectOdometer, todayISO } from '@/domain';
+import {
+  buildFeed,
+  dueLabel,
+  formatPair,
+  isProjectionStale,
+  projectOdometer,
+  todayISO,
+} from '@/domain';
 import { NotificationPrompt } from '@/notifications/NotificationPrompt';
-import { AppText, Button, Icon, ItemRow, Odometer, Screen, Section, SpecStrip, space, useTheme } from '@/ui';
+import {
+  AppText,
+  Button,
+  Icon,
+  ItemRow,
+  Odometer,
+  Screen,
+  Section,
+  SpecStrip,
+  space,
+  useTheme,
+} from '@/ui';
 
 export default function Dashboard() {
   const db = useDb();
@@ -24,7 +48,10 @@ export default function Dashboard() {
   return (
     <>
       <Stack.Screen
-        options={{ title: vehicle.nickname, headerTitle: () => <CarSwitcher nickname={vehicle.nickname} /> }}
+        options={{
+          title: vehicle.nickname,
+          headerTitle: () => <CarSwitcher nickname={vehicle.nickname} />,
+        }}
       />
       {/* Keyed: useLiveQuery keeps the previous car's data while it reloads, so a fresh mount
           waits for the new car instead of rolling the drums between two cars' numbers. */}
@@ -124,8 +151,18 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
         <SpecStrip
           items={[
             { key: 'oil', icon: 'oil', label: 'Óleo', value: s?.oilSpec ?? null },
-            { key: 'tires', icon: 'car-tire-alert', label: 'Calibragem', value: formatPair(s?.tireFrontPsi, s?.tireRearPsi, 'psi') },
-            { key: 'wipers', icon: 'wiper', label: 'Palhetas', value: formatPair(s?.wiperDriver, s?.wiperPassenger) },
+            {
+              key: 'tires',
+              icon: 'car-tire-alert',
+              label: 'Calibragem',
+              value: formatPair(s?.tireFrontPsi, s?.tireRearPsi, 'psi'),
+            },
+            {
+              key: 'wipers',
+              icon: 'wiper',
+              label: 'Palhetas',
+              value: formatPair(s?.wiperDriver, s?.wiperPassenger),
+            },
             { key: 'battery', icon: 'car-battery', label: 'Bateria', value: s?.battery ?? null },
           ]}
           onEdit={() => router.push({ pathname: '/specs', params })}

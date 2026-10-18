@@ -49,7 +49,9 @@ export default function Checkup() {
     const sent = await sendTestDigest().catch(() => false);
     Alert.alert(
       'Lembrete de teste',
-      sent ? 'Chega em 10 segundos. Feche o app para testar a abertura pelo lembrete.' : 'Nada pendente para testar.',
+      sent
+        ? 'Chega em 10 segundos. Feche o app para testar a abertura pelo lembrete.'
+        : 'Nada pendente para testar.',
     );
   };
 
@@ -69,7 +71,8 @@ export default function Checkup() {
         <View style={styles.block}>
           <AppText variant="lead">Nenhum lembrete para esta semana.</AppText>
           <AppText color="inkMuted">
-            Quando uma troca estiver perto de vencer, ela aparece aqui e no lembrete de sábado, às 9h.
+            Quando uma troca estiver perto de vencer, ela aparece aqui e no lembrete de sábado, às
+            9h.
           </AppText>
         </View>
       ) : (

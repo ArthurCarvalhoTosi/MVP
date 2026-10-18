@@ -8,7 +8,9 @@ import { router, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => {}) }));
 const mockFile = { uri: 'file:///cache/Garagem-backup.bkp', exists: true, delete: jest.fn() };
 jest.mock('@/backup', () => ({ MIN_PASSWORD: 8, createBackupFile: jest.fn(async () => mockFile) }));
@@ -36,7 +38,10 @@ test('creates the file with the password, shares it, deletes the copy and closes
   await fill('minha senha', 'minha senha');
 
   expect(createMock).toHaveBeenCalledWith(db, 'minha senha', todayISO());
-  expect(shareMock).toHaveBeenCalledWith(mockFile.uri, expect.objectContaining({ dialogTitle: 'Salvar backup' }));
+  expect(shareMock).toHaveBeenCalledWith(
+    mockFile.uri,
+    expect.objectContaining({ dialogTitle: 'Salvar backup' }),
+  );
   expect(mockFile.delete).toHaveBeenCalled();
   expect(router.back).toHaveBeenCalled();
 });

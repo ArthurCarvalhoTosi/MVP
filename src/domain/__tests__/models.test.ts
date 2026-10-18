@@ -63,17 +63,20 @@ describe('seed file', () => {
     expect(inRange(m.batteryAh, 30, 120)).toBe(true);
   });
 
-  it.each(CAR_MODELS.map((m) => [m.id, m]))('%s only overrides known presets with real intervals', (_, m) => {
-    const keys = PRESETS.map((p) => p.key);
-    for (const [key, schedule] of Object.entries(m.presets ?? {})) {
-      expect(keys).toContain(key);
-      if (!schedule) continue;
-      for (const s of [schedule.normal, schedule.severe]) {
-        expect(s.km !== null || s.months !== null).toBe(true);
-        expect(inRange(s.km, 1000, 300000) && inRange(s.months, 1, 240)).toBe(true);
+  it.each(CAR_MODELS.map((m) => [m.id, m]))(
+    '%s only overrides known presets with real intervals',
+    (_, m) => {
+      const keys = PRESETS.map((p) => p.key);
+      for (const [key, schedule] of Object.entries(m.presets ?? {})) {
+        expect(keys).toContain(key);
+        if (!schedule) continue;
+        for (const s of [schedule.normal, schedule.severe]) {
+          expect(s.km !== null || s.months !== null).toBe(true);
+          expect(inRange(s.km, 1000, 300000) && inRange(s.months, 1, 240)).toBe(true);
+        }
       }
-    }
-  });
+    },
+  );
 
   it.each(CAR_MODELS.map((m) => [m.id, m]))('%s cites a source for every value it has', (_, m) => {
     const needs = {
@@ -115,7 +118,9 @@ describe('searchModels', () => {
     expect(turbo.length).toBeGreaterThan(0);
     expect(turbo.every((m) => m.model.startsWith('Onix') && m.engine.includes('turbo'))).toBe(true);
     expect(searchModels('chevrolet onix')).toEqual(onix);
-    expect(new Set(searchModels('song').map((m) => m.model))).toEqual(new Set(['Song Plus', 'Song Pro']));
+    expect(new Set(searchModels('song').map((m) => m.model))).toEqual(
+      new Set(['Song Plus', 'Song Pro']),
+    );
     expect(new Set(searchModels('hb20').map((m) => m.model))).toEqual(new Set(['HB20', 'HB20S']));
     expect(searchModels('onix xyz')).toEqual([]);
   });
@@ -123,11 +128,15 @@ describe('searchModels', () => {
   it('narrows by model year', () => {
     const corolla2018 = searchModels('corolla 2018');
     expect(corolla2018.length).toBeGreaterThan(0);
-    expect(corolla2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018))).toBe(true);
+    expect(
+      corolla2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018)),
+    ).toBe(true);
     expect(corolla2018.length).toBeLessThan(searchModels('corolla').length);
     const onix2018 = searchModels('onix 2018');
     expect(onix2018.length).toBeGreaterThan(0);
-    expect(onix2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018))).toBe(true);
+    expect(
+      onix2018.every((m) => m.yearFrom <= 2018 && (m.yearTo === null || m.yearTo >= 2018)),
+    ).toBe(true);
   });
 
   it('keeps seed order, best sellers first', () => {
@@ -162,7 +171,14 @@ test('modelSpecs writes values the way the user would type them, keeping gaps em
     wiperPassenger: '16"',
     battery: '60 Ah',
   });
-  const empty = { ...base, oil: null, tireFrontPsi: null, wiperDriver: null, wiperPassenger: null, batteryAh: null };
+  const empty = {
+    ...base,
+    oil: null,
+    tireFrontPsi: null,
+    wiperDriver: null,
+    wiperPassenger: null,
+    batteryAh: null,
+  };
   expect(modelSpecs(empty)).toEqual({
     oilSpec: null,
     tireFrontPsi: null,
@@ -181,12 +197,21 @@ describe('presetsFor', () => {
 
   it('drops what the model does not have and applies its manual intervals', () => {
     const chain = { ...base, presets: { timing_belt: null } };
-    expect(presetsFor(chain).map((p) => p.key)).toEqual(['oil', 'air_filters', 'tire_rotation', 'brakes']);
+    expect(presetsFor(chain).map((p) => p.key)).toEqual([
+      'oil',
+      'air_filters',
+      'tire_rotation',
+      'brakes',
+    ]);
 
     const belt = { normal: { km: 120000, months: null }, severe: { km: 120000, months: null } };
     const longBelt = presetsFor({ ...base, presets: { timing_belt: belt } });
     expect(longBelt).toHaveLength(PRESETS.length);
-    expect(longBelt.find((p) => p.key === 'timing_belt')).toEqual({ key: 'timing_belt', name: 'Correia dentada', ...belt });
+    expect(longBelt.find((p) => p.key === 'timing_belt')).toEqual({
+      key: 'timing_belt',
+      name: 'Correia dentada',
+      ...belt,
+    });
     expect(longBelt.find((p) => p.key === 'oil')).toBe(PRESETS[0]);
   });
 });

@@ -4,13 +4,23 @@ import type { Db } from '@/db/client';
 import * as repo from '@/db/repo';
 import { itemsQuery, logsQuery, readingsQuery, registerMaintenance } from '@/db/repo';
 import { addDays, formatBRL, formatDate, todayISO } from '@/domain';
-import { attachmentsMock, params, redirect, router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
+import {
+  attachmentsMock,
+  params,
+  redirect,
+  router,
+  seedVehicle,
+  setupScreen,
+  spyAlert,
+} from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let vehicleId: string;
@@ -27,7 +37,9 @@ test('invites the first record when there is no history', async () => {
   await render(<History />);
 
   expect(
-    screen.getByText('Nenhuma troca registrada ainda. Quando você registrar a primeira, ela aparece aqui.'),
+    screen.getByText(
+      'Nenhuma troca registrada ainda. Quando você registrar a primeira, ela aparece aqui.',
+    ),
   ).toBeOnTheScreen();
   await userEvent.setup().press(screen.getByRole('button', { name: 'Voltar para a garagem' }));
   expect(router.dismissTo).toHaveBeenCalledWith('/');
@@ -67,7 +79,13 @@ test('opens the PDF export for this car', async () => {
 });
 
 test("shows the history of the car it was opened for, not the first one's", async () => {
-  await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: todayISO(), km: 42000, costCents: 9900 });
+  await registerMaintenance(db, {
+    vehicleId,
+    itemId: oilId,
+    performedAt: todayISO(),
+    km: 42000,
+    costCents: 9900,
+  });
   const gol = await seedVehicle(db, since, { nickname: 'Meu Gol', odometerKm: 80000 });
   await registerMaintenance(db, {
     vehicleId: gol.vehicleId,
@@ -96,7 +114,14 @@ describe('a record', () => {
   const PHOTO = { filePath: 'attachments/a.bin', mime: 'image/jpeg', sizeBytes: 1 };
 
   const seedLog = (attachment?: typeof PHOTO) =>
-    registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: day, km: 41500, notes: 'Oficina do bairro', attachment });
+    registerMaintenance(db, {
+      vehicleId,
+      itemId: oilId,
+      performedAt: day,
+      km: 41500,
+      notes: 'Oficina do bairro',
+      attachment,
+    });
 
   test('shows its notes and opens for editing', async () => {
     await seedLog();
@@ -107,7 +132,10 @@ describe('a record', () => {
     await userEvent.setup().press(screen.getByRole('button', { name: `Editar ${WHAT}` }));
 
     const [log] = logsQuery(db, vehicleId).all();
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { vehicleId, logId: log.id } });
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/register',
+      params: { vehicleId, logId: log.id },
+    });
   });
 
   test('with a photo says so and shows it decrypted on demand', async () => {
@@ -123,9 +151,10 @@ describe('a record', () => {
     await user.press(show);
 
     expect(attachmentsMock.readPhoto).toHaveBeenCalledWith(PHOTO.filePath);
-    expect(screen.getByRole('image', { name: `Foto do comprovante de ${WHAT}` })).toHaveProp('source', [
-      { uri: 'data:image/jpeg;base64,SAVED' },
-    ]);
+    expect(screen.getByRole('image', { name: `Foto do comprovante de ${WHAT}` })).toHaveProp(
+      'source',
+      [{ uri: 'data:image/jpeg;base64,SAVED' }],
+    );
     const hide = screen.getByRole('button', { name: `Ocultar foto do comprovante de ${WHAT}` });
     expect(hide).toBeExpanded();
     await user.press(hide);
@@ -137,7 +166,9 @@ describe('a record', () => {
     await seedLog(PHOTO);
     await render(<History />);
 
-    await userEvent.setup().press(screen.getByRole('button', { name: `Ver foto do comprovante de ${WHAT}` }));
+    await userEvent
+      .setup()
+      .press(screen.getByRole('button', { name: `Ver foto do comprovante de ${WHAT}` }));
 
     expect(screen.getByText('Não foi possível abrir a foto. Tente de novo.')).toBeOnTheScreen();
   });
@@ -161,7 +192,10 @@ describe('a record', () => {
 
     expect(logsQuery(db, vehicleId).all()).toEqual([]);
     expect(readingsQuery(db, vehicleId).all()).toEqual([{ km: 40000, readAt: since }]);
-    expect(itemsQuery(db, vehicleId).all()[0]).toMatchObject({ baselineKm: 40000, baselineDate: since });
+    expect(itemsQuery(db, vehicleId).all()[0]).toMatchObject({
+      baselineKm: 40000,
+      baselineDate: since,
+    });
     expect(attachmentsMock.deleteRemovedPhotos).toHaveBeenCalled();
     await screen.rerender(<History />);
     expect(screen.getByText(/^Nenhuma troca registrada ainda/)).toBeOnTheScreen();
@@ -180,7 +214,9 @@ describe('a record', () => {
     await press('Cancelar');
     expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
 
-    const remove = jest.spyOn(repo, 'removeMaintenance').mockRejectedValueOnce(new Error('disk I/O error'));
+    const remove = jest
+      .spyOn(repo, 'removeMaintenance')
+      .mockRejectedValueOnce(new Error('disk I/O error'));
     await user.press(screen.getByRole('button', { name: `Excluir ${WHAT}` }));
     await press('Excluir');
     expect(screen.getByText('Não foi possível salvar. Tente de novo.')).toBeOnTheScreen();

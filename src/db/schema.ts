@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, sqliteTable, text, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import {
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  type AnySQLiteColumn,
+} from 'drizzle-orm/sqlite-core';
 
 const now = () => new Date().toISOString();
 
@@ -26,7 +33,9 @@ export const odometerReadings = sqliteTable(
   'odometer_readings',
   {
     id: text('id').primaryKey(),
-    vehicleId: text('vehicle_id').notNull().references(() => vehicles.id),
+    vehicleId: text('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id),
     km: integer('km').notNull(),
     readAt: text('read_at').notNull(),
     source: text('source', { enum: ['onboarding', 'adjust', 'log'] }).notNull(),
@@ -41,7 +50,9 @@ export const maintenanceItems = sqliteTable(
   'maintenance_items',
   {
     id: text('id').primaryKey(),
-    vehicleId: text('vehicle_id').notNull().references(() => vehicles.id),
+    vehicleId: text('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id),
     templateKey: text('template_key'),
     name: text('name').notNull(),
     intervalKm: integer('interval_km'),
@@ -68,7 +79,9 @@ export const maintenanceLogs = sqliteTable(
   'maintenance_logs',
   {
     id: text('id').primaryKey(),
-    vehicleId: text('vehicle_id').notNull().references(() => vehicles.id),
+    vehicleId: text('vehicle_id')
+      .notNull()
+      .references(() => vehicles.id),
     itemId: text('item_id').references(() => maintenanceItems.id),
     performedAt: text('performed_at').notNull(),
     km: integer('km').notNull(),
@@ -82,7 +95,9 @@ export const maintenanceLogs = sqliteTable(
 
 export const attachments = sqliteTable('attachments', {
   id: text('id').primaryKey(),
-  logId: text('log_id').notNull().references(() => maintenanceLogs.id),
+  logId: text('log_id')
+    .notNull()
+    .references(() => maintenanceLogs.id),
   filePath: text('file_path').notNull(),
   mime: text('mime').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
@@ -91,7 +106,9 @@ export const attachments = sqliteTable('attachments', {
 });
 
 export const vehicleSpecs = sqliteTable('vehicle_specs', {
-  vehicleId: text('vehicle_id').primaryKey().references(() => vehicles.id),
+  vehicleId: text('vehicle_id')
+    .primaryKey()
+    .references(() => vehicles.id),
   oilSpec: text('oil_spec'),
   tireFrontPsi: integer('tire_front_psi'),
   tireRearPsi: integer('tire_rear_psi'),

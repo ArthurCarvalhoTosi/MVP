@@ -69,20 +69,35 @@ describe('TextField', () => {
 
   it('shows a readable hint under the field', async () => {
     await render(
-      <TextField label="Hodômetro" value="41000" onChangeText={jest.fn()} hint="Valor estimado. Confira no painel do carro." />,
+      <TextField
+        label="Hodômetro"
+        value="41000"
+        onChangeText={jest.fn()}
+        hint="Valor estimado. Confira no painel do carro."
+      />,
     );
     expect(screen.getByText('Valor estimado. Confira no painel do carro.')).toBeVisible();
   });
 
   it('passes length limit and select-on-focus to the input', async () => {
-    await render(<TextField label="Hodômetro" value="" onChangeText={jest.fn()} maxLength={9} selectTextOnFocus />);
+    await render(
+      <TextField
+        label="Hodômetro"
+        value=""
+        onChangeText={jest.fn()}
+        maxLength={9}
+        selectTextOnFocus
+      />,
+    );
     const input = screen.getByLabelText('Hodômetro');
     expect(input).toHaveProp('maxLength', 9);
     expect(input).toHaveProp('selectTextOnFocus', true);
   });
 
   it('hides a password and keeps the keyboard from changing it', async () => {
-    await render(<TextField label="Senha" value="segredo1" onChangeText={jest.fn()} secure autoCorrect />);
+    await render(
+      <TextField label="Senha" value="segredo1" onChangeText={jest.fn()} secure autoCorrect />,
+    );
     const input = screen.getByLabelText('Senha');
     expect(input).toHaveProp('secureTextEntry', true);
     expect(input).toHaveProp('autoCorrect', false);

@@ -1,4 +1,11 @@
-import { backupRows, createVehicle, registerMaintenance, removeMaintenance, selectedVehicleIdQuery, vehiclesQuery } from '@/db/repo';
+import {
+  backupRows,
+  createVehicle,
+  registerMaintenance,
+  removeMaintenance,
+  selectedVehicleIdQuery,
+  vehiclesQuery,
+} from '@/db/repo';
 import type { Db } from '@/db/client';
 import { createTestDb } from '@/db/test-utils/testDb';
 import { ValidationError } from '@/domain';
@@ -9,7 +16,8 @@ const mockFiles = new Map<string, Uint8Array>();
 let mockPhotoCount = 0;
 
 jest.mock('expo-file-system', () => {
-  const join = (parts: (string | { uri: string })[]) => parts.map((p) => (typeof p === 'string' ? p : p.uri)).join('/');
+  const join = (parts: (string | { uri: string })[]) =>
+    parts.map((p) => (typeof p === 'string' ? p : p.uri)).join('/');
   class File {
     uri: string;
     constructor(...parts: (string | { uri: string })[]) {
@@ -42,7 +50,10 @@ jest.mock('@/attachments', () => ({
   }),
   writePhoto: jest.fn(async (base64: string) => {
     const filePath = `attachments/restored-${++mockPhotoCount}.bin`;
-    mockFiles.set(`file:///docs/${filePath}`, Uint8Array.from(base64, (c) => c.charCodeAt(0)));
+    mockFiles.set(
+      `file:///docs/${filePath}`,
+      Uint8Array.from(base64, (c) => c.charCodeAt(0)),
+    );
     return { filePath, mime: 'image/jpeg', sizeBytes: base64.length };
   }),
 }));
@@ -75,19 +86,29 @@ jest.mock('expo-crypto', () => {
     getRandomBytes: (n: number) => new Uint8Array(nodeCrypto.randomBytes(n)),
     AESEncryptionKey,
     AESSealedData,
-    aesEncryptAsync: async (plain: Uint8Array, key: AESEncryptionKey, opts: { additionalData: Uint8Array }) => {
+    aesEncryptAsync: async (
+      plain: Uint8Array,
+      key: AESEncryptionKey,
+      opts: { additionalData: Uint8Array },
+    ) => {
       const iv = nodeCrypto.randomBytes(12);
       const cipher = nodeCrypto.createCipheriv('aes-256-gcm', key.raw, iv);
       cipher.setAAD(opts.additionalData);
       const ct = B.concat([cipher.update(plain), cipher.final()]);
       return new AESSealedData(new Uint8Array(B.concat([iv, ct, cipher.getAuthTag()])));
     },
-    aesDecryptAsync: async (sealed: AESSealedData, key: AESEncryptionKey, opts: { additionalData: Uint8Array }) => {
+    aesDecryptAsync: async (
+      sealed: AESSealedData,
+      key: AESEncryptionKey,
+      opts: { additionalData: Uint8Array },
+    ) => {
       const b = B.from(sealed.bytes);
       const decipher = nodeCrypto.createDecipheriv('aes-256-gcm', key.raw, b.subarray(0, 12));
       decipher.setAAD(opts.additionalData);
       decipher.setAuthTag(b.subarray(b.length - 16));
-      return new Uint8Array(B.concat([decipher.update(b.subarray(12, b.length - 16)), decipher.final()]));
+      return new Uint8Array(
+        B.concat([decipher.update(b.subarray(12, b.length - 16)), decipher.final()]),
+      );
     },
   };
 });
@@ -98,23 +119,40 @@ const mockArgon = jest.fn();
 jest.mock('@noble/hashes/argon2', () => {
   const real = jest.requireActual('@noble/hashes/argon2');
   return {
-    argon2idAsync: async (password: string, salt: Uint8Array, opts: { m: number; t: number; p: number; dkLen: number }) => {
+    argon2idAsync: async (
+      password: string,
+      salt: Uint8Array,
+      opts: { m: number; t: number; p: number; dkLen: number },
+    ) => {
       mockArgon(password, opts);
       return real.argon2id(password, salt, { ...opts, m: 64 });
     },
   };
 });
 
-const { BACKUP_ERRORS, createBackupFile, readBackupFile, restoreBackup } = require('@/backup') as typeof import('@/backup');
+const { BACKUP_ERRORS, createBackupFile, readBackupFile, restoreBackup } =
+  require('@/backup') as typeof import('@/backup');
 const PASSWORD = 'Garagem é 10!';
 const TODAY = '2026-10-17';
-const OIL = { templateKey: 'oil', name: 'Troca de óleo e filtro', intervalKm: 10000, intervalMonths: 12 };
+const OIL = {
+  templateKey: 'oil',
+  name: 'Troca de óleo e filtro',
+  intervalKm: 10000,
+  intervalMonths: 12,
+};
 const ascii = (s: string) => Uint8Array.from(s, (c) => c.charCodeAt(0));
 
 async function seed(db: Db, nickname: string) {
   const vehicleId = await createVehicle(
     db,
-    { nickname, odometerKm: 40000, monthlyKmEstimate: 1000, severeUse: true, modelRef: 'vw-polo-1.0-2018', items: [OIL] },
+    {
+      nickname,
+      odometerKm: 40000,
+      monthlyKmEstimate: 1000,
+      severeUse: true,
+      modelRef: 'vw-polo-1.0-2018',
+      items: [OIL],
+    },
     '2026-01-10',
   );
   return vehicleId;
@@ -139,14 +177,27 @@ beforeEach(async () => {
     notes: 'Oficina do Zé',
     attachment: { filePath: 'attachments/nota.bin', mime: 'image/jpeg', sizeBytes: 12 },
   });
-  await registerMaintenance(db, { vehicleId, itemId: oil.id, performedAt: '2026-02-01', km: 41000 });
-  const removed = db.query.maintenanceLogs.findMany().sync().find((l) => l.km === 41000)!;
+  await registerMaintenance(db, {
+    vehicleId,
+    itemId: oil.id,
+    performedAt: '2026-02-01',
+    km: 41000,
+  });
+  const removed = db.query.maintenanceLogs
+    .findMany()
+    .sync()
+    .find((l) => l.km === 41000)!;
   await removeMaintenance(db, removed.id);
   file = (await createBackupFile(db, PASSWORD, TODAY)).uri;
 });
 
 test('derives the key with Argon2id at OWASP minimum cost, from the password in one Unicode form', async () => {
-  expect(mockArgon).toHaveBeenLastCalledWith(PASSWORD.normalize('NFC'), { m: 19456, t: 2, p: 1, dkLen: 32 });
+  expect(mockArgon).toHaveBeenLastCalledWith(PASSWORD.normalize('NFC'), {
+    m: 19456,
+    t: 2,
+    p: 1,
+    dkLen: 32,
+  });
   // "é" typed as e + combining accent opens a file made with the precomposed "é".
   await expect(readBackupFile(file, PASSWORD.normalize('NFD'))).resolves.toBeDefined();
 });
@@ -154,8 +205,11 @@ test('derives the key with Argon2id at OWASP minimum cost, from the password in 
 test('writes a dated file that shows nothing of the data', () => {
   expect(file).toBe('file:///cache/Garagem-backup-2026-10-17.bkp');
   const text = String.fromCharCode(...mockFiles.get(file)!);
-  expect(text.startsWith('{"format":"garagem-backup","version":1,"kdf":{"name":"argon2id"')).toBe(true);
-  for (const secret of ['Polo', 'Oficina', 'JPEG-DA-NOTA', '42000']) expect(text).not.toContain(secret);
+  expect(text.startsWith('{"format":"garagem-backup","version":1,"kdf":{"name":"argon2id"')).toBe(
+    true,
+  );
+  for (const secret of ['Polo', 'Oficina', 'JPEG-DA-NOTA', '42000'])
+    expect(text).not.toContain(secret);
 });
 
 test('restores everything onto another phone, photos re-encrypted, replacing what was there', async () => {
@@ -174,25 +228,45 @@ test('restores everything onto another phone, photos re-encrypted, replacing wha
   await restoreBackup(other, await readBackupFile(file, PASSWORD));
 
   const restored = backupRows(other);
-  expect(vehiclesQuery(other).all().map((v) => v.nickname)).toEqual(['Meu Polo Ação']);
+  expect(
+    vehiclesQuery(other)
+      .all()
+      .map((v) => v.nickname),
+  ).toEqual(['Meu Polo Ação']);
   expect(selectedVehicleIdQuery(other).all()).toEqual([]);
   // Same rows, soft-deleted ones included; only the photo moved to a file of this phone.
-  const { attachments: [photo], ...rest } = restored;
-  const { attachments: [originalPhoto], ...originalRest } = original;
+  const {
+    attachments: [photo],
+    ...rest
+  } = restored;
+  const {
+    attachments: [originalPhoto],
+    ...originalRest
+  } = original;
   expect(rest).toEqual(originalRest);
   expect(rest.maintenanceLogs).toHaveLength(2);
-  expect(photo).toEqual({ ...originalPhoto, filePath: 'attachments/restored-1.bin', sizeBytes: 12 });
-  expect(String.fromCharCode(...mockFiles.get('file:///docs/attachments/restored-1.bin')!)).toBe('JPEG-DA-NOTA');
+  expect(photo).toEqual({
+    ...originalPhoto,
+    filePath: 'attachments/restored-1.bin',
+    sizeBytes: 12,
+  });
+  expect(String.fromCharCode(...mockFiles.get('file:///docs/attachments/restored-1.bin')!)).toBe(
+    'JPEG-DA-NOTA',
+  );
   expect(mockFiles.has('file:///docs/attachments/old.bin')).toBe(false);
 });
 
 test('a wrong password or a tampered header does not open it', async () => {
-  await expect(readBackupFile(file, 'senha errada')).rejects.toThrow(new ValidationError(BACKUP_ERRORS.wrongPassword));
+  await expect(readBackupFile(file, 'senha errada')).rejects.toThrow(
+    new ValidationError(BACKUP_ERRORS.wrongPassword),
+  );
 
   const bytes = mockFiles.get(file)!;
   const tampered = String.fromCharCode(...bytes).replace('"t":2', '"t":1');
   mockFiles.set(file, ascii(tampered));
-  await expect(readBackupFile(file, PASSWORD)).rejects.toThrow(new ValidationError(BACKUP_ERRORS.wrongPassword));
+  await expect(readBackupFile(file, PASSWORD)).rejects.toThrow(
+    new ValidationError(BACKUP_ERRORS.wrongPassword),
+  );
 });
 
 test('tells apart files that are not backups and backups from a newer app', async () => {
@@ -203,7 +277,9 @@ test('tells apart files that are not backups and backups from a newer app', asyn
 
   const newer = String.fromCharCode(...mockFiles.get(file)!).replace('"version":1', '"version":2');
   mockFiles.set(file, ascii(newer));
-  await expect(readBackupFile(file, PASSWORD)).rejects.toThrow(new ValidationError(BACKUP_ERRORS.newer));
+  await expect(readBackupFile(file, PASSWORD)).rejects.toThrow(
+    new ValidationError(BACKUP_ERRORS.newer),
+  );
 });
 
 test('a restore that fails keeps the current data and drops the photos it wrote', async () => {
@@ -212,8 +288,14 @@ test('a restore that fails keeps the current data and drops the photos it wrote'
   await seed(other, 'Carro que estava aqui');
   const broken = { ...backup, rows: { ...backup.rows, vehicleSpecs: 'nope' as never } };
 
-  await expect(restoreBackup(other, broken)).rejects.toThrow(new ValidationError(BACKUP_ERRORS.notBackup));
+  await expect(restoreBackup(other, broken)).rejects.toThrow(
+    new ValidationError(BACKUP_ERRORS.notBackup),
+  );
 
-  expect(vehiclesQuery(other).all().map((v) => v.nickname)).toEqual(['Carro que estava aqui']);
+  expect(
+    vehiclesQuery(other)
+      .all()
+      .map((v) => v.nickname),
+  ).toEqual(['Carro que estava aqui']);
   expect(mockFiles.has('file:///docs/attachments/restored-1.bin')).toBe(false);
 });

@@ -5,13 +5,24 @@ import Dossier from '@/app/dossier';
 import type { Db } from '@/db/client';
 import { registerMaintenance } from '@/db/repo';
 import { addDays, formatBRL, todayISO } from '@/domain';
-import { attachmentsMock, params, redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import {
+  attachmentsMock,
+  params,
+  redirect,
+  router,
+  seedVehicle,
+  setupScreen,
+} from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
-jest.mock('expo-print', () => ({ printToFileAsync: jest.fn(async () => ({ uri: 'file:///cache/Print/abc.pdf' })) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
+jest.mock('expo-print', () => ({
+  printToFileAsync: jest.fn(async () => ({ uri: 'file:///cache/Print/abc.pdf' })),
+}));
 jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(async () => {}) }));
 
 // Files live in a Set so a test can tell what is still on "mockDisk".
@@ -80,7 +91,10 @@ test('shares a PDF named after the car, without notes, then deletes it and close
   expect(html).toContain('Registrado no app depois');
   expect(html).not.toContain('Ligar para o mecânico');
   const file = `file:///cache/Historico-Meu-Sandero-${todayISO()}.pdf`;
-  expect(shareMock).toHaveBeenCalledWith(file, expect.objectContaining({ mimeType: 'application/pdf' }));
+  expect(shareMock).toHaveBeenCalledWith(
+    file,
+    expect.objectContaining({ mimeType: 'application/pdf' }),
+  );
   expect(mockDisk.size).toBe(0);
   expect(router.back).toHaveBeenCalled();
 });
@@ -97,7 +111,11 @@ test('leaves receipt photos out unless the owner opts in, warning about what the
   expect(lastHtml()).not.toContain('<img');
 
   await user.press(screen.getByRole('radio', { name: 'Sim' }));
-  expect(screen.getByText('Notas fiscais costumam mostrar CPF e endereço. Confira as fotos antes de enviar.')).toBeOnTheScreen();
+  expect(
+    screen.getByText(
+      'Notas fiscais costumam mostrar CPF e endereço. Confira as fotos antes de enviar.',
+    ),
+  ).toBeOnTheScreen();
   await user.press(screen.getByRole('button', { name: 'Gerar e enviar PDF' }));
   expect(attachmentsMock.readPhoto).toHaveBeenCalledWith(PHOTO.filePath);
   expect(lastHtml()).toContain('data:image/jpeg;base64,SAVED');

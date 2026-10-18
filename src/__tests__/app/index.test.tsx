@@ -10,7 +10,9 @@ import { redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
 jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
 
@@ -55,12 +57,17 @@ test('shows the all-clear state with the next item, and expands ok items', async
   expect(screen.getByLabelText('Calibragem: 32 / 30 psi')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Óleo: Adicionar' })).toBeOnTheScreen();
 
-  expect(screen.queryByRole('button', { name: /^Troca de óleo e filtro\. Em dia/ })).not.toBeOnTheScreen();
+  expect(
+    screen.queryByRole('button', { name: /^Troca de óleo e filtro\. Em dia/ }),
+  ).not.toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Em dia (1)' })).toBeCollapsed();
   await user.press(screen.getByRole('button', { name: 'Em dia (1)' }));
   expect(screen.getByRole('button', { name: 'Em dia (1)' })).toBeExpanded();
   await user.press(screen.getByRole('button', { name: /^Troca de óleo e filtro\. Em dia/ }));
-  expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { itemId: expect.any(String) } });
+  expect(router.push).toHaveBeenCalledWith({
+    pathname: '/register',
+    params: { itemId: expect.any(String) },
+  });
 
   await user.press(screen.getByRole('button', { name: 'Ver histórico' }));
   expect(router.push).toHaveBeenCalledWith({ pathname: '/history', params: { vehicleId } });
@@ -69,7 +76,10 @@ test('shows the all-clear state with the next item, and expands ok items', async
 test('shows the selected car, whose sheets get its id, and offers the car list in the header', async () => {
   const { vehicleId: sandero } = await seedVehicle(db);
   // Created last, so selected.
-  const { vehicleId: gol } = await seedVehicle(db, todayISO(), { nickname: 'Meu Gol', odometerKm: 80000 });
+  const { vehicleId: gol } = await seedVehicle(db, todayISO(), {
+    nickname: 'Meu Gol',
+    odometerKm: 80000,
+  });
   await render(<Dashboard />);
   const user = userEvent.setup();
 
@@ -84,7 +94,9 @@ test('shows the selected car, whose sheets get its id, and offers the car list i
 
   await selectVehicle(db, sandero);
   await screen.rerender(<Dashboard />);
-  expect(screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Sandero' })).toBeOnTheScreen();
+  expect(
+    screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Sandero' }),
+  ).toBeOnTheScreen();
   expect(screen.getByLabelText('Hodômetro estimado: 40.000 quilômetros')).toBeOnTheScreen();
 });
 
@@ -97,7 +109,14 @@ test('says the seed values are references only for a car picked from the list', 
   const model = CAR_MODELS.find((m) => m.oil)!;
   await createVehicle(
     db,
-    { nickname: 'Meu carro', odometerKm: 1000, monthlyKmEstimate: 1000, severeUse: false, modelRef: model.id, items: [] },
+    {
+      nickname: 'Meu carro',
+      odometerKm: 1000,
+      monthlyKmEstimate: 1000,
+      severeUse: false,
+      modelRef: model.id,
+      items: [],
+    },
     todayISO(),
   );
   await screen.rerender(<Dashboard />);
@@ -112,7 +131,9 @@ test('opens the oldest car when no car was chosen yet', async () => {
   db.delete(devicePrefs).run();
   await render(<Dashboard />);
 
-  expect(screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Sandero' })).toBeOnTheScreen();
+  expect(
+    screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Sandero' }),
+  ).toBeOnTheScreen();
   expect(screen.getByLabelText('Hodômetro estimado: 40.000 quilômetros')).toBeOnTheScreen();
 });
 

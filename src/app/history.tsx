@@ -7,14 +7,29 @@ import { deleteRemovedPhotos, readPhoto } from '@/attachments';
 import { useDb } from '@/db/provider';
 import { logsQuery, removeMaintenance, vehiclesQuery } from '@/db/repo';
 import { formatBRL, formatDate, formatKm, todayISO, ValidationError } from '@/domain';
-import { AppText, Button, FormError, Icon, Screen, Section, radius, space, useTheme, type IconName } from '@/ui';
+import {
+  AppText,
+  Button,
+  FormError,
+  Icon,
+  Screen,
+  Section,
+  radius,
+  space,
+  useTheme,
+  type IconName,
+} from '@/ui';
 
 type Log = ReturnType<ReturnType<typeof logsQuery>['all']>[number];
 
 export default function History() {
   const db = useDb();
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
-  const [vehicle] = useState(() => vehiclesQuery(db).all().find((v) => v.id === vehicleId));
+  const [vehicle] = useState(() =>
+    vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId),
+  );
   const logs = useLiveQuery(logsQuery(db, vehicle?.id ?? ''), [vehicle?.id]);
   const [error, setError] = useState<unknown>(null);
 
@@ -26,8 +41,14 @@ export default function History() {
     return (
       <Screen>
         <View style={styles.empty}>
-          <AppText>Nenhuma troca registrada ainda. Quando você registrar a primeira, ela aparece aqui.</AppText>
-          <Button variant="secondary" label="Voltar para a garagem" onPress={() => router.dismissTo('/')} />
+          <AppText>
+            Nenhuma troca registrada ainda. Quando você registrar a primeira, ela aparece aqui.
+          </AppText>
+          <Button
+            variant="secondary"
+            label="Voltar para a garagem"
+            onPress={() => router.dismissTo('/')}
+          />
         </View>
       </Screen>
     );
@@ -43,22 +64,26 @@ export default function History() {
     const gone = log.photo
       ? 'O registro e a foto do comprovante serão apagados deste aparelho.'
       : 'O registro será apagado deste aparelho.';
-    Alert.alert('Excluir esta troca?', `${nameOf(log)}, ${formatDate(log.performedAt)}. ${gone} Isso não pode ser desfeito.`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          setError(null);
-          try {
-            await removeMaintenance(db, log.id);
-            deleteRemovedPhotos(db);
-          } catch (e) {
-            setError(e);
-          }
+    Alert.alert(
+      'Excluir esta troca?',
+      `${nameOf(log)}, ${formatDate(log.performedAt)}. ${gone} Isso não pode ser desfeito.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            setError(null);
+            try {
+              await removeMaintenance(db, log.id);
+              deleteRemovedPhotos(db);
+            } catch (e) {
+              setError(e);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
@@ -76,14 +101,21 @@ export default function History() {
           Total gasto em manutenção
         </AppText>
         <AppText variant="number">{formatBRL(total)}</AppText>
-        <AppText color="inkMuted">{count === 1 ? '1 troca registrada' : `${count} trocas registradas`}</AppText>
+        <AppText color="inkMuted">
+          {count === 1 ? '1 troca registrada' : `${count} trocas registradas`}
+        </AppText>
       </View>
 
       <Section title="Trocas">
         <FormError error={error} />
         {logs.data.map((log) => (
           // Keyed on the photo too: a replaced photo starts closed instead of showing the old one.
-          <LogRow key={`${log.id}:${log.photo}`} log={log} onEdit={() => edit(log)} onRemove={() => remove(log)} />
+          <LogRow
+            key={`${log.id}:${log.photo}`}
+            log={log}
+            onEdit={() => edit(log)}
+            onRemove={() => remove(log)}
+          />
         ))}
       </Section>
     </Screen>
@@ -120,7 +152,9 @@ function LogRow({ log, onEdit, onRemove }: { log: Log; onEdit: () => void; onRem
         <View accessible style={styles.info}>
           <AppText variant="bodyStrong">{nameOf(log)}</AppText>
           <AppText>{`${formatDate(log.performedAt)} · ${formatKm(log.km)}`}</AppText>
-          {log.costCents != null ? <AppText variant="number">{formatBRL(log.costCents)}</AppText> : null}
+          {log.costCents != null ? (
+            <AppText variant="number">{formatBRL(log.costCents)}</AppText>
+          ) : null}
           {log.brandSpec ? <AppText color="inkMuted">{log.brandSpec}</AppText> : null}
           {log.notes ? <AppText color="inkMuted">{log.notes}</AppText> : null}
           {registeredOn !== log.performedAt ? (
@@ -170,7 +204,15 @@ function LogRow({ log, onEdit, onRemove }: { log: Log; onEdit: () => void; onRem
   );
 }
 
-function IconButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+function IconButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+}) {
   const { c } = useTheme();
   return (
     <Pressable

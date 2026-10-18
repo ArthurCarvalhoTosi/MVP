@@ -3,7 +3,13 @@
 // sealed data (nonce + ciphertext + tag) whose key comes from the user's password via Argon2id.
 // The header is the GCM additional data, so tampering with the KDF parameters fails to open.
 import { argon2idAsync } from '@noble/hashes/argon2';
-import { AESEncryptionKey, AESSealedData, aesDecryptAsync, aesEncryptAsync, getRandomBytes } from 'expo-crypto';
+import {
+  AESEncryptionKey,
+  AESSealedData,
+  aesDecryptAsync,
+  aesEncryptAsync,
+  getRandomBytes,
+} from 'expo-crypto';
 import { File, Paths } from 'expo-file-system';
 import migrations from '../../drizzle/migrations';
 import { readPhoto, writePhoto } from '@/attachments';
@@ -47,10 +53,16 @@ export async function createBackupFile(db: Db, password: string, today: ISODate)
   const payload: Payload = { schema: SCHEMA, createdAt: new Date().toISOString(), rows, photos };
 
   const salt = getRandomBytes(16);
-  const header: Header = { format: FORMAT, version: VERSION, kdf: { ...KDF, salt: toBase64(salt) } };
+  const header: Header = {
+    format: FORMAT,
+    version: VERSION,
+    kdf: { ...KDF, salt: toBase64(salt) },
+  };
   const headerBytes = ascii(JSON.stringify(header));
   const key = await deriveKey(password, salt, header.kdf);
-  const sealed = await aesEncryptAsync(ascii(asciiJson(payload)), key, { additionalData: headerBytes });
+  const sealed = await aesEncryptAsync(ascii(asciiJson(payload)), key, {
+    additionalData: headerBytes,
+  });
   const body = await sealed.combined();
 
   const bytes = new Uint8Array(headerBytes.length + 1 + body.length);
@@ -81,16 +93,24 @@ export async function readBackupFile(uri: string, password: string): Promise<Bac
   let payload: Payload;
   try {
     const key = await deriveKey(password, fromBase64(header.kdf.salt), header.kdf);
-    const plain = await aesDecryptAsync(AESSealedData.fromCombined(bytes.subarray(newline + 1)), key, {
-      output: 'bytes',
-      additionalData: bytes.subarray(0, newline),
-    });
+    const plain = await aesDecryptAsync(
+      AESSealedData.fromCombined(bytes.subarray(newline + 1)),
+      key,
+      {
+        output: 'bytes',
+        additionalData: bytes.subarray(0, newline),
+      },
+    );
     payload = JSON.parse(fromAscii(plain));
   } catch {
     // GCM can't tell a wrong password from a damaged file.
     throw new ValidationError(BACKUP_ERRORS.wrongPassword);
   }
-  if (typeof payload?.schema !== 'number' || typeof payload.rows !== 'object' || typeof payload.photos !== 'object') {
+  if (
+    typeof payload?.schema !== 'number' ||
+    typeof payload.rows !== 'object' ||
+    typeof payload.photos !== 'object'
+  ) {
     throw new ValidationError(BACKUP_ERRORS.notBackup);
   }
   if (payload.schema > SCHEMA) throw new ValidationError(BACKUP_ERRORS.newer);
@@ -126,9 +146,12 @@ export async function restoreBackup(db: Db, backup: Backup): Promise<void> {
 
 function deriveKey(password: string, salt: Uint8Array, kdf: { m: number; t: number; p: number }) {
   // NFC: the same password typed on another keyboard may arrive in a different Unicode form.
-  return argon2idAsync(password.normalize('NFC'), salt, { m: kdf.m, t: kdf.t, p: kdf.p, dkLen: 32 }).then((raw) =>
-    AESEncryptionKey.import(raw),
-  );
+  return argon2idAsync(password.normalize('NFC'), salt, {
+    m: kdf.m,
+    t: kdf.t,
+    p: kdf.p,
+    dkLen: 32,
+  }).then((raw) => AESEncryptionKey.import(raw));
 }
 
 function discard(filePath: string) {
@@ -143,7 +166,10 @@ function discard(filePath: string) {
 // JSON with every non-ASCII character escaped, so bytes and text convert one to one without
 // TextDecoder (not in every Hermes build).
 function asciiJson(value: unknown): string {
-  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return JSON.stringify(value).replace(
+    /[\u007f-\uffff]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
 }
 
 function ascii(s: string): Uint8Array {
@@ -155,7 +181,8 @@ function ascii(s: string): Uint8Array {
 function fromAscii(bytes: Uint8Array): string {
   let s = '';
   // Chunked: String.fromCharCode with millions of arguments overflows the stack.
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return s;
 }
 

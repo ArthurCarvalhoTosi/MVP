@@ -57,7 +57,11 @@ describe('buildDigest: Saturdays', () => {
   });
 
   it('crosses the year end', () => {
-    expect(dates(new Date(2026, 11, 28, 12, 0)).slice(0, 3)).toEqual(['2027-01-02', '2027-01-09', '2027-01-16']);
+    expect(dates(new Date(2026, 11, 28, 12, 0)).slice(0, 3)).toEqual([
+      '2027-01-02',
+      '2027-01-09',
+      '2027-01-16',
+    ]);
   });
 
   it('has nothing on Saturdays with nothing pending', () => {
@@ -95,11 +99,28 @@ describe('buildDigest: one critical item', () => {
   });
 
   it('mentions the attention items that come along', () => {
-    const one = buildDigest([SANDERO], [overdue('Óleo'), attention('Freios')], readings, WEDNESDAY)[0];
-    expect(one).toMatchObject({ kind: 'critical', itemId: 'Óleo', body: 'Meu Sandero: vencido há 46 dias. Mais 1 em atenção.' });
+    const one = buildDigest(
+      [SANDERO],
+      [overdue('Óleo'), attention('Freios')],
+      readings,
+      WEDNESDAY,
+    )[0];
+    expect(one).toMatchObject({
+      kind: 'critical',
+      itemId: 'Óleo',
+      body: 'Meu Sandero: vencido há 46 dias. Mais 1 em atenção.',
+    });
 
-    const two = buildDigest([SANDERO, GOL], [overdue('Óleo'), attention('Freios'), attention('Pneus', 'gol')], readings, WEDNESDAY)[0];
-    expect(two).toMatchObject({ kind: 'critical', body: 'Meu Sandero: vencido há 46 dias. Mais 2 em atenção.' });
+    const two = buildDigest(
+      [SANDERO, GOL],
+      [overdue('Óleo'), attention('Freios'), attention('Pneus', 'gol')],
+      readings,
+      WEDNESDAY,
+    )[0];
+    expect(two).toMatchObject({
+      kind: 'critical',
+      body: 'Meu Sandero: vencido há 46 dias. Mais 2 em atenção.',
+    });
   });
 
   it('covers an item overdue by km, in the right car', () => {
@@ -107,7 +128,12 @@ describe('buildDigest: one critical item', () => {
     const timing = item('Correia', 'gol', { baselineKm: 40000, intervalKm: 50000 });
     const gol = [{ vehicleId: 'gol', km: 92000, readAt: '2026-10-14' }];
     const [first] = buildDigest([SANDERO, GOL], [timing], gol, WEDNESDAY);
-    expect(first).toMatchObject({ kind: 'critical', itemId: 'Correia', vehicleId: 'gol', title: 'Correia' });
+    expect(first).toMatchObject({
+      kind: 'critical',
+      itemId: 'Correia',
+      vehicleId: 'gol',
+      title: 'Correia',
+    });
     expect(first.body).toMatch(/^Meu Gol: /);
     expect(first.body).toContain('passou 2.000 km');
   });
@@ -115,7 +141,12 @@ describe('buildDigest: one critical item', () => {
 
 describe('buildDigest: summary', () => {
   it('lists the items of one car, critical first, with singular and plural', () => {
-    const two = buildDigest([SANDERO], [attention('Freios'), overdue('Óleo'), overdue('Filtro de ar')], readings, WEDNESDAY)[0];
+    const two = buildDigest(
+      [SANDERO],
+      [attention('Freios'), overdue('Óleo'), overdue('Filtro de ar')],
+      readings,
+      WEDNESDAY,
+    )[0];
     expect(two).toEqual({
       kind: 'summary',
       date: '2026-10-17',
@@ -197,8 +228,16 @@ describe('pendingByVehicle', () => {
       readings,
       '2026-10-17',
     );
-    expect(groups.map((g) => [g.vehicle.nickname, g.entries.map((e) => [e.item.name, e.due.urgency])])).toEqual([
-      ['Meu Sandero', [['Óleo', 'critical'], ['Freios', 'attention']]],
+    expect(
+      groups.map((g) => [g.vehicle.nickname, g.entries.map((e) => [e.item.name, e.due.urgency])]),
+    ).toEqual([
+      [
+        'Meu Sandero',
+        [
+          ['Óleo', 'critical'],
+          ['Freios', 'attention'],
+        ],
+      ],
       ['Meu Gol', [['Filtro', 'attention']]],
     ]);
   });

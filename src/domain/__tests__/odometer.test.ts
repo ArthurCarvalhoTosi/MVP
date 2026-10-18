@@ -29,12 +29,16 @@ describe('dailyRate', () => {
   it('uses the regression slope when readings span 14+ days', () => {
     expect(dailyRate([r(10000, '2026-10-01'), r(10700, '2026-10-15')], 1500, today)).toBe(50);
     expect(dailyRate([r(10000, '2026-10-01'), r(10140, '2026-10-15')], 1500, today)).toBe(10);
-    expect(dailyRate([r(1000, '2026-09-01'), r(1100, '2026-09-11'), r(1300, '2026-09-21')], 0, today)).toBeCloseTo(15);
+    expect(
+      dailyRate([r(1000, '2026-09-01'), r(1100, '2026-09-11'), r(1300, '2026-09-21')], 0, today),
+    ).toBeCloseTo(15);
   });
 
   it('ignores readings older than 90 days', () => {
     // 2026-07-16 is 91 days before today; 2026-07-17 is exactly 90.
-    expect(dailyRate([r(0, '2026-07-16'), r(10000, '2026-10-01'), r(10700, '2026-10-15')], 1500, today)).toBe(50);
+    expect(
+      dailyRate([r(0, '2026-07-16'), r(10000, '2026-10-01'), r(10700, '2026-10-15')], 1500, today),
+    ).toBe(50);
     expect(dailyRate([r(0, '2026-07-16'), r(10000, '2026-10-15')], 1500, today)).toBe(50);
     expect(dailyRate([r(1000, '2026-07-17'), r(1900, '2026-10-15')], 1500, today)).toBe(10);
   });
@@ -57,7 +61,9 @@ describe('projectOdometer', () => {
 
   it('starts from the latest reading, ties broken by highest km', () => {
     expect(projectOdometer([r(200, today), r(100, today)], 1500, today)).toBe(200);
-    expect(projectOdometer([r(10000, '2026-10-14'), r(9000, '2026-10-01')], 1500, today)).toBe(10050);
+    expect(projectOdometer([r(10000, '2026-10-14'), r(9000, '2026-10-01')], 1500, today)).toBe(
+      10050,
+    );
   });
 
   it('never projects backwards for a future reading', () => {

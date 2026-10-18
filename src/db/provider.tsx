@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Alert, View } from 'react-native';
 import { AppText, Button, Screen, space } from '@/ui';
-import { DatabaseKeyError, EncryptionUnavailableError, openDatabase, resetDatabase, type Db } from './client';
+import {
+  DatabaseKeyError,
+  EncryptionUnavailableError,
+  openDatabase,
+  resetDatabase,
+  type Db,
+} from './client';
 
 const DbContext = createContext<Db | null>(null);
 
@@ -33,7 +39,13 @@ const GENERIC_MESSAGE = 'Não foi possível abrir seus dados. Feche e abra o app
 
 type State = { db: Db } | { error: unknown } | null;
 
-export function DatabaseProvider({ children, onSettled }: { children: ReactNode; onSettled?: () => void }) {
+export function DatabaseProvider({
+  children,
+  onSettled,
+}: {
+  children: ReactNode;
+  onSettled?: () => void;
+}) {
   const [state, setState] = useState<State>(null);
   const [resetting, setResetting] = useState(false);
 
@@ -79,7 +91,9 @@ export function DatabaseProvider({ children, onSettled }: { children: ReactNode;
         {error instanceof DatabaseKeyError ? (
           <>
             <AppText variant="lead">{KEY_MESSAGE}</AppText>
-            <AppText>Para continuar usando o app, apague os dados antigos e comece de novo.</AppText>
+            <AppText>
+              Para continuar usando o app, apague os dados antigos e comece de novo.
+            </AppText>
             <Button
               label="Apagar dados e começar de novo"
               variant="secondary"

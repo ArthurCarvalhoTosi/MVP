@@ -7,13 +7,24 @@ import { StyleSheet, View } from 'react-native';
 import { readPhoto } from '@/attachments';
 import { useDb } from '@/db/provider';
 import { logsQuery, readingsQuery, vehiclesQuery } from '@/db/repo';
-import { dossierFileName, dossierHtml, findModel, modelYears, todayISO, ValidationError } from '@/domain';
+import {
+  dossierFileName,
+  dossierHtml,
+  findModel,
+  modelYears,
+  todayISO,
+  ValidationError,
+} from '@/domain';
 import { AppText, Button, ChipGroup, FormError, Screen, Section, space } from '@/ui';
 
 export default function Dossier() {
   const db = useDb();
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
-  const [vehicle] = useState(() => vehiclesQuery(db).all().find((v) => v.id === vehicleId));
+  const [vehicle] = useState(() =>
+    vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId),
+  );
   const [withPhotos, setWithPhotos] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -52,8 +63,14 @@ export default function Dossier() {
         generatedOn: today,
       });
       pdf = new File((await Print.printToFileAsync({ html })).uri);
-      await pdf.move(new File(Paths.cache, `${dossierFileName(vehicle.nickname, today)}.pdf`), { overwrite: true });
-      await Sharing.shareAsync(pdf.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: 'Enviar histórico' });
+      await pdf.move(new File(Paths.cache, `${dossierFileName(vehicle.nickname, today)}.pdf`), {
+        overwrite: true,
+      });
+      await Sharing.shareAsync(pdf.uri, {
+        mimeType: 'application/pdf',
+        UTI: 'com.adobe.pdf',
+        dialogTitle: 'Enviar histórico',
+      });
       router.back();
     } catch {
       setError(new ValidationError('Não foi possível gerar o PDF. Tente de novo.'));
@@ -74,8 +91,8 @@ export default function Dossier() {
       <Section title="Histórico em PDF">
         <View style={styles.body}>
           <AppText>
-            Um PDF com as trocas registradas, datas, km e valores, para mostrar a quem for comprar o carro. As
-            observações não entram.
+            Um PDF com as trocas registradas, datas, km e valores, para mostrar a quem for comprar o
+            carro. As observações não entram.
           </AppText>
           {hasPhotos ? (
             <>

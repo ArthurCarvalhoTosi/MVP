@@ -11,9 +11,15 @@ export default function AdjustKm() {
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
-    const vehicle = vehiclesQuery(db).all().find((v) => v.id === vehicleId);
+    const vehicle = vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId);
     if (!vehicle) return null;
-    const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, todayISO());
+    const km = projectOdometer(
+      readingsQuery(db, vehicle.id).all(),
+      vehicle.monthlyKmEstimate,
+      todayISO(),
+    );
     return { vehicleId: vehicle.id, km };
   });
   const [km, setKm] = useState(start ? String(start.km) : '');

@@ -34,7 +34,11 @@ function AppStack() {
   // Sheets draw their own title: native headers aren't reliable inside formSheet on Android.
   // The content keeps full-screen height at a lower detent, so a Screen footer only shows at detent 1:
   // shorter sheets put their button inline instead.
-  const sheet = { presentation: 'formSheet', headerShown: false, sheetGrabberVisible: true } as const;
+  const sheet = {
+    presentation: 'formSheet',
+    headerShown: false,
+    sheetGrabberVisible: true,
+  } as const;
 
   return (
     <>

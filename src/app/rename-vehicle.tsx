@@ -9,7 +9,11 @@ export default function RenameVehicle() {
   const db = useDb();
   const { vehicleId } = useLocalSearchParams<{ vehicleId: string }>();
   // Read once: the form only needs the starting name.
-  const [vehicle] = useState(() => vehiclesQuery(db).all().find((v) => v.id === vehicleId));
+  const [vehicle] = useState(() =>
+    vehiclesQuery(db)
+      .all()
+      .find((v) => v.id === vehicleId),
+  );
   const [nickname, setNickname] = useState(vehicle?.nickname ?? '');
   const [error, setError] = useState<string>();
   const [saveError, setSaveError] = useState<unknown>(null);

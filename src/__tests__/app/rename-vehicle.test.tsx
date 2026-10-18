@@ -7,7 +7,9 @@ import { params, redirect, router, seedVehicle, setupScreen } from '@/test-utils
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let vehicleId: string;
@@ -30,7 +32,9 @@ test('starts from the current name, saves the new one and closes', async () => {
   await user.type(field(), ' Sandero da Ana ');
   await user.press(screen.getByRole('button', { name: 'Salvar nome' }));
 
-  expect(vehiclesQuery(db).all()).toEqual([expect.objectContaining({ nickname: 'Sandero da Ana' })]);
+  expect(vehiclesQuery(db).all()).toEqual([
+    expect.objectContaining({ nickname: 'Sandero da Ana' }),
+  ]);
   expect(router.back).toHaveBeenCalled();
 });
 

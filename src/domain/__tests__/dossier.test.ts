@@ -29,7 +29,12 @@ const text = (html: string) =>
 
 test('describes the car, the last reading and the totals', () => {
   const html = dossierHtml(
-    input({ logs: [log({ costCents: 15050 }), log({ name: 'Rodízio de pneus', costCents: null, hasReceipt: true })] }),
+    input({
+      logs: [
+        log({ costCents: 15050 }),
+        log({ name: 'Rodízio de pneus', costCents: null, hasReceipt: true }),
+      ],
+    }),
   );
   const t = text(html);
   expect(t).toContain('Meu Onix · Chevrolet Onix 1.0 turbo, 2020 a 2025');
@@ -39,15 +44,26 @@ test('describes the car, the last reading and the totals', () => {
 });
 
 test('lists each service with date, km, cost and brand, in the given order', () => {
-  const t = text(dossierHtml(input({ logs: [log({ performedAt: '2026-08-01', km: 45000 }), log()] })));
-  expect(t.indexOf('1 de ago. de 2026 · 45.000 km')).toBeLessThan(t.indexOf('10 de mar. de 2026 · 41.500 km'));
+  const t = text(
+    dossierHtml(input({ logs: [log({ performedAt: '2026-08-01', km: 45000 }), log()] })),
+  );
+  expect(t.indexOf('1 de ago. de 2026 · 45.000 km')).toBeLessThan(
+    t.indexOf('10 de mar. de 2026 · 41.500 km'),
+  );
   expect(t).toContain('R$ 250,00');
   expect(t).toContain('Mobil 5W-30');
 });
 
 test('flags records created after the service date, and says when same-day ones were made', () => {
   const t = text(
-    dossierHtml(input({ logs: [log({ registeredOn: '2026-04-02' }), log({ performedAt: '2026-05-01', registeredOn: '2026-05-01' })] })),
+    dossierHtml(
+      input({
+        logs: [
+          log({ registeredOn: '2026-04-02' }),
+          log({ performedAt: '2026-05-01', registeredOn: '2026-05-01' }),
+        ],
+      }),
+    ),
   );
   expect(t).toContain('Registrado no app depois, em 2 de abr. de 2026');
   expect(t).toContain('Registrado depois do serviço');
@@ -62,20 +78,28 @@ test('marks receipts, embedding photos only when given', () => {
   expect(text(without)).not.toContain('as fotos estão incluídas');
 
   const withPhoto = dossierHtml(input({ logs: [log({ hasReceipt: true, photo: 'QUJD' })] }));
-  expect(withPhoto).toContain('<img src="data:image/jpeg;base64,QUJD" alt="Comprovante de Troca de óleo e filtro">');
+  expect(withPhoto).toContain(
+    '<img src="data:image/jpeg;base64,QUJD" alt="Comprovante de Troca de óleo e filtro">',
+  );
   expect(text(withPhoto)).toContain('as fotos estão incluídas aqui');
 });
 
 test('escapes what the user typed', () => {
-  const html = dossierHtml(input({ nickname: '<b>Carro & cia</b>', logs: [log({ brandSpec: '"5W-30" <script>' })] }));
+  const html = dossierHtml(
+    input({ nickname: '<b>Carro & cia</b>', logs: [log({ brandSpec: '"5W-30" <script>' })] }),
+  );
   expect(html).toContain('&lt;b&gt;Carro &amp; cia&lt;/b&gt;');
   expect(html).toContain('&quot;5W-30&quot; &lt;script&gt;');
   expect(html).not.toContain('<script>');
 });
 
 test('names the file after the car, without accents or symbols', () => {
-  expect(dossierFileName('Meu Sandero 2018', '2026-10-17')).toBe('Historico-Meu-Sandero-2018-2026-10-17');
-  expect(dossierFileName('  Carro da Ação / "SUV"! ', '2026-10-17')).toBe('Historico-Carro-da-Acao-SUV-2026-10-17');
+  expect(dossierFileName('Meu Sandero 2018', '2026-10-17')).toBe(
+    'Historico-Meu-Sandero-2018-2026-10-17',
+  );
+  expect(dossierFileName('  Carro da Ação / "SUV"! ', '2026-10-17')).toBe(
+    'Historico-Carro-da-Acao-SUV-2026-10-17',
+  );
   expect(dossierFileName('🚗', '2026-10-17')).toBe('Historico-2026-10-17');
 });
 

@@ -24,7 +24,9 @@ describe('Screen', () => {
     // 700 tall below a 100 header, so its bottom is at 800; a keyboard from 500 down covers 300.
     await fireEvent.layout(avoider, { x: 0, y: 0, width: 390, height: 700 });
     await act(async () => {
-      listeners.keyboardWillShow({ endCoordinates: { screenX: 0, screenY: 500, width: 390, height: 344 } });
+      listeners.keyboardWillShow({
+        endCoordinates: { screenX: 0, screenY: 500, width: 390, height: 344 },
+      });
     });
 
     expect(StyleSheet.flatten(avoider.props.style)).toMatchObject({ paddingBottom: 300 });

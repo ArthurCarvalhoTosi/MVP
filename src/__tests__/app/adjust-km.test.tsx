@@ -9,7 +9,9 @@ import { params, redirect, router, seedVehicle, setupScreen, spyAlert } from '@/
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let vehicleId: string;
@@ -48,7 +50,9 @@ test('prefills the projection and saves the panel reading as an adjustment', asy
 
   expect(router.back).toHaveBeenCalled();
   expect(readingsQuery(db, vehicleId).all()).toContainEqual({ km: 40800, readAt: todayISO() });
-  expect(db.select({ source: odometerReadings.source }).from(odometerReadings).all()).toContainEqual({ source: 'adjust' });
+  expect(
+    db.select({ source: odometerReadings.source }).from(odometerReadings).all(),
+  ).toContainEqual({ source: 'adjust' });
 });
 
 test('asks before correcting a KM below earlier readings, then discards the higher ones', async () => {
@@ -62,14 +66,21 @@ test('asks before correcting a KM below earlier readings, then discards the high
   expect(alert).toHaveBeenCalledWith(
     'Corrigir o KM?',
     'Esse valor é menor que um KM registrado antes. Se o painel mostra este número, as leituras maiores serão descartadas e as próximas trocas recalculadas.',
-    [expect.objectContaining({ text: 'Cancelar', style: 'cancel' }), expect.objectContaining({ text: 'Corrigir KM' })],
+    [
+      expect.objectContaining({ text: 'Cancelar', style: 'cancel' }),
+      expect.objectContaining({ text: 'Corrigir KM' }),
+    ],
   );
   expect(router.back).not.toHaveBeenCalled();
 
   await press('Corrigir KM');
 
   expect(router.back).toHaveBeenCalled();
-  expect(readingsQuery(db, vehicleId).all().map((r) => r.km)).toEqual([40000, 41200]);
+  expect(
+    readingsQuery(db, vehicleId)
+      .all()
+      .map((r) => r.km),
+  ).toEqual([40000, 41200]);
 });
 
 test('keeps every reading when the correction is cancelled', async () => {
@@ -95,14 +106,21 @@ test('rejects a KM too high to be real', async () => {
 });
 
 test('adjusts the car it was opened for, not the first one', async () => {
-  const { vehicleId: gol } = await seedVehicle(db, todayISO(), { nickname: 'Meu Gol', odometerKm: 80000 });
+  const { vehicleId: gol } = await seedVehicle(db, todayISO(), {
+    nickname: 'Meu Gol',
+    odometerKm: 80000,
+  });
   params.vehicleId = gol;
   await render(<AdjustKm />);
 
   expect(field()).toHaveDisplayValue('80000');
   await saveKm('80.500');
 
-  expect(readingsQuery(db, gol).all().map((r) => r.km)).toEqual([80000, 80500]);
+  expect(
+    readingsQuery(db, gol)
+      .all()
+      .map((r) => r.km),
+  ).toEqual([80000, 80500]);
   expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
 });
 

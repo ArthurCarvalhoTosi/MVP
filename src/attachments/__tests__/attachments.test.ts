@@ -49,7 +49,11 @@ jest.mock('expo-file-system', () => {
       return b;
     }
   }
-  return { Directory, File, Paths: { document: new Directory('file:///docs'), cache: new Directory('file:///cache') } };
+  return {
+    Directory,
+    File,
+    Paths: { document: new Directory('file:///docs'), cache: new Directory('file:///cache') },
+  };
 });
 
 jest.mock('expo-crypto', () => {
@@ -97,7 +101,9 @@ jest.mock('expo-crypto', () => {
       const b = B.from(sealed.bytes);
       const decipher = nodeCrypto.createDecipheriv('aes-256-gcm', key.raw, b.subarray(0, 12));
       decipher.setAuthTag(b.subarray(b.length - 16));
-      return B.concat([decipher.update(b.subarray(12, b.length - 16)), decipher.final()]).toString('base64');
+      return B.concat([decipher.update(b.subarray(12, b.length - 16)), decipher.final()]).toString(
+        'base64',
+      );
     },
   };
 });
@@ -142,7 +148,8 @@ beforeEach(() => {
   });
 });
 
-const encryptedFiles = () => [...mockFiles.keys()].filter((k) => k.startsWith('file:///docs/attachments/'));
+const encryptedFiles = () =>
+  [...mockFiles.keys()].filter((k) => k.startsWith('file:///docs/attachments/'));
 
 describe('preparePhoto', () => {
   test('shrinks to 1600 px, re-encodes as JPEG and leaves no plain file behind', async () => {
@@ -172,7 +179,11 @@ describe('writePhoto and readPhoto', () => {
   test('store ciphertext in the documents folder that only reads back with the stored key', async () => {
     const saved = await attachmentsModule.writePhoto(JPEG);
 
-    expect(saved).toEqual({ filePath: expect.stringMatching(/^attachments\/[0-9a-f-]{36}\.bin$/), mime: 'image/jpeg', sizeBytes: expect.any(Number) });
+    expect(saved).toEqual({
+      filePath: expect.stringMatching(/^attachments\/[0-9a-f-]{36}\.bin$/),
+      mime: 'image/jpeg',
+      sizeBytes: expect.any(Number),
+    });
     const onDisk = mockFiles.get(`file:///docs/${saved.filePath}`)!;
     expect(saved.sizeBytes).toBe(onDisk.length);
     expect(NodeBuffer.from(onDisk).includes(NodeBuffer.from(JPEG, 'base64'))).toBe(false);
@@ -184,9 +195,13 @@ describe('writePhoto and readPhoto', () => {
     await attachmentsModule.writePhoto(JPEG);
 
     expect(SecureStore.setItemAsync).toHaveBeenCalledTimes(1);
-    expect(SecureStore.setItemAsync).toHaveBeenCalledWith('garagem.attachments.key', expect.stringMatching(/^[0-9a-f]{64}$/), {
-      keychainAccessible: 'AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY',
-    });
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'garagem.attachments.key',
+      expect.stringMatching(/^[0-9a-f]{64}$/),
+      {
+        keychainAccessible: 'AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY',
+      },
+    );
   });
 
   test('refuse a file changed on disk', async () => {
@@ -224,7 +239,13 @@ describe('saveWithPhoto', () => {
       db = await createTestDb();
       vehicleId = await createVehicle(
         db,
-        { nickname: 'Carro', odometerKm: 50000, monthlyKmEstimate: 1000, severeUse: false, items: [{ templateKey: 'oil', name: 'Óleo', intervalKm: 10000, intervalMonths: 12 }] },
+        {
+          nickname: 'Carro',
+          odometerKm: 50000,
+          monthlyKmEstimate: 1000,
+          severeUse: false,
+          items: [{ templateKey: 'oil', name: 'Óleo', intervalKm: 10000, intervalMonths: 12 }],
+        },
         '2026-10-01',
       );
       oilId = itemsQuery(db, vehicleId).all()[0].id;
@@ -232,7 +253,13 @@ describe('saveWithPhoto', () => {
 
     test('records the photo with the log', async () => {
       await attachmentsModule.saveWithPhoto(JPEG, (attachment) =>
-        registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: '2026-11-01', km: 51000, attachment }),
+        registerMaintenance(db, {
+          vehicleId,
+          itemId: oilId,
+          performedAt: '2026-11-01',
+          km: 51000,
+          attachment,
+        }),
       );
       const [log] = logsQuery(db, vehicleId).all();
       expect(log.photo).toEqual(expect.stringMatching(/^attachments\//));
@@ -241,7 +268,13 @@ describe('saveWithPhoto', () => {
 
     test('deletes the new file when the database refuses the log', async () => {
       const failed = attachmentsModule.saveWithPhoto(JPEG, (attachment) =>
-        registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: '2026-11-01', km: 40000, attachment }),
+        registerMaintenance(db, {
+          vehicleId,
+          itemId: oilId,
+          performedAt: '2026-11-01',
+          km: 40000,
+          attachment,
+        }),
       );
       await expect(failed).rejects.toBeInstanceOf(OdometerError);
       expect(encryptedFiles()).toEqual([]);
@@ -249,7 +282,10 @@ describe('saveWithPhoto', () => {
     });
 
     test('deleteRemovedPhotos deletes only the files of removed photos, and never throws', async () => {
-      for (const [performedAt, km] of [['2026-11-01', 51000], ['2026-12-01', 52000]] as const) {
+      for (const [performedAt, km] of [
+        ['2026-11-01', 51000],
+        ['2026-12-01', 52000],
+      ] as const) {
         await attachmentsModule.saveWithPhoto(JPEG, (attachment) =>
           registerMaintenance(db, { vehicleId, itemId: oilId, performedAt, km, attachment }),
         );
@@ -261,7 +297,9 @@ describe('saveWithPhoto', () => {
       expect(encryptedFiles()).toEqual([`file:///docs/${older.photo}`]);
       // Already gone: nothing to do, no error.
       expect(() => attachmentsModule.deleteRemovedPhotos(db)).not.toThrow();
-      expect(db.select().from(attachments).where(isNull(attachments.deletedAt)).all()).toHaveLength(1);
+      expect(db.select().from(attachments).where(isNull(attachments.deletedAt)).all()).toHaveLength(
+        1,
+      );
     });
   });
 });

@@ -1,13 +1,22 @@
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
-import { DatabaseKeyError, EncryptionUnavailableError, openDatabase, resetDatabase } from '../client';
+import {
+  DatabaseKeyError,
+  EncryptionUnavailableError,
+  openDatabase,
+  resetDatabase,
+} from '../client';
 
 // Native-only pieces (SecureStore, SQLCipher) are mocked: this covers the key logic, not encryption itself.
 const mockStore = new Map<string, string>();
 const CIPHER = { cipher_version: '4.6.1 community' };
 const answer = (sql: string) => (sql === 'PRAGMA cipher_version' ? CIPHER : { 'count(*)': 0 });
-const mockSqlite = { execSync: jest.fn(), getFirstSync: jest.fn<unknown, [string]>(answer), closeSync: jest.fn() };
+const mockSqlite = {
+  execSync: jest.fn(),
+  getFirstSync: jest.fn<unknown, [string]>(answer),
+  closeSync: jest.fn(),
+};
 
 jest.mock('expo-secure-store', () => ({
   AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 'AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY',
@@ -54,7 +63,9 @@ test('generates the key once, stores it device-only, and sends it first as a raw
   expect(SecureStore.setItemAsync).toHaveBeenCalledWith('garagem.db.key', key, {
     keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
   });
-  expect(SQLite.openDatabaseSync).toHaveBeenCalledWith('garagem.db', { enableChangeListener: true });
+  expect(SQLite.openDatabaseSync).toHaveBeenCalledWith('garagem.db', {
+    enableChangeListener: true,
+  });
   expect(mockSqlite.execSync.mock.calls.map(([s]) => s)).toEqual([
     `PRAGMA key = "x'${key}'"`,
     'PRAGMA foreign_keys = ON',
@@ -119,12 +130,16 @@ test('a stored key and a failing probe is a plain error (data may be intact, so 
 test.each([null, { cipher_version: '' }])(
   'fails closed when SQLCipher is missing (cipher_version %p): no read, no key stored',
   async (cipher) => {
-    mockSqlite.getFirstSync.mockImplementation((sql: string) => (sql === 'PRAGMA cipher_version' ? cipher : {}));
+    mockSqlite.getFirstSync.mockImplementation((sql: string) =>
+      sql === 'PRAGMA cipher_version' ? cipher : {},
+    );
 
     const err = await openDatabase().catch((e: unknown) => e);
 
     expect(err).toBeInstanceOf(EncryptionUnavailableError);
-    expect((err as Error).message).toBe('A criptografia do banco não está disponível nesta versão do app.');
+    expect((err as Error).message).toBe(
+      'A criptografia do banco não está disponível nesta versão do app.',
+    );
     expect(mockSqlite.getFirstSync).not.toHaveBeenCalledWith('SELECT count(*) FROM sqlite_master');
     expect(mockSqlite.closeSync).toHaveBeenCalledTimes(1);
     expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
@@ -176,7 +191,9 @@ describe('resetDatabase', () => {
   test('a missing file is fine; any other delete failure keeps the key', async () => {
     mockStore.set('garagem.db.key', 'k');
     jest.mocked(SQLite.deleteDatabaseSync).mockImplementationOnce(() => {
-      throw new Error("Calling the 'deleteDatabaseSync' function has failed\n→ Caused by: Database 'garagem.db' not found");
+      throw new Error(
+        "Calling the 'deleteDatabaseSync' function has failed\n→ Caused by: Database 'garagem.db' not found",
+      );
     });
     await resetDatabase();
     expect(mockStore.has('garagem.db.key')).toBe(false);

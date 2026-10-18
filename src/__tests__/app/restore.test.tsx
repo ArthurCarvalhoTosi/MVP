@@ -8,7 +8,9 @@ import { router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 const mockDelete = jest.fn();
 jest.mock('expo-file-system', () => ({

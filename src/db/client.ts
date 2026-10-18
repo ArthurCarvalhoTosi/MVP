@@ -27,7 +27,8 @@ let openHandle: SQLiteDatabase | undefined;
 
 export async function openDatabase(): Promise<Db> {
   const stored = await SecureStore.getItemAsync(KEY_NAME);
-  const key = stored ?? Array.from(getRandomBytes(32), (b) => b.toString(16).padStart(2, '0')).join('');
+  const key =
+    stored ?? Array.from(getRandomBytes(32), (b) => b.toString(16).padStart(2, '0')).join('');
 
   const sqlite = openDatabaseSync(DB_NAME, { enableChangeListener: true });
   try {
@@ -68,7 +69,9 @@ function unlock(sqlite: SQLiteDatabase, key: string, keyIsNew: boolean) {
     // The original error is dropped on purpose: it could echo the PRAGMA key statement.
     // Only a missing key means the file can never be read (and may be reset); with a stored key the
     // failure may be transient (I/O, busy) and the data intact.
-    throw keyIsNew ? new DatabaseKeyError('Database key missing') : new Error('Database could not be read');
+    throw keyIsNew
+      ? new DatabaseKeyError('Database key missing')
+      : new Error('Database could not be read');
   }
 }
 

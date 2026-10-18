@@ -22,7 +22,10 @@ export default function Restore() {
     setError(null);
     try {
       // Any type: Android rarely knows a mime type for .bkp files.
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
       if (result.canceled) return;
       const [asset] = result.assets;
       setPicked({ uri: asset.uri, name: asset.name });
@@ -74,7 +77,9 @@ export default function Restore() {
       footer={
         <>
           <FormError error={error} />
-          {busy ? <AppText color="inkMuted">Abrindo o backup. Isso leva alguns segundos.</AppText> : null}
+          {busy ? (
+            <AppText color="inkMuted">Abrindo o backup. Isso leva alguns segundos.</AppText>
+          ) : null}
           <Button label="Restaurar" loading={busy} onPress={restore} />
         </>
       }
@@ -86,15 +91,27 @@ export default function Restore() {
             <AppText variant="caption" color="inkMuted">
               Arquivo
             </AppText>
-            <AppText variant="bodyStrong">{picked ? picked.name : 'Nenhum arquivo escolhido'}</AppText>
+            <AppText variant="bodyStrong">
+              {picked ? picked.name : 'Nenhum arquivo escolhido'}
+            </AppText>
             {errors.file ? (
               <AppText variant="caption" color="critical" accessibilityLiveRegion="polite">
                 {errors.file}
               </AppText>
             ) : null}
           </View>
-          <Button variant="secondary" label={picked ? 'Escolher outro arquivo' : 'Escolher arquivo'} onPress={pick} />
-          <TextField label="Senha do backup" secure value={password} onChangeText={setPassword} error={errors.password} />
+          <Button
+            variant="secondary"
+            label={picked ? 'Escolher outro arquivo' : 'Escolher arquivo'}
+            onPress={pick}
+          />
+          <TextField
+            label="Senha do backup"
+            secure
+            value={password}
+            onChangeText={setPassword}
+            error={errors.password}
+          />
         </View>
       </Section>
     </Screen>

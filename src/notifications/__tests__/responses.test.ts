@@ -9,7 +9,9 @@ import { respondToNotification } from '../responses';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
 
 let db: Db;
 let sandero: string;
@@ -55,17 +57,20 @@ test('Adiar 15 dias snoozes the item from today and shows the check-up with it',
   expect(N.dismissNotificationAsync).toHaveBeenCalledWith('checkup-2026-10-24');
 });
 
-test.each(['done', 'snooze'])('%s on an item whose car was removed opens the check-up and writes nothing', async (action) => {
-  const before = selectedVehicleIdQuery(db).all();
-  await removeVehicle(db, sandero);
+test.each(['done', 'snooze'])(
+  '%s on an item whose car was removed opens the check-up and writes nothing',
+  async (action) => {
+    const before = selectedVehicleIdQuery(db).all();
+    await removeVehicle(db, sandero);
 
-  await respondToNotification(db, notificationResponse(critical(), action));
+    await respondToNotification(db, notificationResponse(critical(), action));
 
-  expect(router.push).toHaveBeenCalledWith('/checkup');
-  expect(router.push).toHaveBeenCalledTimes(1);
-  expect(selectedVehicleIdQuery(db).all()).toEqual(before);
-  expect(snoozedUntil()).toBeNull();
-});
+    expect(router.push).toHaveBeenCalledWith('/checkup');
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(selectedVehicleIdQuery(db).all()).toEqual(before);
+    expect(snoozedUntil()).toBeNull();
+  },
+);
 
 test('a failed write still lands on the check-up', async () => {
   const repo = require('@/db/repo');

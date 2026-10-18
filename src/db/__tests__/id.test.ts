@@ -20,9 +20,11 @@ test('encodes the ms timestamp in the first 48 bits', () => {
 
 test('sorts by creation time across milliseconds', () => {
   const now = jest.spyOn(Date, 'now');
-  const ids = [1_700_000_000_000, 1_700_000_000_001, 1_700_000_065_536, 1_800_000_000_000].map((ms) => {
-    now.mockReturnValue(ms);
-    return uuidv7();
-  });
+  const ids = [1_700_000_000_000, 1_700_000_000_001, 1_700_000_065_536, 1_800_000_000_000].map(
+    (ms) => {
+      now.mockReturnValue(ms);
+      return uuidv7();
+    },
+  );
   expect([...ids].sort()).toEqual(ids);
 });

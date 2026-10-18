@@ -21,7 +21,8 @@ export default function Backup() {
   const create = async () => {
     if (busy) return;
     const next: Errors = {
-      password: password.length >= MIN_PASSWORD ? undefined : `Use pelo menos ${MIN_PASSWORD} caracteres.`,
+      password:
+        password.length >= MIN_PASSWORD ? undefined : `Use pelo menos ${MIN_PASSWORD} caracteres.`,
       confirm: confirm === password ? undefined : 'As duas senhas não são iguais.',
     };
     setErrors(next);
@@ -31,7 +32,10 @@ export default function Backup() {
     let file: File | undefined;
     try {
       file = await createBackupFile(db, password, todayISO());
-      await Sharing.shareAsync(file.uri, { mimeType: 'application/octet-stream', dialogTitle: 'Salvar backup' });
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'application/octet-stream',
+        dialogTitle: 'Salvar backup',
+      });
       router.back();
     } catch (e) {
       setError(e);
@@ -52,7 +56,11 @@ export default function Backup() {
       footer={
         <>
           <FormError error={error} />
-          {busy ? <AppText color="inkMuted">Protegendo o arquivo com a senha. Isso leva alguns segundos.</AppText> : null}
+          {busy ? (
+            <AppText color="inkMuted">
+              Protegendo o arquivo com a senha. Isso leva alguns segundos.
+            </AppText>
+          ) : null}
           <Button label="Criar backup" loading={busy} onPress={create} />
         </>
       }
@@ -60,10 +68,16 @@ export default function Backup() {
       <Section title="Fazer backup">
         <View style={styles.body}>
           <AppText>
-            Guarda carros, trocas e fotos num arquivo protegido por senha. Use para passar seus dados para outro
-            aparelho.
+            Guarda carros, trocas e fotos num arquivo protegido por senha. Use para passar seus
+            dados para outro aparelho.
           </AppText>
-          <TextField label="Senha do backup" secure value={password} onChangeText={setPassword} error={errors.password} />
+          <TextField
+            label="Senha do backup"
+            secure
+            value={password}
+            onChangeText={setPassword}
+            error={errors.password}
+          />
           <TextField
             label="Repita a senha"
             secure

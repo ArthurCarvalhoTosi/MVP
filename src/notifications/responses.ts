@@ -9,7 +9,10 @@ import { ACTION_DONE, ACTION_SNOOZE, type NotificationData } from './scheduler';
  * Routes a tap on a reminder: Feito opens the log for that item on its car, Adiar 15 dias snoozes it and
  * shows the check-up, and anything else (a body tap, or an item or car removed since) shows the check-up.
  */
-export async function respondToNotification(db: Db, response: Notifications.NotificationResponse): Promise<void> {
+export async function respondToNotification(
+  db: Db,
+  response: Notifications.NotificationResponse,
+): Promise<void> {
   const { actionIdentifier, notification } = response;
   if (actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
     // Android leaves the notification up after a button tap; losing this only leaves it in the tray.
@@ -19,7 +22,11 @@ export async function respondToNotification(db: Db, response: Notifications.Noti
   const data = notification.request.content.data as Partial<NotificationData> | null;
   const itemId = data?.kind === 'critical' && typeof data.itemId === 'string' ? data.itemId : null;
   // allItemsQuery skips removed items and items of removed cars.
-  const item = itemId ? allItemsQuery(db).all().find((i) => i.id === itemId) : undefined;
+  const item = itemId
+    ? allItemsQuery(db)
+        .all()
+        .find((i) => i.id === itemId)
+    : undefined;
 
   try {
     if (item && actionIdentifier === ACTION_DONE) {

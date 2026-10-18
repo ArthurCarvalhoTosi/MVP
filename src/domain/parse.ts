@@ -25,7 +25,8 @@ export function parseBRDate(s: string, today: ISODate): ISODate | null {
   const [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])];
   const dt = new Date(Date.UTC(y, mo - 1, d));
   // Date rolls 31/02 into March (and years < 100 into 19xx); any mismatch means the date doesn't exist.
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d)
+    return null;
   const iso = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   return iso <= today ? iso : null;
 }

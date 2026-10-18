@@ -12,8 +12,13 @@ jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
-jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
-jest.mock('../scheduler', () => ({ ...jest.requireActual('../scheduler'), scheduleDigest: jest.fn() }));
+jest.mock('expo-crypto', () => ({
+  getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
+}));
+jest.mock('../scheduler', () => ({
+  ...jest.requireActual('../scheduler'),
+  scheduleDigest: jest.fn(),
+}));
 
 function Host() {
   useNotifications();
@@ -33,7 +38,11 @@ const lastPlan = () => jest.mocked(scheduleDigest).mock.lastCall?.[0];
 test('plans the reminders from the data on open, and again when it changes', async () => {
   await render(<Host />);
   expect(lastPlan()).toHaveLength(8);
-  expect(lastPlan()?.[0]).toMatchObject({ kind: 'critical', itemId: oilId, title: 'Troca de óleo e filtro' });
+  expect(lastPlan()?.[0]).toMatchObject({
+    kind: 'critical',
+    itemId: oilId,
+    title: 'Troca de óleo e filtro',
+  });
 
   // Snoozed past the whole plan: nothing left to remind.
   await setSnooze(db, oilId, addDays(todayISO(), 90));

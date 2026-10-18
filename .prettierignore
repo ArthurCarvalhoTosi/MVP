@@ -1,0 +1,8 @@
+drizzle
+android
+ios
+*.md
+# Already 2-space indented. Prettier would collapse every object and URL list.
+src/domain/models.json
+# Expo writes this; Prettier rewrites a coordinate in scientific notation.
+assets/expo.icon/icon.json
