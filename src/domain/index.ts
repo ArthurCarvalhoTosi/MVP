@@ -8,3 +8,4 @@ export * from './feed';
 export * from './parse';
 export * from './errors';
 export * from './digest';
+export * from './dossier';

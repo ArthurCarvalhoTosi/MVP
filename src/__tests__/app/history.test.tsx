@@ -58,6 +58,14 @@ test('shows the total spent and a reverse timeline, flagging late records', asyn
   expect(screen.getAllByText(`Registrado em ${formatDate(todayISO())}`)).toHaveLength(2);
 });
 
+test('opens the PDF export for this car', async () => {
+  await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: todayISO(), km: 42000 });
+  await render(<History />);
+
+  await userEvent.setup().press(screen.getByRole('button', { name: 'Exportar histórico em PDF' }));
+  expect(router.push).toHaveBeenCalledWith({ pathname: '/dossier', params: { vehicleId } });
+});
+
 test("shows the history of the car it was opened for, not the first one's", async () => {
   await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: todayISO(), km: 42000, costCents: 9900 });
   const gol = await seedVehicle(db, since, { nickname: 'Meu Gol', odometerKm: 80000 });

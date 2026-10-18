@@ -62,7 +62,15 @@ export default function History() {
   };
 
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      footer={
+        <Button
+          label="Exportar histórico em PDF"
+          onPress={() => router.push({ pathname: '/dossier', params: { vehicleId: vehicle.id } })}
+        />
+      }
+    >
       <View style={styles.total} accessible>
         <AppText variant="caption" color="inkMuted">
           Total gasto em manutenção
