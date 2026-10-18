@@ -15,6 +15,13 @@
       "when": 1792123622758,
       "tag": "0001_nice_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792282690338,
+      "tag": "0002_magenta_talos",
+      "breakpoints": true
     }
   ]
 }

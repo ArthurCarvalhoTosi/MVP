@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { MAX_KM, READING_ERRORS, ValidationError } from '@/domain';
 import type { Db } from '../client';
 import {
@@ -11,11 +11,15 @@ import {
   OdometerError,
   readingsQuery,
   registerMaintenance,
+  removedAttachmentsQuery,
+  removeMaintenance,
   removeVehicle,
+  renameVehicle,
   selectedVehicleIdQuery,
   selectVehicle,
   setSnooze,
   specsQuery,
+  updateMaintenance,
   upsertSpecs,
   vehiclesQuery,
 } from '../repo';
@@ -100,7 +104,15 @@ describe('createVehicle', () => {
     expect(items).toHaveLength(2);
     expect(items).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ ...OIL, baselineKm: 50000, baselineDate: TODAY, active: true, snoozedUntil: null }),
+        expect.objectContaining({
+          ...OIL,
+          baselineKm: 50000,
+          baselineDate: TODAY,
+          startKm: 50000,
+          startDate: TODAY,
+          active: true,
+          snoozedUntil: null,
+        }),
         expect.objectContaining({ ...TIRES, baselineKm: 50000, baselineDate: TODAY, active: true }),
       ]),
     );
@@ -564,4 +576,257 @@ test('allItemsQuery and allReadingsQuery span every vehicle except removed ones'
     { vehicleId: a.vehicleId, km: 50000, readAt: TODAY },
     { vehicleId: b.vehicleId, km: 31000, readAt: '2026-11-01' },
   ]);
+});
+
+describe('renameVehicle', () => {
+  test('saves the trimmed name', async () => {
+    const vehicleId = await seed();
+    await renameVehicle(db, vehicleId, '  Sandero da Ana ');
+    expect(vehiclesQuery(db).all()).toEqual([expect.objectContaining({ id: vehicleId, nickname: 'Sandero da Ana' })]);
+  });
+
+  test('rejects an empty name and an unknown or removed car', async () => {
+    const vehicleId = await seed();
+    const removed = await seed();
+    await removeVehicle(db, removed);
+
+    await expectValidation(renameVehicle(db, vehicleId, '   '), 'Informe um apelido para o veículo.');
+    await expectValidation(renameVehicle(db, 'nope', 'Carro'), 'Carro não encontrado.');
+    await expectValidation(renameVehicle(db, removed, 'Carro'), 'Carro não encontrado.');
+    expect(vehiclesQuery(db).all()).toEqual([expect.objectContaining({ nickname: 'Meu carro' })]);
+  });
+});
+
+describe('editing and removing logs', () => {
+  const PHOTO = { filePath: 'attachments/a.bin', mime: 'image/jpeg', sizeBytes: 10 };
+
+  const liveReadings = () =>
+    db
+      .select({
+        km: odometerReadings.km,
+        readAt: odometerReadings.readAt,
+        source: odometerReadings.source,
+        logId: odometerReadings.logId,
+      })
+      .from(odometerReadings)
+      .where(isNull(odometerReadings.deletedAt))
+      .orderBy(odometerReadings.readAt, odometerReadings.km)
+      .all();
+  const liveAttachments = () => db.select().from(attachments).where(isNull(attachments.deletedAt)).all();
+
+  /** Oil logged twice after the TODAY start (50.000 km): 51.000 on 11-01 and 52.000, with a photo, on 12-01. */
+  async function seedTwoLogs() {
+    jest.useFakeTimers({ now: new Date('2026-12-01T10:00:00.000Z') });
+    const ids = await seedWithItems();
+    await registerMaintenance(db, { vehicleId: ids.vehicleId, itemId: ids.oilId, performedAt: '2026-11-01', km: 51000 });
+    jest.setSystemTime(new Date('2026-12-01T10:00:01.000Z'));
+    await registerMaintenance(db, {
+      vehicleId: ids.vehicleId,
+      itemId: ids.oilId,
+      performedAt: '2026-12-01',
+      km: 52000,
+      attachment: PHOTO,
+    });
+    const [newer, older] = logsQuery(db, ids.vehicleId).all();
+    return { ...ids, newer: newer.id, older: older.id };
+  }
+
+  test('a log brings its reading, linked to it, and its photo', async () => {
+    const { vehicleId, newer, older } = await seedTwoLogs();
+
+    expect(liveReadings()).toEqual([
+      { km: 50000, readAt: TODAY, source: 'onboarding', logId: null },
+      { km: 51000, readAt: '2026-11-01', source: 'log', logId: older },
+      { km: 52000, readAt: '2026-12-01', source: 'log', logId: newer },
+    ]);
+    expect(logsQuery(db, vehicleId).all().map((l) => [l.id, l.photo])).toEqual([
+      [newer, PHOTO.filePath],
+      [older, null],
+    ]);
+    expect(liveAttachments()).toEqual([expect.objectContaining({ logId: newer, ...PHOTO })]);
+  });
+
+  describe('updateMaintenance', () => {
+    test('saves the fields and moves its own reading, checked against the others only', async () => {
+      const { vehicleId, oilId, newer, older } = await seedTwoLogs();
+
+      // Lower than its own old reading: fine, that reading moves with the log.
+      await updateMaintenance(db, newer, {
+        performedAt: '2026-11-20',
+        km: 51800,
+        costCents: 9900,
+        brandSpec: ' 5W30 ',
+        notes: ' Oficina do João ',
+      });
+
+      expect(logsQuery(db, vehicleId).all()[0]).toMatchObject({
+        id: newer,
+        performedAt: '2026-11-20',
+        km: 51800,
+        costCents: 9900,
+        brandSpec: '5W30',
+        notes: 'Oficina do João',
+        photo: PHOTO.filePath,
+      });
+      expect(liveReadings().map((r) => [r.km, r.readAt, r.logId])).toEqual([
+        [50000, TODAY, null],
+        [51000, '2026-11-01', older],
+        [51800, '2026-11-20', newer],
+      ]);
+      expect(item(oilId)).toMatchObject({ baselineKm: 51800, baselineDate: '2026-11-20' });
+    });
+
+    test('rejects a km out of order with the other readings and changes nothing', async () => {
+      const { vehicleId, oilId, newer } = await seedTwoLogs();
+      const everything = () => ({ logs: logsQuery(db, vehicleId).all(), readings: liveReadings(), oil: item(oilId) });
+      const before = everything();
+
+      expectOdometerError(
+        await rejection(updateMaintenance(db, newer, { performedAt: '2026-12-01', km: 50500 })),
+        'below_previous',
+      );
+      expectOdometerError(
+        await rejection(updateMaintenance(db, newer, { performedAt: '2026-10-15', km: 51500 })),
+        'above_next',
+      );
+
+      expect(everything()).toEqual(before);
+    });
+
+    test('moving the baseline log before another one hands the baseline to that one', async () => {
+      const { oilId, newer, older } = await seedTwoLogs();
+
+      await updateMaintenance(db, newer, { performedAt: '2026-10-20', km: 50500 });
+      expect(item(oilId)).toMatchObject({ baselineKm: 51000, baselineDate: '2026-11-01' });
+
+      // Before the marco zero, a log stays in history without moving the baseline.
+      await updateMaintenance(db, older, { performedAt: '2026-09-01', km: 45000 });
+      expect(item(oilId)).toMatchObject({ baselineKm: 50500, baselineDate: '2026-10-20' });
+    });
+
+    test('keeps, replaces or removes the photo', async () => {
+      const { newer } = await seedTwoLogs();
+      const fields = { performedAt: '2026-12-01', km: 52000 };
+
+      await updateMaintenance(db, newer, fields);
+      expect(liveAttachments()).toEqual([expect.objectContaining({ logId: newer, filePath: PHOTO.filePath })]);
+
+      await updateMaintenance(db, newer, { ...fields, attachment: { ...PHOTO, filePath: 'attachments/b.bin' } });
+      expect(liveAttachments()).toEqual([expect.objectContaining({ logId: newer, filePath: 'attachments/b.bin' })]);
+      expect(removedAttachmentsQuery(db).all()).toEqual([{ filePath: PHOTO.filePath }]);
+
+      await updateMaintenance(db, newer, { ...fields, attachment: null });
+      expect(liveAttachments()).toEqual([]);
+      expect(removedAttachmentsQuery(db).all()).toHaveLength(2);
+    });
+
+    test('a cost-only edit leaves a reading dropped by a correction dropped', async () => {
+      const { vehicleId, newer, older } = await seedTwoLogs();
+      await addOdometerReading(db, vehicleId, 51500, '2026-12-05', 'adjust', { correct: true });
+      const before = liveReadings();
+
+      await updateMaintenance(db, newer, { performedAt: '2026-12-01', km: 52000, costCents: 100 });
+      expect(liveReadings()).toEqual(before);
+
+      // A new km brings it back, checked again.
+      expectOdometerError(
+        await rejection(updateMaintenance(db, newer, { performedAt: '2026-12-01', km: 51600 })),
+        'above_next',
+      );
+      await updateMaintenance(db, newer, { performedAt: '2026-12-01', km: 51400 });
+      expect(liveReadings().map((r) => [r.km, r.logId])).toEqual([
+        [50000, null],
+        [51000, older],
+        [51400, newer],
+        [51500, null],
+      ]);
+    });
+
+    test('validates the input and rejects an unknown or removed log', async () => {
+      const { newer, older } = await seedTwoLogs();
+      await removeMaintenance(db, older);
+
+      await expectValidation(updateMaintenance(db, 'nope', { performedAt: TODAY, km: 50000 }), 'Registro não encontrado.');
+      await expectValidation(updateMaintenance(db, older, { performedAt: TODAY, km: 50000 }), 'Registro não encontrado.');
+      await expectValidation(updateMaintenance(db, newer, { performedAt: TODAY, km: 1, costCents: -1 }), 'Valor inválido.');
+      await expectValidation(updateMaintenance(db, newer, { performedAt: '2026-02-30', km: 1 }), 'Data inválida.');
+      await expectValidation(updateMaintenance(db, newer, { performedAt: TODAY, km: MAX_KM + 1 }), 'Quilometragem inválida.');
+    });
+
+    test('rolls everything back when a step fails', async () => {
+      const { vehicleId, oilId, newer } = await seedTwoLogs();
+      const everything = () => ({
+        logs: logsQuery(db, vehicleId).all(),
+        readings: liveReadings(),
+        attachments: db.select().from(attachments).all(),
+        oil: item(oilId),
+      });
+      const before = everything();
+      // Adding the new photo is the last write before the baseline.
+      db.run(sql`CREATE TRIGGER fail_insert BEFORE INSERT ON attachments BEGIN SELECT RAISE(ABORT, 'boom'); END`);
+
+      await expect(
+        updateMaintenance(db, newer, { performedAt: '2026-11-20', km: 51800, attachment: { ...PHOTO, filePath: 'x' } }),
+      ).rejects.toThrow('boom');
+
+      expect(everything()).toEqual(before);
+    });
+  });
+
+  describe('removeMaintenance', () => {
+    test('soft-deletes the log, its reading and photo, and walks the baseline back', async () => {
+      const { vehicleId, oilId, newer, older } = await seedTwoLogs();
+      jest.setSystemTime(new Date('2026-12-02T10:00:00.000Z'));
+
+      await removeMaintenance(db, newer);
+
+      expect(logsQuery(db, vehicleId).all().map((l) => l.id)).toEqual([older]);
+      expect(liveReadings().map((r) => r.km)).toEqual([50000, 51000]);
+      expect(db.select().from(attachments).all()).toEqual([
+        expect.objectContaining({ deletedAt: '2026-12-02T10:00:00.000Z', updatedAt: '2026-12-02T10:00:00.000Z' }),
+      ]);
+      expect(item(oilId)).toMatchObject({ baselineKm: 51000, baselineDate: '2026-11-01' });
+
+      // No log left: back to the marco zero.
+      await removeMaintenance(db, older);
+      expect(item(oilId)).toMatchObject({ baselineKm: 50000, baselineDate: TODAY });
+      expect(liveReadings().map((r) => r.km)).toEqual([50000]);
+    });
+
+    test("removing another item's log leaves this baseline alone", async () => {
+      const { vehicleId, oilId, tiresId } = await seedTwoLogs();
+      await registerMaintenance(db, { vehicleId, itemId: tiresId, performedAt: '2026-12-01', km: 52000 });
+      const tiresLog = logsQuery(db, vehicleId).all().find((l) => l.itemId === tiresId)!;
+      const oil = item(oilId);
+
+      await removeMaintenance(db, tiresLog.id);
+
+      expect(item(oilId)).toEqual(oil);
+      expect(item(tiresId)).toMatchObject({ baselineKm: 50000, baselineDate: TODAY });
+    });
+
+    test('a baseline walked back never sits above a later real reading', async () => {
+      // Both logs accepted overestimated km; the panel later showed 50.800 km.
+      const { vehicleId, oilId, newer } = await seedTwoLogs();
+      await addOdometerReading(db, vehicleId, 50800, '2026-12-05', 'adjust', { correct: true });
+
+      await removeMaintenance(db, newer);
+
+      expect(item(oilId)).toMatchObject({ baselineKm: 50800, baselineDate: '2026-11-01' });
+    });
+
+    test('rejects an unknown or removed log, and rolls back when a step fails', async () => {
+      const { vehicleId, oilId, newer, older } = await seedTwoLogs();
+      await removeMaintenance(db, older);
+      await expectValidation(removeMaintenance(db, older), 'Registro não encontrado.');
+      await expectValidation(removeMaintenance(db, 'nope'), 'Registro não encontrado.');
+
+      const everything = () => ({ logs: logsQuery(db, vehicleId).all(), readings: liveReadings(), oil: item(oilId) });
+      const before = everything();
+      db.run(sql`CREATE TRIGGER fail_update BEFORE UPDATE ON attachments BEGIN SELECT RAISE(ABORT, 'boom'); END`);
+
+      await expect(removeMaintenance(db, newer)).rejects.toThrow('boom');
+      expect(everything()).toEqual(before);
+    });
+  });
 });
