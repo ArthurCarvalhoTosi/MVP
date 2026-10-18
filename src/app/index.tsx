@@ -129,6 +129,12 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
           ]}
           onEdit={() => router.push({ pathname: '/specs', params })}
         />
+        {/* Values from the seed: the user didn't type them, so say where they came from. */}
+        {vehicle.modelRef ? (
+          <AppText variant="caption" color="inkMuted">
+            Valores de referência. Confira no manual do proprietário.
+          </AppText>
+        ) : null}
       </Section>
 
       {needsAttention.length > 0 ? (

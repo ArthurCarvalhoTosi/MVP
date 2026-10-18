@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, getTableColumns, gt, inArray, isNull, lte } from 'drizzle-orm';
-import { checkReading, MAX_KM, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
+import { checkReading, findModel, MAX_KM, modelSpecs, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
 import type { Db } from './client';
 import { uuidv7 } from './id';
 import {
@@ -188,6 +188,8 @@ export async function createVehicle(
     odometerKm: number;
     monthlyKmEstimate: number;
     severeUse: boolean;
+    /** A seed model id; its specs fill the car's cola de bolso. */
+    modelRef?: string | null;
     items: { templateKey: string | null; name: string; intervalKm: number | null; intervalMonths: number | null }[];
   },
   today: ISODate,
@@ -196,6 +198,8 @@ export async function createVehicle(
   odometerKm(input.odometerKm);
   nonNegativeInt(input.monthlyKmEstimate, 'Estimativa de km por mês inválida.');
   isoDate(today);
+  const model = input.modelRef ? findModel(input.modelRef) : undefined;
+  if (input.modelRef && !model) throw new ValidationError('Modelo não encontrado.');
   const vehicleId = uuidv7();
   const items = input.items.map((item) => {
     if (item.intervalKm === null && item.intervalMonths === null) {
@@ -218,13 +222,22 @@ export async function createVehicle(
 
   db.transaction((tx) => {
     tx.insert(vehicles)
-      .values({ id: vehicleId, nickname, monthlyKmEstimate: input.monthlyKmEstimate, severeUse: input.severeUse })
+      .values({
+        id: vehicleId,
+        modelRef: model?.id ?? null,
+        nickname,
+        monthlyKmEstimate: input.monthlyKmEstimate,
+        severeUse: input.severeUse,
+      })
       .run();
     tx.insert(odometerReadings)
       .values({ id: uuidv7(), vehicleId, km: input.odometerKm, readAt: today, source: 'onboarding' })
       .run();
     if (items.length > 0) tx.insert(maintenanceItems).values(items).run();
-    tx.insert(vehicleSpecs).values({ vehicleId }).run();
+    // Copied, not merged on read: what the user edits (even a cleared value) is the whole truth and
+    // every reader stays one plain query.
+    // shortcut: a seed fix only reaches new cars; when one matters, update the rows still holding the old value.
+    tx.insert(vehicleSpecs).values({ vehicleId, ...(model && modelSpecs(model)) }).run();
     setSelectedVehicle(tx, vehicleId);
   });
   return vehicleId;

@@ -3,7 +3,20 @@ import { useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { createVehicle, vehiclesQuery } from '@/db/repo';
-import { intervalLabel, MAX_KM, MONTHLY_KM_OPTIONS, parseIntBR, PRESETS, presetSchedule, todayISO } from '@/domain';
+import {
+  intervalLabel,
+  MAX_KM,
+  modelYears,
+  MONTHLY_KM_OPTIONS,
+  parseIntBR,
+  PRESETS,
+  presetSchedule,
+  presetsFor,
+  searchModels,
+  suggestedNickname,
+  todayISO,
+  type CarModel,
+} from '@/domain';
 import { AppText, Button, ChipGroup, FormError, Icon, Screen, Section, TextField, space, radius, useTheme } from '@/ui';
 
 const SEVERE_OPTIONS = [
@@ -22,10 +35,25 @@ export default function Onboarding() {
   const [km, setKm] = useState('');
   const [monthly, setMonthly] = useState(1000);
   const [severe, setSevere] = useState(false);
+  const [model, setModel] = useState<ModelChoice>(null);
+  const [suggestion, setSuggestion] = useState('');
   const [picked, setPicked] = useState(() => PRESETS.map((p) => p.key));
   const [errors, setErrors] = useState<Errors>({});
   const [saveError, setSaveError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
+
+  const chosen = model === 'none' ? undefined : (model ?? undefined);
+  const presets = presetsFor(chosen);
+  const items = presets.filter((p) => picked.includes(p.key));
+
+  const choose = (next: ModelChoice) => {
+    // Only fills a blank name or our own earlier suggestion, never what the user typed.
+    if (next && next !== 'none' && (!nickname.trim() || nickname === suggestion)) {
+      setNickname(suggestedNickname(next));
+      setSuggestion(suggestedNickname(next));
+    }
+    setModel(next);
+  };
 
   const start = async () => {
     if (saving) return;
@@ -38,7 +66,7 @@ export default function Onboarding() {
           : odometerKm > MAX_KM
             ? 'Confira o KM: o valor parece alto demais.'
             : undefined,
-      items: picked.length ? undefined : 'Marque pelo menos um item para acompanhar.',
+      items: items.length ? undefined : 'Marque pelo menos um item para acompanhar.',
     };
     setSaveError(null);
     if (odometerKm === null || next.km || next.nickname || next.items) {
@@ -57,7 +85,8 @@ export default function Onboarding() {
           odometerKm,
           monthlyKmEstimate: monthly,
           severeUse: severe,
-          items: PRESETS.filter((p) => picked.includes(p.key)).map((p) => ({
+          modelRef: chosen?.id ?? null,
+          items: items.map((p) => ({
             templateKey: p.key,
             name: p.name,
             ...presetSchedule(p, severe),
@@ -87,6 +116,7 @@ export default function Onboarding() {
     >
       {adding ? <Stack.Screen options={{ title: 'Adicionar carro' }} /> : null}
       <View style={styles.fields}>
+        <ModelField model={model} onChange={choose} />
         <TextField
           label="Como você chama o carro?"
           placeholder="Meu Sandero 2018"
@@ -124,7 +154,7 @@ export default function Onboarding() {
       </View>
 
       <Section title="O que acompanhar">
-        {PRESETS.map((p) => {
+        {presets.map((p) => {
           const checked = picked.includes(p.key);
           const s = presetSchedule(p, severe);
           const interval = intervalLabel(s.intervalKm, s.intervalMonths);
@@ -168,6 +198,70 @@ export default function Onboarding() {
   );
 }
 
+// null while searching; 'none' once the user says the car isn't listed.
+type ModelChoice = CarModel | 'none' | null;
+
+function ModelField({ model, onChange }: { model: ModelChoice; onChange: (m: ModelChoice) => void }) {
+  const { c } = useTheme();
+  const [query, setQuery] = useState('');
+
+  if (model !== null) {
+    const m = model === 'none' ? null : model;
+    return (
+      <View style={[styles.check, { borderBottomColor: c.line }]}>
+        <View style={styles.flex}>
+          <AppText variant="caption" color="inkMuted">
+            Modelo
+          </AppText>
+          <AppText variant="bodyStrong">{m ? `${m.brand} ${m.model} ${m.engine}` : 'Não está na lista'}</AppText>
+          <AppText variant="caption" color="inkMuted">
+            {m ? modelYears(m) : 'Depois você preenche óleo, calibragem, palhetas e bateria.'}
+          </AppText>
+        </View>
+        <Button variant="quiet" label="Trocar modelo" onPress={() => onChange(null)} />
+      </View>
+    );
+  }
+
+  const results = searchModels(query);
+  return (
+    <View>
+      <TextField
+        label="Qual é o modelo?"
+        placeholder="Ex.: Onix, HB20, Strada"
+        autoCorrect={false}
+        value={query}
+        onChangeText={setQuery}
+      />
+      <View style={styles.results}>
+        {results.map((m) => (
+          <Pressable
+            key={m.id}
+            onPress={() => onChange(m)}
+            accessibilityRole="button"
+            accessibilityLabel={`${m.brand} ${m.model} ${m.engine}, ${modelYears(m)}`}
+            style={({ pressed }) => [styles.check, { borderBottomColor: c.line }, pressed && { backgroundColor: c.line }]}
+          >
+            <View style={styles.flex}>
+              <AppText variant="bodyStrong">{`${m.brand} ${m.model}`}</AppText>
+              <AppText variant="caption" color="inkMuted">{`${m.engine} · ${modelYears(m)}`}</AppText>
+            </View>
+            <Icon name="chevron-right" size={20} color={c.inkMuted} />
+          </Pressable>
+        ))}
+      </View>
+      {query.trim() && results.length === 0 ? (
+        <AppText color="inkMuted" accessibilityLiveRegion="polite">
+          Não achamos esse modelo. Confira o nome ou toque em “Meu carro não está na lista”.
+        </AppText>
+      ) : null}
+      <View style={styles.start}>
+        <Button variant="quiet" label="Meu carro não está na lista" onPress={() => onChange('none')} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   fields: { gap: space.xl, marginBottom: space.xxl },
   question: { gap: space.s },
@@ -189,4 +283,6 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
   note: { marginTop: space.m },
+  results: { marginTop: space.s },
+  start: { alignItems: 'flex-start' },
 });
