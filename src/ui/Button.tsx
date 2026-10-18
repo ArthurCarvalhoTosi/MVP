@@ -12,6 +12,8 @@ type Props = {
   loading?: boolean;
   /** For buttons that show or hide content below them. */
   expanded?: boolean;
+  /** When the visible label needs context to stand alone, e.g. repeated in every row of a list. */
+  accessibilityLabel?: string;
 };
 
 export function Button({
@@ -22,6 +24,7 @@ export function Button({
   disabled = false,
   loading = false,
   expanded,
+  accessibilityLabel = label,
 }: Props) {
   const { c } = useTheme();
   const fg = variant === 'primary' ? 'onPrimary' : 'primary';
@@ -32,7 +35,7 @@ export function Button({
       onPress={onPress}
       disabled={inactive}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: inactive, busy: loading, expanded }}
       style={({ pressed }) => [
         styles.base,

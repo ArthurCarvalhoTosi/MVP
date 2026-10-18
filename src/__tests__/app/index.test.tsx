@@ -2,9 +2,9 @@ import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { AppState, type AppStateStatus } from 'react-native';
 import Dashboard from '@/app/index';
 import type { Db } from '@/db/client';
-import { selectVehicle, upsertSpecs } from '@/db/repo';
+import { createVehicle, selectVehicle, upsertSpecs } from '@/db/repo';
 import { devicePrefs } from '@/db/schema';
-import { addDays, todayISO } from '@/domain';
+import { addDays, CAR_MODELS, todayISO } from '@/domain';
 import { redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
@@ -12,6 +12,7 @@ jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQ
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
+jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
 
 let db: Db;
 beforeEach(async () => {
@@ -24,12 +25,15 @@ test('redirects to onboarding when there is no vehicle', async () => {
 });
 
 test('shows an overdue item with "Registrar troca" and a stale-KM hint', async () => {
-  // 400 days at ~1.000 km/month: oil (10.000 km / 12 months) is well past due.
+  // 400 days at ~1.000 km/month: oil (10.000 km / 12 months) passed its km limit first, ~3.333 km ago.
   const { oilId } = await seedVehicle(db, addDays(todayISO(), -400));
   await render(<Dashboard />);
 
   expect(screen.getByRole('header', { name: 'Precisa de atenção' })).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: /^Troca de óleo e filtro\. Crítico\. Vencido há/ })).toBeOnTheScreen();
+  // The km past the limit, not a day count estimated from the km/day.
+  expect(
+    screen.getByRole('button', { name: /^Troca de óleo e filtro\. Crítico\. Passou 3\.33\d km$/ }),
+  ).toBeOnTheScreen();
   expect(screen.getByText(/Faz mais de 30 dias que o KM não é atualizado/)).toBeOnTheScreen();
   expect(screen.queryByText('Tudo em dia.')).not.toBeOnTheScreen();
 
@@ -82,6 +86,23 @@ test('shows the selected car, whose sheets get its id, and offers the car list i
   await screen.rerender(<Dashboard />);
   expect(screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Sandero' })).toBeOnTheScreen();
   expect(screen.getByLabelText('Hodômetro estimado: 40.000 quilômetros')).toBeOnTheScreen();
+});
+
+test('says the seed values are references only for a car picked from the list', async () => {
+  const note = 'Valores de referência. Confira no manual do proprietário.';
+  await seedVehicle(db);
+  await render(<Dashboard />);
+  expect(screen.queryByText(note)).not.toBeOnTheScreen();
+
+  const model = CAR_MODELS.find((m) => m.oil)!;
+  await createVehicle(
+    db,
+    { nickname: 'Meu carro', odometerKm: 1000, monthlyKmEstimate: 1000, severeUse: false, modelRef: model.id, items: [] },
+    todayISO(),
+  );
+  await screen.rerender(<Dashboard />);
+  expect(screen.getByLabelText(`Óleo: ${model.oil}`)).toBeOnTheScreen();
+  expect(screen.getByText(note)).toBeOnTheScreen();
 });
 
 test('opens the oldest car when no car was chosen yet', async () => {

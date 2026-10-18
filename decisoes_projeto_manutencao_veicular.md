@@ -12,7 +12,7 @@ Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura
 * **Decisão de Escopo:** **Hiper-focado em Carros.**
   * Casa e híbrido descartados (menor dor financeira percebida, diluição de valor).
   * **Motos fora do MVP** (exigem presets próprios — corrente, intervalos de óleo menores — e dobram o trabalho de seed). O modelo de dados mantém `vehicle_type` para permitir inclusão futura.
-* **Múltiplos carros:** o usuário pode acompanhar vários carros. O app abre direto no último carro visto (preserva a consulta em 3 segundos); tocar no nome do carro no topo abre "Seus carros", com o status de cada um, "Adicionar carro" (reusa o onboarding) e "Remover" (com confirmação; soft delete do carro e de todos os seus registros). Renomear fica para depois.
+* **Múltiplos carros:** o usuário pode acompanhar vários carros. O app abre direto no último carro visto (preserva a consulta em 3 segundos); tocar no nome do carro no topo abre "Seus carros", com o status de cada um, "Adicionar carro" (reusa o onboarding) e "Remover" (com confirmação; soft delete do carro e de todos os seus registros) e renomear (lápis na lista).
 * **Sem conta no MVP (v0):** app 100% local. A arquitetura já é preparada para contas e acesso multi-dispositivo na v1 (ver seção 7).
 * **Plataforma prioritária:** Android (~80% do mercado BR). iOS sai junto, mas testes de notificação priorizam Android.
 
@@ -114,7 +114,7 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 | App | React Native + **Expo** (TypeScript), EAS Build + OTA Updates |
 | Banco local | `expo-sqlite` com **SQLCipher** + **Drizzle ORM** (migrations tipadas) |
 | Segredos locais | `expo-secure-store` (Android Keystore / iOS Keychain) |
-| Criptografia de arquivos | `react-native-quick-crypto` (AES-256-GCM) |
+| Criptografia de arquivos | `expo-crypto` (AES-256-GCM nativo) |
 | Notificações | `expo-notifications` (agendamento 100% local) |
 | PDF | `expo-print` (HTML → PDF no aparelho) |
 | Backend (v1) | **Supabase**: Auth, Postgres + RLS, Storage, Edge Functions |
@@ -149,7 +149,11 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 * **Resumo semanal:** toque abre a tela de Check-up com itens pendentes (sem botões de ação — `[Feito]` é ambíguo com vários itens).
 * **Item único crítico:** notificação individual com `[Feito]` e `[Adiar 15 dias]`.
   * `[Feito]` abre o app com o registro pré-preenchido (salvar em 1 toque). Tratamento de ação com app encerrado é instável no Expo/iOS; abrir o app é mais robusto.
-  * `[Adiar 15 dias]` pode ser tratado em background (operação trivial e idempotente).
+  * `[Adiar 15 dias]` também abre o app: gravar em background com o app encerrado exigiria `expo-task-manager` e não é confiável; no app, a escrita usa o banco cifrado já aberto e o usuário vê o resultado.
+* **Quem entra:** itens críticos e em atenção (mesmo critério de "Precisa de atenção"), de todos os carros, exceto os adiados. No máximo uma notificação por sábado, às 09h locais; sábado sem pendência não notifica. Exatamente um crítico gera a notificação individual (itens em atenção citados como "Mais N em atenção."); dois ou mais críticos geram o resumo.
+* **Soneca:** o item sai dos lembretes e do Check-up até `snoozed_until`; vencimento e dashboard não mudam. Registrar a troca limpa a soneca.
+* **Permissão:** cartão no dashboard explica antes do pedido do sistema; respondido de qualquer forma, não volta. Sem permissão, nada é agendado.
+* **Limites:** sem abrir o app por 8 semanas, os lembretes acabam; alarmes inexatos (sem `SCHEDULE_EXACT_ALARM`) podem atrasar alguns minutos.
 
 ---
 
@@ -309,7 +313,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 | `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
 | `src/app` (telas) | Jest + RNTL | Fluxos com banco em memória: onboarding, registro de troca, ajuste/correção de KM, cola de bolso, histórico, troca/adição/remoção de carros. |
 
-* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 28 suítes, 207 testes, lint sem avisos.
+* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 37 suítes, 552 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
 * **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela e notificações. Validados manualmente no emulador Android.
 * `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
 
@@ -345,14 +349,32 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 * Carro selecionado lembrado na tabela local `device_prefs` (nunca sincronizada).
 * Testado no emulador: adicionar um segundo carro e alternar entre os dois.
 
+**CI/CD (2026-10-17)**
+* GitHub Actions (`.github/workflows/ci.yml`): typecheck, lint e testes em todo PR e push para a `main`; na `main`, APK Android de release (arm64, assinado com a chave de debug) publicado como artefato por 30 dias. Play Store exigirá EAS Build com keystore própria.
+* Dependências nativas novas instaladas de uma vez (notificações, PDF, compartilhar, câmera/galeria, seletor de arquivo). Criptografia de arquivos pelo AES-256-GCM nativo do `expo-crypto`, sem `react-native-quick-crypto`.
+
+**Histórico, comprovantes e vencimento por km (2026-10-17)**
+* Item vencido pelo km mostra "Passou N km" em vez de dias estimados pela média (`computeDue` informa qual limite define o vencimento; empate fica com o km).
+* Registros podem ser editados (data, km, custo, marca, observações, foto) e excluídos com confirmação. Cada registro tem sua leitura de hodômetro ligada (`log_id`), que acompanha a edição/exclusão e continua validada contra as demais. O marco zero de cada item fica guardado (`start_km`/`start_date`): excluir ou mover o registro que definia a linha de base a devolve ao registro anterior ou ao marco zero, nunca acima de uma leitura real posterior.
+* Renomear carro em "Seus carros".
+* Foto do comprovante (câmera ou galeria): reduzida a 1.600 px e re-codificada em JPEG (sem EXIF/GPS), cifrada com AES-256-GCM em `documents/attachments`, chave própria no Secure Store. O JPEG em claro só existe em memória (imagem sem cache de disco); temporários do picker e do manipulador apagados em qualquer caminho. Histórico mostra "Com comprovante" e "Ver foto".
+* Remover registro ou carro: soft delete do anexo (para o sync) e o arquivo cifrado é apagado do disco na hora (não há desfazer; notas fiscais têm CPF e endereço).
+
+**Notificações locais (2026-10-17)**
+* `buildDigest` no domínio; lembrete de sábado agrupando os carros; notificação de item único crítico com `[Feito]` / `[Adiar 15 dias]`; tela Check-up; pedido de permissão explicado num cartão do dashboard; respostas tratadas também com o app aberto pela notificação (regras na seção 6).
+
+**Seed curado (2026-10-17, dados parciais)**
+* `src/domain/models.json` versionado, com fontes por campo; valores não confirmados ficam vazios. Busca no onboarding (ignora acentos, maiúsculas e hífen; aceita ano), sugestão de apelido e "Meu carro não está na lista".
+* Specs copiadas para `vehicle_specs` na criação: o que o usuário edita ou apaga vale; correção do seed só alcança carros novos.
+* O seed tira a correia dentada de motores com corrente e de elétricos e ajusta intervalos quando o manual diverge (ex.: VW severo 10.000 km / 6 m; correia VW 120.000 km / 5 anos). Aviso "Valores de referência" na cola de bolso de carros do seed.
+
+**`npm audit` (2026-10-17): risco aceito**
+* As 67 ocorrências vêm de 5 pacotes-raiz, todos de ferramentas de build/teste (Metro, Jest, CLI do Expo, drizzle-kit); nada entra no app instalado. `braces`, `node-forge` e `sprintf-js` não têm versão corrigida; `uuid@7` só entra pelo `xcode` (prebuild iOS) e a falha é em v3/v5/v6; o `esbuild` 0.18 do drizzle-kit não usa o servidor de desenvolvimento vulnerável. As "correções" do npm são rebaixamentos (expo@44, react-native@0.72). Reavaliar a cada atualização do SDK.
+
 ### Pendente
-1. **Validar o restante no emulador:** registrar troca, correção de KM, histórico, remover carro, modo escuro, teclado nas sheets, TalkBack.
-2. **Rótulo de item vencido por km:** hoje mostra "Vencido há 2813 dias" (estimativa a partir da média). Destacar "Passou N km" quando o vencimento vier do km.
-3. **Seed curado:** levantar os ~40 modelos mais vendidos e suas specs + busca no onboarding.
-4. **Notificações locais** (resumo semanal + item crítico; `buildDigest`, adiar 15 dias), agrupando os carros.
-5. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade.
-6. **Foto do comprovante** (anexo cifrado, sem EXIF).
-7. **Backup cifrado por arquivo** (exportar/importar com senha).
-8. Edição/exclusão de registros no histórico; renomear carro.
-9. **Rodar no iOS** (exige macOS ou EAS Build).
-10. Tratar os avisos do `npm audit` (vindos do template e das ferramentas de teste).
+1. **Validar no emulador:** registrar troca, correção de KM, histórico (editar/excluir, foto), remover/renomear carro, busca de modelo, notificações (botão de teste do Check-up em `__DEV__`), modo escuro, teclado nas sheets, TalkBack. A primeira rodada de QA foi interrompida antes do relatório.
+2. **Completar o seed:** hoje 33 modelos, ~70% dos valores vazios (palhetas e calibragem quase todas). Faltam HB20/HB20S, Creta, Tracker, Montana, Spin, S10, HR-V, City, Yaris, Kicks, Kwid, Kardian, Duster, Sandero/Logan, Ranger, Haval H6, Tiggo 7. Os testes do seed usam mínimo de 30 modelos e buscas por "song"/"corolla 2018" por causa disso.
+3. **Dossiê em PDF** (`expo-print`) com sinais de credibilidade; fotos opcionais via `readPhoto` de `src/attachments`.
+4. **Backup cifrado por arquivo** (exportar/importar com senha, Argon2id via `@noble/hashes`), incluindo as fotos.
+5. **Rodar no iOS** (exige macOS ou EAS Build).
+6. `resetDatabase` também apagar `documents/attachments`.

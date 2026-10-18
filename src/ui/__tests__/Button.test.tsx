@@ -44,4 +44,10 @@ describe('Button', () => {
     await screen.rerender(<Button label="Salvar" onPress={jest.fn()} />);
     expect(screen.getByRole('button', { name: 'Salvar' })).not.toBeCollapsed();
   });
+
+  it('lets the screen reader hear a fuller label than the one shown', async () => {
+    await render(<Button label="Ver foto" accessibilityLabel="Ver foto do comprovante de Óleo" onPress={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Ver foto do comprovante de Óleo' })).toBeOnTheScreen();
+    expect(screen.getByText('Ver foto')).toBeOnTheScreen();
+  });
 });

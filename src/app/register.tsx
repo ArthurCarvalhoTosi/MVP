@@ -1,10 +1,32 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { deleteRemovedPhotos, preparePhoto, readPhoto, saveWithPhoto } from '@/attachments';
 import { useDb } from '@/db/provider';
-import { allItemsQuery, OdometerError, readingsQuery, registerMaintenance, vehiclesQuery } from '@/db/repo';
-import { addDays, MAX_KM, parseBRDate, parseBRL, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
-import { Button, ChipGroup, FormError, Screen, Section, TextField, space } from '@/ui';
+import {
+  allItemsQuery,
+  logsQuery,
+  OdometerError,
+  readingsQuery,
+  registerMaintenance,
+  updateMaintenance,
+  vehiclesQuery,
+} from '@/db/repo';
+import {
+  addDays,
+  MAX_KM,
+  parseBRDate,
+  parseBRL,
+  parseIntBR,
+  projectOdometer,
+  READING_ERRORS,
+  todayISO,
+  ValidationError,
+  type ISODate,
+} from '@/domain';
+import { AppText, Button, ChipGroup, FormError, Screen, Section, TextField, radius, space, useTheme } from '@/ui';
 
 const DATE_OPTIONS = [
   { label: 'Hoje', value: 'today' },
@@ -12,32 +34,92 @@ const DATE_OPTIONS = [
   { label: 'Outra data', value: 'other' },
 ] as const;
 
+type DateChoice = (typeof DATE_OPTIONS)[number]['value'];
 type Errors = Partial<Record<'km' | 'date' | 'cost', string>>;
 
+/** Registers a maintenance for `itemId`, or edits the log `logId` of car `vehicleId` (from history). */
 export default function Register() {
   const db = useDb();
-  const { itemId } = useLocalSearchParams<{ itemId: string }>();
+  const { c } = useTheme();
+  const { itemId, logId, vehicleId } = useLocalSearchParams<{ itemId?: string; logId?: string; vehicleId?: string }>();
   // Read once: the form only needs starting values, not live updates.
   const [start] = useState(() => {
+    const today = todayISO();
+    if (logId) {
+      const log = logsQuery(db, vehicleId ?? '').all().find((l) => l.id === logId);
+      if (!log) return null;
+      return { vehicleId: log.vehicleId, itemId: log.itemId, title: log.itemName ?? 'Manutenção', log, km: log.km, date: log.performedAt };
+    }
     const item = allItemsQuery(db).all().find((i) => i.id === itemId);
     const vehicle = item && vehiclesQuery(db).all().find((v) => v.id === item.vehicleId);
     if (!vehicle || !item) return null;
-    const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, todayISO());
-    return { vehicleId: vehicle.id, item, km };
+    const km = projectOdometer(readingsQuery(db, vehicle.id).all(), vehicle.monthlyKmEstimate, today);
+    return { vehicleId: vehicle.id, itemId: item.id, title: item.name, log: null, km, date: today };
   });
+  const log = start?.log;
   const [km, setKm] = useState(start ? String(start.km) : '');
-  const [dateChoice, setDateChoice] = useState<(typeof DATE_OPTIONS)[number]['value']>('today');
-  const [otherDate, setOtherDate] = useState('');
-  const [cost, setCost] = useState('');
-  const [brandSpec, setBrandSpec] = useState('');
+  const [dateChoice, setDateChoice] = useState<DateChoice>(() => (start ? choiceFor(start.date) : 'today'));
+  const [otherDate, setOtherDate] = useState(() => (start && choiceFor(start.date) === 'other' ? toBR(start.date) : ''));
+  const [cost, setCost] = useState(log?.costCents != null ? (log.costCents / 100).toFixed(2).replace('.', ',') : '');
+  const [brandSpec, setBrandSpec] = useState(log?.brandSpec ?? '');
+  const [notes, setNotes] = useState(log?.notes ?? '');
+  // Plain JPEGs as base64, in memory only: the one picked here, and the saved one, kept apart so a
+  // slow decrypt can't overwrite a newer pick. Until the user picks or removes, the saved one stays.
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoChanged, setPhotoChanged] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<unknown>(null);
+  const [picking, setPicking] = useState<'camera' | 'library' | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [saveError, setSaveError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
 
+  const savedPhoto = log?.photo ?? null;
+  useEffect(() => {
+    if (!savedPhoto) return;
+    let live = true;
+    readPhoto(savedPhoto).then(
+      (base64) => live && setSaved(base64),
+      () => live && setPhotoError(new ValidationError('Não foi possível abrir a foto salva.')),
+    );
+    return () => {
+      live = false;
+    };
+  }, [savedPhoto]);
+
   if (!start) return <Redirect href="/" />;
 
+  const pick = async (source: 'camera' | 'library') => {
+    if (picking) return;
+    setPhotoError(null);
+    setPicking(source);
+    try {
+      if (source === 'camera' && !(await ImagePicker.requestCameraPermissionsAsync()).granted) {
+        setPhotoError(
+          new ValidationError('Para fotografar o comprovante, permita o uso da câmera nas configurações do aparelho.'),
+        );
+        return;
+      }
+      const launch = source === 'camera' ? ImagePicker.launchCameraAsync : ImagePicker.launchImageLibraryAsync;
+      const result = await launch({ mediaTypes: 'images', quality: 1 });
+      if (result.canceled) return;
+      setPhoto(await preparePhoto(result.assets[0].uri));
+      setPhotoChanged(true);
+    } catch {
+      setPhotoError(new ValidationError('Não foi possível usar essa foto. Tente de novo.'));
+    } finally {
+      setPicking(null);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setPhotoChanged(true);
+    setPhotoError(null);
+  };
+
   const save = async () => {
-    if (saving) return;
+    if (saving || picking) return;
     const today = todayISO();
     const kmValue = parseIntBR(km);
     const performedAt =
@@ -58,14 +140,17 @@ export default function Register() {
     if (kmValue === null || next.km || performedAt === null || next.cost) return;
     setSaving(true);
     try {
-      await registerMaintenance(db, {
-        vehicleId: start.vehicleId,
-        itemId: start.item.id,
-        performedAt,
-        km: kmValue,
-        costCents,
-        brandSpec,
-      });
+      const fields = { performedAt, km: kmValue, costCents, brandSpec, notes };
+      if (log) {
+        await saveWithPhoto(photoChanged ? photo : undefined, (attachment) =>
+          updateMaintenance(db, log.id, { ...fields, attachment }),
+        );
+        deleteRemovedPhotos(db);
+      } else {
+        await saveWithPhoto(photo, (attachment) =>
+          registerMaintenance(db, { ...fields, vehicleId: start.vehicleId, itemId: start.itemId, attachment }),
+        );
+      }
       router.back(); // stays "saving" while the sheet closes
     } catch (e) {
       setSaving(false);
@@ -76,17 +161,25 @@ export default function Register() {
     }
   };
 
+  const showsPhoto = photoChanged ? photo !== null : savedPhoto !== null;
+  const shown = photoChanged ? photo : saved;
+
   return (
     <Screen
       scroll
       footer={
         <>
           <FormError error={saveError} />
-          <Button label="Registrar troca" loading={saving} onPress={save} />
+          <Button
+            label={log ? 'Salvar alterações' : 'Registrar troca'}
+            loading={saving}
+            disabled={picking !== null}
+            onPress={save}
+          />
         </>
       }
     >
-      <Section title={start.item.name}>
+      <Section title={start.title}>
         <View style={styles.fields}>
           <TextField
             label="KM no momento da troca"
@@ -97,7 +190,7 @@ export default function Register() {
             value={km}
             onChangeText={setKm}
             error={errors.km}
-            hint={km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
+            hint={!log && km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
           />
           <ChipGroup label="Data da troca" options={DATE_OPTIONS} value={dateChoice} onChange={setDateChoice} />
           {dateChoice === 'other' ? (
@@ -123,12 +216,75 @@ export default function Register() {
             value={brandSpec}
             onChangeText={setBrandSpec}
           />
+          <TextField
+            label="Observações (opcional)"
+            placeholder="Ex.: Oficina do bairro"
+            value={notes}
+            onChangeText={setNotes}
+          />
+          <View style={styles.photo}>
+            <AppText variant="caption" color="inkMuted">
+              Foto do comprovante (opcional)
+            </AppText>
+            {showsPhoto ? (
+              <>
+                {shown ? (
+                  <Image
+                    source={{ uri: `data:image/jpeg;base64,${shown}` }}
+                    // Decrypted: never into the image cache on disk.
+                    cachePolicy="none"
+                    contentFit="contain"
+                    accessible
+                    accessibilityRole="image"
+                    accessibilityLabel="Foto do comprovante"
+                    style={[styles.preview, { backgroundColor: c.surface, borderColor: c.line }]}
+                  />
+                ) : photoError ? null : (
+                  <AppText color="inkMuted">Abrindo a foto…</AppText>
+                )}
+                <View style={styles.start}>
+                  <Button variant="quiet" label="Remover foto" onPress={removePhoto} />
+                </View>
+              </>
+            ) : (
+              <View style={styles.photoButtons}>
+                <Button
+                  variant="secondary"
+                  icon="camera"
+                  label="Tirar foto"
+                  loading={picking === 'camera'}
+                  disabled={picking === 'library'}
+                  onPress={() => pick('camera')}
+                />
+                <Button
+                  variant="secondary"
+                  icon="image-multiple"
+                  label="Escolher da galeria"
+                  loading={picking === 'library'}
+                  disabled={picking === 'camera'}
+                  onPress={() => pick('library')}
+                />
+              </View>
+            )}
+            <FormError error={photoError} />
+          </View>
         </View>
       </Section>
     </Screen>
   );
 }
 
+function choiceFor(d: ISODate): DateChoice {
+  const today = todayISO();
+  return d === today ? 'today' : d === addDays(today, -1) ? 'yesterday' : 'other';
+}
+
+const toBR = (d: ISODate) => d.split('-').reverse().join('/');
+
 const styles = StyleSheet.create({
   fields: { gap: space.xl },
+  photo: { gap: space.s },
+  photoButtons: { gap: space.s },
+  preview: { height: 240, borderWidth: 1, borderRadius: radius.plaque },
+  start: { alignItems: 'flex-start' },
 });

@@ -1,13 +1,15 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import History from '@/app/history';
 import type { Db } from '@/db/client';
-import { registerMaintenance } from '@/db/repo';
+import * as repo from '@/db/repo';
+import { itemsQuery, logsQuery, readingsQuery, registerMaintenance } from '@/db/repo';
 import { addDays, formatBRL, formatDate, todayISO } from '@/domain';
-import { params, redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import { attachmentsMock, params, redirect, router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
+jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
 jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
 
 let db: Db;
@@ -78,4 +80,103 @@ test('leaves for the garage when the car is gone', async () => {
   params.vehicleId = 'missing';
   await render(<History />);
   expect(redirect).toHaveBeenCalledWith('/');
+});
+
+describe('a record', () => {
+  const day = addDays(todayISO(), -5);
+  const WHAT = `Troca de óleo e filtro de ${formatDate(day)}`;
+  const PHOTO = { filePath: 'attachments/a.bin', mime: 'image/jpeg', sizeBytes: 1 };
+
+  const seedLog = (attachment?: typeof PHOTO) =>
+    registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: day, km: 41500, notes: 'Oficina do bairro', attachment });
+
+  test('shows its notes and opens for editing', async () => {
+    await seedLog();
+    await render(<History />);
+
+    expect(screen.getByText('Oficina do bairro')).toBeOnTheScreen();
+    expect(screen.queryByText('Com comprovante')).not.toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole('button', { name: `Editar ${WHAT}` }));
+
+    const [log] = logsQuery(db, vehicleId).all();
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { vehicleId, logId: log.id } });
+  });
+
+  test('with a photo says so and shows it decrypted on demand', async () => {
+    await seedLog(PHOTO);
+    await render(<History />);
+    const user = userEvent.setup();
+
+    expect(screen.getByText('Com comprovante')).toBeOnTheScreen();
+    expect(attachmentsMock.readPhoto).not.toHaveBeenCalled();
+    const show = screen.getByRole('button', { name: `Ver foto do comprovante de ${WHAT}` });
+    expect(show).toBeCollapsed();
+
+    await user.press(show);
+
+    expect(attachmentsMock.readPhoto).toHaveBeenCalledWith(PHOTO.filePath);
+    expect(screen.getByRole('image', { name: `Foto do comprovante de ${WHAT}` })).toHaveProp('source', [
+      { uri: 'data:image/jpeg;base64,SAVED' },
+    ]);
+    const hide = screen.getByRole('button', { name: `Ocultar foto do comprovante de ${WHAT}` });
+    expect(hide).toBeExpanded();
+    await user.press(hide);
+    expect(screen.queryByRole('image')).not.toBeOnTheScreen();
+  });
+
+  test('explains a photo that could not be opened', async () => {
+    attachmentsMock.readPhoto.mockRejectedValueOnce(new Error('bad tag'));
+    await seedLog(PHOTO);
+    await render(<History />);
+
+    await userEvent.setup().press(screen.getByRole('button', { name: `Ver foto do comprovante de ${WHAT}` }));
+
+    expect(screen.getByText('Não foi possível abrir a foto. Tente de novo.')).toBeOnTheScreen();
+  });
+
+  test('is deleted only after confirming, with its reading, and the baseline goes back', async () => {
+    await seedLog(PHOTO);
+    const { alert, press } = spyAlert();
+    await render(<History />);
+
+    await userEvent.setup().press(screen.getByRole('button', { name: `Excluir ${WHAT}` }));
+    expect(alert).toHaveBeenCalledWith(
+      'Excluir esta troca?',
+      `Troca de óleo e filtro, ${formatDate(day)}. O registro e a foto do comprovante serão apagados deste aparelho. Isso não pode ser desfeito.`,
+      [
+        expect.objectContaining({ text: 'Cancelar', style: 'cancel' }),
+        expect.objectContaining({ text: 'Excluir', style: 'destructive' }),
+      ],
+    );
+    expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
+    await press('Excluir');
+
+    expect(logsQuery(db, vehicleId).all()).toEqual([]);
+    expect(readingsQuery(db, vehicleId).all()).toEqual([{ km: 40000, readAt: since }]);
+    expect(itemsQuery(db, vehicleId).all()[0]).toMatchObject({ baselineKm: 40000, baselineDate: since });
+    expect(attachmentsMock.deleteRemovedPhotos).toHaveBeenCalled();
+    await screen.rerender(<History />);
+    expect(screen.getByText(/^Nenhuma troca registrada ainda/)).toBeOnTheScreen();
+  });
+
+  test('stays when the deletion is cancelled, and a failure reads plainly', async () => {
+    await seedLog();
+    const { alert, press } = spyAlert();
+    await render(<History />);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByRole('button', { name: `Excluir ${WHAT}` }));
+    expect(alert.mock.calls[0][1]).toBe(
+      `Troca de óleo e filtro, ${formatDate(day)}. O registro será apagado deste aparelho. Isso não pode ser desfeito.`,
+    );
+    await press('Cancelar');
+    expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
+
+    const remove = jest.spyOn(repo, 'removeMaintenance').mockRejectedValueOnce(new Error('disk I/O error'));
+    await user.press(screen.getByRole('button', { name: `Excluir ${WHAT}` }));
+    await press('Excluir');
+    expect(screen.getByText('Não foi possível salvar. Tente de novo.')).toBeOnTheScreen();
+    expect(logsQuery(db, vehicleId).all()).toHaveLength(1);
+    remove.mockRestore();
+  });
 });

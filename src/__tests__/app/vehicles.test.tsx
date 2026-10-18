@@ -5,11 +5,12 @@ import * as repo from '@/db/repo';
 import { removeVehicle, selectedVehicleIdQuery, vehiclesQuery } from '@/db/repo';
 import { vehicles } from '@/db/schema';
 import { addDays, formatKm, projectOdometer, todayISO } from '@/domain';
-import { router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
+import { attachmentsMock, router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
+jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
 jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
 
 let db: Db;
@@ -39,6 +40,17 @@ test('lists every car with its status and km, the open one selected', async () =
   expect(screen.getByRole('button', { name: GOL })).toBeSelected();
   expect(screen.getByRole('button', { name: 'Remover Meu Sandero' })).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Remover Meu Gol' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Renomear Meu Sandero' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Renomear Meu Gol' })).toBeOnTheScreen();
+});
+
+test('opens the rename sheet for the tapped car', async () => {
+  await render(<Vehicles />);
+
+  await userEvent.setup().press(screen.getByRole('button', { name: 'Renomear Meu Sandero' }));
+
+  // Replace, not push: on iOS a pushed screen would open underneath this sheet.
+  expect(router.replace).toHaveBeenCalledWith({ pathname: '/rename-vehicle', params: { vehicleId: sandero } });
 });
 
 test('opens the tapped car and closes', async () => {
@@ -65,6 +77,8 @@ test('removes a car only after confirming', async () => {
   // Soft delete: the row stays, marked deleted.
   expect(vehiclesQuery(db).all().map((v) => v.id)).toEqual([sandero]);
   expect(db.select().from(vehicles).all().find((v) => v.id === gol)?.deletedAt).toEqual(expect.any(String));
+  // Its receipt photos leave the disk right away.
+  expect(attachmentsMock.deleteRemovedPhotos).toHaveBeenCalledWith(db);
   // Other cars remain, so the sheet stays open; the remaining car becomes the open one.
   expect(router.back).not.toHaveBeenCalled();
   await screen.rerender(<Vehicles />);

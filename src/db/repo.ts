@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, getTableColumns, gt, inArray, isNull, lte } from 'drizzle-orm';
-import { checkReading, MAX_KM, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
+import { and, asc, desc, eq, getTableColumns, gt, gte, inArray, isNotNull, isNull, lte, min, ne, sql } from 'drizzle-orm';
+import { checkReading, findModel, MAX_KM, modelSpecs, READING_ERRORS, ValidationError, type ISODate } from '@/domain';
 import type { Db } from './client';
 import { uuidv7 } from './id';
 import {
@@ -13,6 +13,7 @@ import {
 } from './schema';
 
 const SELECTED_VEHICLE = 'selectedVehicleId';
+const NOTIFICATION_PROMPT = 'notificationPromptAnswered';
 
 // updatedAt is refreshed on every update by $onUpdateFn in schema.ts.
 
@@ -65,6 +66,11 @@ export function selectedVehicleIdQuery(db: Db) {
   return db.select({ value: devicePrefs.value }).from(devicePrefs).where(eq(devicePrefs.key, SELECTED_VEHICLE));
 }
 
+/** One row once the reminder prompt was answered (either way), so it's never shown again. */
+export function notificationPromptQuery(db: Db) {
+  return db.select({ value: devicePrefs.value }).from(devicePrefs).where(eq(devicePrefs.key, NOTIFICATION_PROMPT));
+}
+
 // useLiveQuery only watches the FROM table, not joined ones; removeVehicle soft-deletes the
 // vehicle's items and readings too, so a removal still refreshes these two.
 
@@ -109,17 +115,28 @@ export function itemsQuery(db: Db, vehicleId: string) {
 }
 
 export function logsQuery(db: Db, vehicleId: string) {
-  // shortcut: useLiveQuery only watches maintenance_logs, so an item rename won't refresh itemName
-  // until a log changes; fine while items can't be renamed.
+  // useLiveQuery only watches maintenance_logs: a photo only changes through updateMaintenance or
+  // removeMaintenance, which also write the log row.
+  // shortcut: an item rename won't refresh itemName until a log changes; fine while items can't be renamed.
   return (
     db
-      .select({ ...getTableColumns(maintenanceLogs), itemName: maintenanceItems.name })
+      .select({
+        ...getTableColumns(maintenanceLogs),
+        itemName: maintenanceItems.name,
+        // File of the receipt photo (at most one live per log), or null.
+        photo: sql<string | null>`(SELECT ${attachments.filePath} FROM ${attachments} WHERE ${attachments.logId} = ${maintenanceLogs.id} AND ${attachments.deletedAt} IS NULL LIMIT 1)`,
+      })
       .from(maintenanceLogs)
       // No deletedAt filter on the item: history keeps the name of a removed item.
       .leftJoin(maintenanceItems, eq(maintenanceLogs.itemId, maintenanceItems.id))
       .where(and(eq(maintenanceLogs.vehicleId, vehicleId), isNull(maintenanceLogs.deletedAt)))
       .orderBy(desc(maintenanceLogs.performedAt), desc(maintenanceLogs.createdAt))
   );
+}
+
+/** Files of removed photos, which may still be on disk (see deleteRemovedPhotos). */
+export function removedAttachmentsQuery(db: Db) {
+  return db.select({ filePath: attachments.filePath }).from(attachments).where(isNotNull(attachments.deletedAt));
 }
 
 export function specsQuery(db: Db, vehicleId: string) {
@@ -131,8 +148,20 @@ export function specsQuery(db: Db, vehicleId: string) {
 
 // --- Writes ---
 
-function assertReading(db: Db, vehicleId: string, km: number, readAt: ISODate) {
-  const check = checkReading(readingsQuery(db, vehicleId).all(), km, readAt);
+/** `exceptId`: a reading being moved, checked against the others only. */
+function assertReading(db: Db, vehicleId: string, km: number, readAt: ISODate, exceptId?: string) {
+  const readings = db
+    .select({ km: odometerReadings.km, readAt: odometerReadings.readAt })
+    .from(odometerReadings)
+    .where(
+      and(
+        eq(odometerReadings.vehicleId, vehicleId),
+        isNull(odometerReadings.deletedAt),
+        exceptId ? ne(odometerReadings.id, exceptId) : undefined,
+      ),
+    )
+    .all();
+  const check = checkReading(readings, km, readAt);
   if (check !== 'ok') throw new OdometerError(check);
 }
 
@@ -152,9 +181,24 @@ function setSelectedVehicle(db: Db, vehicleId: string) {
     .run();
 }
 
+export async function answerNotificationPrompt(db: Db): Promise<void> {
+  db.insert(devicePrefs)
+    .values({ key: NOTIFICATION_PROMPT, value: 'yes' })
+    .onConflictDoNothing({ target: devicePrefs.key })
+    .run();
+}
+
 export async function selectVehicle(db: Db, vehicleId: string): Promise<void> {
   assertVehicle(db, vehicleId);
   setSelectedVehicle(db, vehicleId);
+}
+
+export async function renameVehicle(db: Db, vehicleId: string, nickname: string): Promise<void> {
+  const name = requiredText(nickname, 'Informe um apelido para o veículo.');
+  db.transaction((tx) => {
+    assertVehicle(tx, vehicleId);
+    tx.update(vehicles).set({ nickname: name }).where(eq(vehicles.id, vehicleId)).run();
+  });
 }
 
 export async function removeVehicle(db: Db, vehicleId: string): Promise<void> {
@@ -188,6 +232,8 @@ export async function createVehicle(
     odometerKm: number;
     monthlyKmEstimate: number;
     severeUse: boolean;
+    /** A seed model id; its specs fill the car's cola de bolso. */
+    modelRef?: string | null;
     items: { templateKey: string | null; name: string; intervalKm: number | null; intervalMonths: number | null }[];
   },
   today: ISODate,
@@ -196,6 +242,8 @@ export async function createVehicle(
   odometerKm(input.odometerKm);
   nonNegativeInt(input.monthlyKmEstimate, 'Estimativa de km por mês inválida.');
   isoDate(today);
+  const model = input.modelRef ? findModel(input.modelRef) : undefined;
+  if (input.modelRef && !model) throw new ValidationError('Modelo não encontrado.');
   const vehicleId = uuidv7();
   const items = input.items.map((item) => {
     if (item.intervalKm === null && item.intervalMonths === null) {
@@ -213,18 +261,29 @@ export async function createVehicle(
       intervalMonths: item.intervalMonths,
       baselineKm: input.odometerKm,
       baselineDate: today,
+      startKm: input.odometerKm,
+      startDate: today,
     };
   });
 
   db.transaction((tx) => {
     tx.insert(vehicles)
-      .values({ id: vehicleId, nickname, monthlyKmEstimate: input.monthlyKmEstimate, severeUse: input.severeUse })
+      .values({
+        id: vehicleId,
+        modelRef: model?.id ?? null,
+        nickname,
+        monthlyKmEstimate: input.monthlyKmEstimate,
+        severeUse: input.severeUse,
+      })
       .run();
     tx.insert(odometerReadings)
       .values({ id: uuidv7(), vehicleId, km: input.odometerKm, readAt: today, source: 'onboarding' })
       .run();
     if (items.length > 0) tx.insert(maintenanceItems).values(items).run();
-    tx.insert(vehicleSpecs).values({ vehicleId }).run();
+    // Copied, not merged on read: what the user edits (even a cleared value) is the whole truth and
+    // every reader stays one plain query.
+    // shortcut: a seed fix only reaches new cars; when one matters, update the rows still holding the old value.
+    tx.insert(vehicleSpecs).values({ vehicleId, ...(model && modelSpecs(model)) }).run();
     setSelectedVehicle(tx, vehicleId);
   });
   return vehicleId;
@@ -267,7 +326,7 @@ export async function addOdometerReading(
           ),
         )
         .run();
-      // shortcut: logs keep their typed km; editing a log comes with history editing.
+      // Logs keep their typed km: changing what the user wrote is left to editing the log in history.
     }
     // Still throws above_next with correct (rolling the correction back): later readings aren't overridden.
     assertReading(tx, vehicleId, km, readAt);
@@ -275,22 +334,37 @@ export async function addOdometerReading(
   });
 }
 
+/** An encrypted file already on disk (see @/attachments), recorded with its log. */
+export type NewAttachment = { filePath: string; mime: string; sizeBytes: number };
+
+type LogFields = {
+  performedAt: ISODate;
+  km: number;
+  costCents?: number | null;
+  brandSpec?: string | null;
+  notes?: string | null;
+};
+
+function logFields(input: LogFields) {
+  odometerKm(input.km);
+  isoDate(input.performedAt);
+  if (input.costCents != null) nonNegativeInt(input.costCents, 'Valor inválido.');
+  return {
+    performedAt: input.performedAt,
+    km: input.km,
+    costCents: input.costCents ?? null,
+    brandSpec: optionalText(input.brandSpec),
+    notes: optionalText(input.notes),
+  };
+}
+
 export async function registerMaintenance(
   db: Db,
-  input: {
-    vehicleId: string;
-    itemId: string | null;
-    performedAt: ISODate;
-    km: number;
-    costCents?: number | null;
-    brandSpec?: string | null;
-    notes?: string | null;
-  },
+  input: LogFields & { vehicleId: string; itemId: string | null; attachment?: NewAttachment | null },
 ): Promise<void> {
-  const { vehicleId, itemId, performedAt, km } = input;
-  odometerKm(km);
-  isoDate(performedAt);
-  if (input.costCents != null) nonNegativeInt(input.costCents, 'Valor inválido.');
+  const { vehicleId, itemId } = input;
+  const fields = logFields(input);
+  const { km, performedAt } = fields;
 
   db.transaction((tx) => {
     assertReading(tx, vehicleId, km, performedAt);
@@ -309,19 +383,10 @@ export async function registerMaintenance(
       : undefined;
     if (itemId && !item) throw new ValidationError('Item de manutenção não encontrado.');
 
-    tx.insert(maintenanceLogs)
-      .values({
-        id: uuidv7(),
-        vehicleId,
-        itemId,
-        performedAt,
-        km,
-        costCents: input.costCents ?? null,
-        brandSpec: optionalText(input.brandSpec),
-        notes: optionalText(input.notes),
-      })
-      .run();
-    tx.insert(odometerReadings).values({ id: uuidv7(), vehicleId, km, readAt: performedAt, source: 'log' }).run();
+    const logId = uuidv7();
+    tx.insert(maintenanceLogs).values({ id: logId, vehicleId, itemId, ...fields }).run();
+    tx.insert(odometerReadings).values({ id: uuidv7(), vehicleId, km, readAt: performedAt, source: 'log', logId }).run();
+    if (input.attachment) tx.insert(attachments).values({ id: uuidv7(), logId, ...input.attachment }).run();
 
     // A retroactive log (older than the baseline) stays in history but must not move the baseline.
     if (item && performedAt >= item.baselineDate) {
@@ -331,6 +396,147 @@ export async function registerMaintenance(
         .run();
     }
   });
+}
+
+/**
+ * `attachment`: leave it out to keep the photo, null removes it, a new one replaces it. Removed
+ * photos stay on disk until deleteRemovedPhotos (@/attachments) runs.
+ */
+export async function updateMaintenance(
+  db: Db,
+  logId: string,
+  input: LogFields & { attachment?: NewAttachment | null },
+): Promise<void> {
+  const fields = logFields(input);
+  const { km, performedAt } = fields;
+
+  db.transaction((tx) => {
+    const log = liveLog(tx, logId);
+    // Only a moved reading is checked again: one already dropped by a correction in Ajustar KM
+    // stays dropped while just the cost or notes change.
+    if (km !== log.km || performedAt !== log.performedAt) {
+      const reading = logReading(tx, log);
+      assertReading(tx, log.vehicleId, km, performedAt, reading?.id);
+      if (reading) {
+        tx.update(odometerReadings)
+          .set({ km, readAt: performedAt, logId, deletedAt: null })
+          .where(eq(odometerReadings.id, reading.id))
+          .run();
+      } else {
+        tx.insert(odometerReadings)
+          .values({ id: uuidv7(), vehicleId: log.vehicleId, km, readAt: performedAt, source: 'log', logId })
+          .run();
+      }
+    }
+    tx.update(maintenanceLogs).set(fields).where(eq(maintenanceLogs.id, logId)).run();
+    if (input.attachment !== undefined) {
+      const now = new Date().toISOString();
+      tx.update(attachments)
+        .set({ deletedAt: now, updatedAt: now })
+        .where(and(eq(attachments.logId, logId), isNull(attachments.deletedAt)))
+        .run();
+      if (input.attachment) tx.insert(attachments).values({ id: uuidv7(), logId, ...input.attachment }).run();
+    }
+    if (log.itemId) rebase(tx, log.itemId);
+  });
+}
+
+/** Soft-deletes the log with its reading and photo. The photo file stays until deleteRemovedPhotos runs. */
+export async function removeMaintenance(db: Db, logId: string): Promise<void> {
+  db.transaction((tx) => {
+    const log = liveLog(tx, logId);
+    const now = new Date().toISOString();
+    const gone = { deletedAt: now, updatedAt: now };
+    tx.update(maintenanceLogs).set(gone).where(eq(maintenanceLogs.id, logId)).run();
+    const reading = logReading(tx, log);
+    if (reading && !reading.deletedAt) {
+      tx.update(odometerReadings).set(gone).where(eq(odometerReadings.id, reading.id)).run();
+    }
+    tx.update(attachments)
+      .set(gone)
+      .where(and(eq(attachments.logId, logId), isNull(attachments.deletedAt)))
+      .run();
+    if (log.itemId) rebase(tx, log.itemId);
+  });
+}
+
+function liveLog(tx: Db, logId: string) {
+  const log = tx
+    .select()
+    .from(maintenanceLogs)
+    .where(and(eq(maintenanceLogs.id, logId), isNull(maintenanceLogs.deletedAt)))
+    .get();
+  if (!log) throw new ValidationError('Registro não encontrado.');
+  return log;
+}
+
+function logReading(tx: Db, log: typeof maintenanceLogs.$inferSelect) {
+  const cols = { id: odometerReadings.id, deletedAt: odometerReadings.deletedAt };
+  return (
+    tx.select(cols).from(odometerReadings).where(eq(odometerReadings.logId, log.id)).get() ??
+    // Logs saved before readings were linked (migration 0002) find theirs by value.
+    tx
+      .select(cols)
+      .from(odometerReadings)
+      .where(
+        and(
+          isNull(odometerReadings.logId),
+          eq(odometerReadings.vehicleId, log.vehicleId),
+          eq(odometerReadings.source, 'log'),
+          eq(odometerReadings.km, log.km),
+          eq(odometerReadings.readAt, log.performedAt),
+          isNull(odometerReadings.deletedAt),
+        ),
+      )
+      .get()
+  );
+}
+
+/** Points the item's baseline at its latest log since the marco zero, or back at the marco zero. */
+function rebase(tx: Db, itemId: string) {
+  const item = tx.select().from(maintenanceItems).where(eq(maintenanceItems.id, itemId)).get();
+  if (!item) return;
+  const start =
+    item.startKm !== null && item.startDate !== null
+      ? { km: item.startKm, date: item.startDate }
+      : // Items created before the start columns existed began at their car's onboarding reading.
+        tx
+          .select({ km: odometerReadings.km, date: odometerReadings.readAt })
+          .from(odometerReadings)
+          .where(and(eq(odometerReadings.vehicleId, item.vehicleId), eq(odometerReadings.source, 'onboarding')))
+          .get();
+  if (!start) return;
+  const last = tx
+    .select({ km: maintenanceLogs.km, date: maintenanceLogs.performedAt })
+    .from(maintenanceLogs)
+    .where(
+      and(
+        eq(maintenanceLogs.itemId, itemId),
+        isNull(maintenanceLogs.deletedAt),
+        gte(maintenanceLogs.performedAt, start.date),
+      ),
+    )
+    .orderBy(desc(maintenanceLogs.performedAt), desc(maintenanceLogs.createdAt))
+    .get();
+  const base = last ?? start;
+  // As in a correction in Ajustar KM: a maintenance can't have happened above a later real reading.
+  const later = tx
+    .select({ km: min(odometerReadings.km) })
+    .from(odometerReadings)
+    .where(
+      and(
+        eq(odometerReadings.vehicleId, item.vehicleId),
+        isNull(odometerReadings.deletedAt),
+        gte(odometerReadings.readAt, base.date),
+      ),
+    )
+    .get()?.km;
+  const baselineKm = later != null ? Math.min(base.km, later) : base.km;
+  if (baselineKm === item.baselineKm && base.date === item.baselineDate) return;
+  tx.update(maintenanceItems)
+    .set({ baselineKm, baselineDate: base.date })
+    .where(eq(maintenanceItems.id, itemId))
+    .run();
 }
 
 export async function setSnooze(db: Db, itemId: string, until: ISODate | null): Promise<void> {

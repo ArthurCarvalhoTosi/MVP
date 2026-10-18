@@ -7,6 +7,7 @@ let mockOnSettled: (() => void) | undefined;
 
 jest.mock('expo-splash-screen', () => ({ preventAutoHideAsync: jest.fn(), hide: jest.fn() }));
 jest.mock('expo-font', () => ({ useFonts: () => [true, null] }));
+jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
 jest.mock('expo-router', () => ({
   Stack: Object.assign(({ children }: { children: ReactNode }) => children, { Screen: () => null }),
 }));

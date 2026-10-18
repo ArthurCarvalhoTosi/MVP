@@ -26,6 +26,8 @@ test('prefills saved values, saves edits and stores emptied fields as null', asy
   expect(screen.getByRole('header', { name: 'Cola de bolso' })).toBeOnTheScreen();
   expect(screen.getByText('Valores de referência. Confira no manual do proprietário.')).toBeOnTheScreen();
   expect(screen.getByLabelText('Óleo')).toHaveDisplayValue('5W-30 sintético');
+  // Manual fallback: where to find the pressure when the seed has none.
+  expect(screen.getByText(/etiqueta na porta do motorista ou na tampa do tanque/)).toBeOnTheScreen();
 
   await user.clear(screen.getByLabelText('Bateria'));
   await user.type(screen.getByLabelText('Pneu dianteiro, psi'), '32');

@@ -6,6 +6,7 @@ import { useDb } from '@/db/provider';
 import { itemsQuery, readingsQuery, selectedVehicleIdQuery, specsQuery, vehiclesQuery } from '@/db/repo';
 import type { vehicles } from '@/db/schema';
 import { buildFeed, dueLabel, formatPair, isProjectionStale, projectOdometer, todayISO } from '@/domain';
+import { NotificationPrompt } from '@/notifications/NotificationPrompt';
 import { AppText, Button, Icon, ItemRow, Odometer, Screen, Section, SpecStrip, space, useTheme } from '@/ui';
 
 export default function Dashboard() {
@@ -129,6 +130,12 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
           ]}
           onEdit={() => router.push({ pathname: '/specs', params })}
         />
+        {/* Values from the seed: the user didn't type them, so say where they came from. */}
+        {vehicle.modelRef ? (
+          <AppText variant="caption" color="inkMuted">
+            Valores de referência. Confira no manual do proprietário.
+          </AppText>
+        ) : null}
       </Section>
 
       {needsAttention.length > 0 ? (
@@ -145,6 +152,8 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
           ) : null}
         </View>
       )}
+
+      <NotificationPrompt />
 
       {feed.ok.length > 0 ? (
         <View>

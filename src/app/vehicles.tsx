@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { deleteRemovedPhotos } from '@/attachments';
 import { useDb } from '@/db/provider';
 import {
   allItemsQuery,
@@ -55,6 +56,7 @@ export default function Vehicles() {
             setError(null);
             try {
               await removeVehicle(db, vehicle.id);
+              deleteRemovedPhotos(db);
               // The dashboard's redirect to onboarding only runs once it's back in focus.
               if (last) router.back();
             } catch (e) {
@@ -89,14 +91,25 @@ export default function Vehicles() {
               selected={v.id === current?.id}
               onPress={() => choose(v.id)}
               end={
-                <Pressable
-                  onPress={() => remove(v)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remover ${v.nickname}`}
-                  style={({ pressed }) => [styles.remove, pressed && { backgroundColor: c.line }]}
-                >
-                  <Icon name="trash-can-outline" size={24} color={c.inkMuted} />
-                </Pressable>
+                <View style={styles.actions}>
+                  <Pressable
+                    // Replace, not push: on iOS a pushed screen would open underneath this sheet.
+                    onPress={() => router.replace({ pathname: '/rename-vehicle', params: { vehicleId: v.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Renomear ${v.nickname}`}
+                    style={({ pressed }) => [styles.action, pressed && { backgroundColor: c.line }]}
+                  >
+                    <Icon name="pencil" size={24} color={c.inkMuted} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => remove(v)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover ${v.nickname}`}
+                    style={({ pressed }) => [styles.action, pressed && { backgroundColor: c.line }]}
+                  >
+                    <Icon name="trash-can-outline" size={24} color={c.inkMuted} />
+                  </Pressable>
+                </View>
               }
             />
           );
@@ -110,5 +123,6 @@ export default function Vehicles() {
 }
 
 const styles = StyleSheet.create({
-  remove: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  actions: { flexDirection: 'row' },
+  action: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
 });

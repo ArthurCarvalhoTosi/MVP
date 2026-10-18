@@ -31,11 +31,12 @@ describe('formatDate', () => {
 });
 
 describe('dueLabel', () => {
-  const due = (daysLeft: number | null, kmLeft: number | null = null): Due => ({
+  const due = (daysLeft: number | null, kmLeft: number | null = null, dueBy: Due['dueBy'] = 'time'): Due => ({
     dueDate: null,
     daysLeft,
     dueKm: null,
     kmLeft,
+    dueBy,
     urgency: 'ok',
   });
   const primary = (d: number | null) => dueLabel(due(d)).primary;
@@ -53,14 +54,20 @@ describe('dueLabel', () => {
     expect(primary(null)).toBe('Sem previsão');
   });
 
-  it('says "Vencido" once the km limit is reached, whatever the date says', () => {
-    expect(dueLabel(due(0, -1200))).toEqual({ primary: 'Vencido', secondary: 'Passou 1.200 km' });
-    expect(dueLabel(due(30, -10)).primary).toBe('Vencido');
-    expect(dueLabel(due(null, -1)).primary).toBe('Vencido');
-    expect(dueLabel(due(0, 0))).toEqual({ primary: 'Vence hoje', secondary: 'Faltam 0 km' });
-    // An overdue date keeps its own count; km still ahead keeps the date wording.
-    expect(dueLabel(due(-3, -500)).primary).toBe('Vencido há 3 dias');
-    expect(dueLabel(due(0, 100)).primary).toBe('Vence hoje');
+  it('leads with the km past the limit when the km sets the due date', () => {
+    // The day count of a km date is an estimate from the average km/day, never shown once overdue.
+    expect(dueLabel(due(-2813, -1200, 'km'))).toEqual({ primary: 'Passou 1.200 km', secondary: null });
+    expect(dueLabel(due(0, -1, 'km'))).toEqual({ primary: 'Passou 1 km', secondary: null });
+    // Exactly at the limit isn't past it yet.
+    expect(dueLabel(due(0, 0, 'km'))).toEqual({ primary: 'Vence hoje', secondary: 'Faltam 0 km' });
+    expect(dueLabel(due(40, 1200, 'km'))).toEqual({ primary: 'Vence em 40 dias', secondary: 'Faltam 1.200 km' });
+  });
+
+  it('keeps the exact day count when the calendar sets the due date', () => {
+    expect(dueLabel(due(-3, -500, 'time'))).toEqual({ primary: 'Vencido há 3 dias', secondary: 'Passou 500 km' });
+    expect(dueLabel(due(-3, 100, 'time'))).toEqual({ primary: 'Vencido há 3 dias', secondary: 'Faltam 100 km' });
+    expect(dueLabel(due(0, null, 'time'))).toEqual({ primary: 'Vence hoje', secondary: null });
+    expect(dueLabel(due(null, 100, null))).toEqual({ primary: 'Sem previsão', secondary: 'Faltam 100 km' });
   });
 
   it('describes km left', () => {

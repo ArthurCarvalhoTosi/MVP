@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { check, index, integer, sqliteTable, text, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 const now = () => new Date().toISOString();
 
@@ -30,6 +30,8 @@ export const odometerReadings = sqliteTable(
     km: integer('km').notNull(),
     readAt: text('read_at').notNull(),
     source: text('source', { enum: ['onboarding', 'adjust', 'log'] }).notNull(),
+    // The log this reading came with, so editing or removing the log carries its reading along.
+    logId: text('log_id').references((): AnySQLiteColumn => maintenanceLogs.id),
     ...timestamps,
   },
   (t) => [index('odometer_readings_vehicle_read_at_idx').on(t.vehicleId, t.readAt)],
@@ -46,6 +48,10 @@ export const maintenanceItems = sqliteTable(
     intervalMonths: integer('interval_months'),
     baselineKm: integer('baseline_km').notNull(),
     baselineDate: text('baseline_date').notNull(),
+    // The marco zero, so removing every log brings the baseline back to it. Null on items created
+    // before these columns existed: those started at their car's onboarding reading.
+    startKm: integer('start_km'),
+    startDate: text('start_date'),
     snoozedUntil: text('snoozed_until'),
     active: integer('active', { mode: 'boolean' }).notNull().default(true),
     ...timestamps,

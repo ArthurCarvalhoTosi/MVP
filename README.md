@@ -32,6 +32,10 @@ npm run lint        # ESLint (eslint-config-expo, inclui regras do React Compile
 
 Os três devem passar antes de todo commit.
 
+## CI/CD
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) roda os três comandos acima em todo PR para a `main` e em todo push nela. Na `main`, se passarem, gera um APK Android de release (arm64, assinado com a chave de debug) e o publica como artefato da execução por 30 dias: baixe em **Actions → execução → Artifacts** e instale no celular. Para a Play Store, troque por EAS Build com keystore própria.
+
 ## Banco
 
 Schema em `src/db/schema.ts`. Depois de alterá-lo:
