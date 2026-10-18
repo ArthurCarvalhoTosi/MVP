@@ -50,10 +50,12 @@ export function formatPair(a?: string | number | null, b?: string | number | nul
 
 export function dueLabel(due: Due): { primary: string; secondary: string | null } {
   const { kmLeft, daysLeft } = due;
-  // Past the km limit, the date may still say today or later (e.g. no km/day trend), so "Vence hoje" would never move.
-  const kmOverdue = kmLeft !== null && kmLeft < 0 && (daysLeft === null || daysLeft >= 0);
+  const passed = kmLeft !== null && kmLeft < 0 ? `Passou ${formatKm(-kmLeft)}` : null;
+  // Overdue by km, the day count would come from the average km/day ("Vencido há 2813 dias");
+  // the km past the limit is what's actually known.
+  if (passed && due.dueBy === 'km') return { primary: passed, secondary: null };
   return {
-    primary: kmOverdue ? 'Vencido' : daysLabel(daysLeft),
-    secondary: kmLeft === null ? null : kmLeft < 0 ? `Passou ${formatKm(-kmLeft)}` : `Faltam ${formatKm(kmLeft)}`,
+    primary: daysLabel(daysLeft),
+    secondary: kmLeft === null ? null : (passed ?? `Faltam ${formatKm(kmLeft)}`),
   };
 }

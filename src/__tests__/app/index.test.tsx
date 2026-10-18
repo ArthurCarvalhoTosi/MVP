@@ -24,12 +24,15 @@ test('redirects to onboarding when there is no vehicle', async () => {
 });
 
 test('shows an overdue item with "Registrar troca" and a stale-KM hint', async () => {
-  // 400 days at ~1.000 km/month: oil (10.000 km / 12 months) is well past due.
+  // 400 days at ~1.000 km/month: oil (10.000 km / 12 months) passed its km limit first, ~3.333 km ago.
   const { oilId } = await seedVehicle(db, addDays(todayISO(), -400));
   await render(<Dashboard />);
 
   expect(screen.getByRole('header', { name: 'Precisa de atenção' })).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: /^Troca de óleo e filtro\. Crítico\. Vencido há/ })).toBeOnTheScreen();
+  // The km past the limit, not a day count estimated from the km/day.
+  expect(
+    screen.getByRole('button', { name: /^Troca de óleo e filtro\. Crítico\. Passou 3\.33\d km$/ }),
+  ).toBeOnTheScreen();
   expect(screen.getByText(/Faz mais de 30 dias que o KM não é atualizado/)).toBeOnTheScreen();
   expect(screen.queryByText('Tudo em dia.')).not.toBeOnTheScreen();
 

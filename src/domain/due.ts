@@ -15,6 +15,8 @@ export interface Due {
   daysLeft: number | null;
   dueKm: number | null;
   kmLeft: number | null;
+  /** Which limit sets dueDate. A 'km' date is an estimate from the average km/day. */
+  dueBy: 'km' | 'time' | null;
   urgency: Urgency;
 }
 
@@ -24,22 +26,24 @@ export function computeDue(
   monthlyEstimate: number,
   today: ISODate,
 ): Due {
-  const dates: ISODate[] = [];
-  if (item.intervalMonths != null) dates.push(addMonths(item.baselineDate, item.intervalMonths));
+  const timeDate = item.intervalMonths != null ? addMonths(item.baselineDate, item.intervalMonths) : null;
 
+  let kmDate: ISODate | null = null;
   let dueKm: number | null = null;
   let kmLeft: number | null = null;
   if (item.intervalKm != null) {
     dueKm = item.baselineKm + item.intervalKm;
     kmLeft = dueKm - projectOdometer(readings, monthlyEstimate, today);
     const rate = dailyRate(readings, monthlyEstimate, today);
-    if (rate > 0) dates.push(addDays(today, kmLeft <= 0 ? Math.floor(kmLeft / rate) : Math.ceil(kmLeft / rate)));
-    else if (kmLeft <= 0) dates.push(today); // rate 0 and km still ahead: never reached, no date
+    if (rate > 0) kmDate = addDays(today, kmLeft <= 0 ? Math.floor(kmLeft / rate) : Math.ceil(kmLeft / rate));
+    else if (kmLeft <= 0) kmDate = today; // rate 0 and km still ahead: never reached, no date
   }
 
-  const dueDate = dates.length ? dates.reduce((a, b) => (b < a ? b : a)) : null;
+  // A tie goes to km: with the km already passed, the item is overdue even if the calendar says today.
+  const dueBy = kmDate !== null && (timeDate === null || kmDate <= timeDate) ? 'km' : timeDate !== null ? 'time' : null;
+  const dueDate = dueBy === 'km' ? kmDate : timeDate;
   const daysLeft = dueDate ? daysBetween(today, dueDate) : null;
-  return { dueDate, daysLeft, dueKm, kmLeft, urgency: urgencyOf(daysLeft, kmLeft) };
+  return { dueDate, daysLeft, dueKm, kmLeft, dueBy, urgency: urgencyOf(daysLeft, kmLeft) };
 }
 
 const atMost = (v: number | null, limit: number) => v != null && v <= limit;
