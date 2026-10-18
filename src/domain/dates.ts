@@ -35,3 +35,8 @@ export function addMonths(d: ISODate, n: number): ISODate {
 export function daysBetween(from: ISODate, to: ISODate): number {
   return (toUTC(to) - toUTC(from)) / DAY_MS;
 }
+
+/** 0 = Sunday … 6 = Saturday. */
+export function dayOfWeek(d: ISODate): number {
+  return new Date(toUTC(d)).getUTCDay();
+}
