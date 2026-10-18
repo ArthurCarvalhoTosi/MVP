@@ -20,6 +20,11 @@ jest.mock('expo-sqlite', () => ({
   deleteDatabaseSync: jest.fn(),
   deleteDatabaseAsync: jest.fn(),
 }));
+const mockDir = { exists: false, delete: jest.fn() };
+jest.mock('expo-file-system', () => ({
+  Directory: jest.fn(() => mockDir),
+  Paths: { document: { uri: 'file:///docs' } },
+}));
 jest.mock('expo-crypto', () => ({
   getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)),
 }));
@@ -29,6 +34,7 @@ jest.mock('drizzle-orm/expo-sqlite/migrator', () => ({ migrate: jest.fn(async ()
 beforeEach(() => {
   mockStore.clear();
   jest.clearAllMocks();
+  mockDir.exists = false;
   mockSqlite.getFirstSync.mockImplementation(answer);
 });
 
@@ -159,9 +165,12 @@ describe('resetDatabase', () => {
       jest.mocked(SQLite.deleteDatabaseSync).mock.invocationCallOrder[0],
     );
     expect(mockStore.has('garagem.db.key')).toBe(false);
+    expect(mockDir.delete).not.toHaveBeenCalled();
 
+    mockDir.exists = true;
     await resetDatabase(); // the handle is closed only once
     expect(mockSqlite.closeSync).toHaveBeenCalledTimes(1);
+    expect(mockDir.delete).toHaveBeenCalledTimes(1);
   });
 
   test('a missing file is fine; any other delete failure keeps the key', async () => {

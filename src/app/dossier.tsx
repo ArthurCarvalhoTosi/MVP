@@ -69,15 +69,8 @@ export default function Dossier() {
   };
 
   return (
-    <Screen
-      scroll
-      footer={
-        <>
-          <FormError error={error} />
-          <Button label="Gerar e enviar PDF" loading={busy} onPress={share} />
-        </>
-      }
-    >
+    // Button inline, not in the footer: a pinned footer falls below the fold at the half-height detent.
+    <Screen scroll>
       <Section title="Histórico em PDF">
         <View style={styles.body}>
           <AppText>
@@ -102,6 +95,8 @@ export default function Dossier() {
               ) : null}
             </>
           ) : null}
+          <FormError error={error} />
+          <Button label="Gerar e enviar PDF" loading={busy} onPress={share} />
         </View>
       </Section>
     </Screen>

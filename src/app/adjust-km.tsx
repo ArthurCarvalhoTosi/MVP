@@ -1,10 +1,10 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
 import { addOdometerReading, OdometerError, readingsQuery, vehiclesQuery } from '@/db/repo';
 import { MAX_KM, parseIntBR, projectOdometer, READING_ERRORS, todayISO } from '@/domain';
-import { Button, FormError, Screen, Section, TextField } from '@/ui';
+import { Button, FormError, Screen, Section, TextField, space } from '@/ui';
 
 export default function AdjustKm() {
   const db = useDb();
@@ -56,28 +56,29 @@ export default function AdjustKm() {
   };
 
   return (
-    <Screen
-      scroll
-      footer={
-        <>
+    // Button inline, not in the footer: a pinned footer falls below the fold at the half-height detent.
+    <Screen scroll>
+      <Section title="Ajustar KM">
+        <View style={styles.body}>
+          <TextField
+            label="KM no painel agora"
+            suffix="km"
+            keyboardType="number-pad"
+            selectTextOnFocus
+            maxLength={9}
+            value={km}
+            onChangeText={setKm}
+            error={kmError}
+            hint={km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
+          />
           <FormError error={saveError} />
           <Button label="Salvar KM" loading={saving} onPress={() => save(false)} />
-        </>
-      }
-    >
-      <Section title="Ajustar KM">
-        <TextField
-          label="KM no painel agora"
-          suffix="km"
-          keyboardType="number-pad"
-          selectTextOnFocus
-          maxLength={9}
-          value={km}
-          onChangeText={setKm}
-          error={kmError}
-          hint={km === String(start.km) ? 'Valor estimado. Confira no painel do carro.' : null}
-        />
+        </View>
       </Section>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  body: { gap: space.l },
+});

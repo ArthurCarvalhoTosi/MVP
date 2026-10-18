@@ -2,6 +2,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { getRandomBytes } from 'expo-crypto';
+import { Directory, Paths } from 'expo-file-system';
 import * as SecureStore from 'expo-secure-store';
 import { deleteDatabaseSync, openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import migrations from '../../drizzle/migrations';
@@ -86,4 +87,11 @@ export async function resetDatabase(): Promise<void> {
     if (!(e instanceof Error && /not found/i.test(e.message))) throw e;
   }
   await SecureStore.deleteItemAsync(KEY_NAME);
+  // Same folder src/attachments writes to. Files stay encrypted, but they are still the user's data.
+  try {
+    const dir = new Directory(Paths.document, 'attachments');
+    if (dir.exists) dir.delete();
+  } catch {
+    // Best effort: leftovers are unreadable without the photo key, which is also device-only.
+  }
 }
