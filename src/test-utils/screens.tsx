@@ -5,7 +5,7 @@ import { act } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { Alert, Text, type AlertButton } from 'react-native';
 import type { Db } from '@/db/client';
-import { createVehicle, itemsQuery } from '@/db/repo';
+import { createVehicle, itemsQuery, type NewAttachment } from '@/db/repo';
 import { createTestDb } from '@/db/test-utils/testDb';
 import { todayISO, type ISODate } from '@/domain';
 
@@ -35,6 +35,19 @@ export const expoRouterMock = {
 // so a rerender after a write shows fresh data.
 export const liveQueryMock = {
   useLiveQuery: (query: { all: () => unknown }) => ({ data: query.all(), error: undefined, updatedAt: new Date() }),
+};
+
+// No native crypto or files under jest. A photo "PHOTO" is saved as attachments/PHOTO.bin; a saved
+// one reads back as "SAVED". Wire up with
+//   jest.mock('@/attachments', () => require('@/test-utils/screens').attachmentsMock);
+export const attachmentsMock = {
+  preparePhoto: jest.fn(async (_uri: string) => 'PHOTO'),
+  readPhoto: jest.fn(async (_filePath: string) => 'SAVED'),
+  deleteRemovedPhotos: jest.fn(),
+  saveWithPhoto: jest.fn(
+    async (photo: string | null | undefined, save: (a: NewAttachment | null | undefined) => Promise<void>) =>
+      save(photo == null ? photo : { filePath: `attachments/${photo}.bin`, mime: 'image/jpeg', sizeBytes: 1 }),
+  ),
 };
 
 let db: Db | undefined;
