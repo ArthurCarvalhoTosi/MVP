@@ -12,6 +12,7 @@ jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQ
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
 jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => new Uint8Array(require('crypto').randomBytes(n)) }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
+jest.mock('expo-notifications', () => require('@/test-utils/notifications').notificationsMock);
 
 let db: Db;
 beforeEach(async () => {

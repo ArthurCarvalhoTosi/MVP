@@ -12,6 +12,7 @@ Antes de mudar comportamento, leia [decisoes_projeto_manutencao_veicular.md](dec
 | `src/db` | Schema Drizzle, banco cifrado (SQLCipher), repositório | [src/db/AGENTS.md](src/db/AGENTS.md) |
 | `src/ui` | Design system: tokens, hodômetro, componentes acessíveis | [src/ui/AGENTS.md](src/ui/AGENTS.md) |
 | `src/app` | Telas (expo-router) | seção "Telas" abaixo |
+| `src/notifications` | Lembrete de sábado: agendador (expo-notifications), respostas aos toques, pedido de permissão | reagenda tudo a cada abertura e mudança de dados; nunca quebra a tela se a permissão for negada |
 | `drizzle/` | Migrations geradas | nunca editar à mão |
 
 Importe pelo alias `@/` (`@/domain`, `@/db/repo`, `@/ui`). `src/domain` não importa nada de fora dele.

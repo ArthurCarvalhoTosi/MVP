@@ -13,6 +13,7 @@ import {
 } from './schema';
 
 const SELECTED_VEHICLE = 'selectedVehicleId';
+const NOTIFICATION_PROMPT = 'notificationPromptAnswered';
 
 // updatedAt is refreshed on every update by $onUpdateFn in schema.ts.
 
@@ -63,6 +64,11 @@ export function vehiclesQuery(db: Db) {
 
 export function selectedVehicleIdQuery(db: Db) {
   return db.select({ value: devicePrefs.value }).from(devicePrefs).where(eq(devicePrefs.key, SELECTED_VEHICLE));
+}
+
+/** One row once the reminder prompt was answered (either way), so it's never shown again. */
+export function notificationPromptQuery(db: Db) {
+  return db.select({ value: devicePrefs.value }).from(devicePrefs).where(eq(devicePrefs.key, NOTIFICATION_PROMPT));
 }
 
 // useLiveQuery only watches the FROM table, not joined ones; removeVehicle soft-deletes the
@@ -149,6 +155,13 @@ function setSelectedVehicle(db: Db, vehicleId: string) {
   db.insert(devicePrefs)
     .values({ key: SELECTED_VEHICLE, value: vehicleId })
     .onConflictDoUpdate({ target: devicePrefs.key, set: { value: vehicleId } })
+    .run();
+}
+
+export async function answerNotificationPrompt(db: Db): Promise<void> {
+  db.insert(devicePrefs)
+    .values({ key: NOTIFICATION_PROMPT, value: 'yes' })
+    .onConflictDoNothing({ target: devicePrefs.key })
     .run();
 }
 
