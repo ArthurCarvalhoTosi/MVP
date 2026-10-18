@@ -370,6 +370,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 
 **Seed preenchido (2026-10-17)**
 * Versão 2 do JSON: 51 modelos, 124 entradas (~41% dos valores preenchidos). Entrou o que a pesquisa já tinha coletado (Fiat, GM, Stellantis, Toyota/Honda, VW, Renault, Ford, BYD) mais HB20/HB20S, Creta, Kicks e Haval H6, a partir dos manuais oficiais brasileiros. Palhetas continuam quase todas vazias (os manuais mandam ver a etiqueta). Tiggo 7 ficou de fora: não houve fonte brasileira confiável no prazo.
+* Sandero Stepway 2010 1.6 (manual do proprietário da Renault, pág. 0.04): 35 psi na frente. A traseira impressa diz 32 psi e 2,4 bar na mesma célula, então ficou vazia. Óleo, palheta, bateria e prazo da correia não estão nesse manual.
 * Testes do seed de volta ao mínimo de 45 modelos e às buscas por "hb20" / "onix 2018".
 
 **Dossiê em PDF (2026-10-17)**
@@ -386,10 +387,14 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 * Confirmado: busca "hb20", apelido sugerido, cola de bolso do seed, Ajustar KM, permissão de notificação e lembrete de teste (`checkup-test` disparou com o texto certo), foto pela câmera (prévia, histórico "Com comprovante"/"Ver foto", arquivo `.bin` em `files/attachments`, cache do picker vazio), edição de registro, PDF (`Historico-Meu-HB20-….pdf` no compartilhamento), sheet de backup, modo escuro, botão visível com o teclado em Ajustar KM.
 * Não fechado nesta rodada: TalkBack; criar/restaurar o `.bkp` até o fim (a digitação da senha falhou na automação); conferir de novo se o vencimento do item acompanha o registro depois de um force-stop.
 
+**Validação no emulador Android (2026-10-17, terceira rodada)**
+* Registrar "Filtros de ar e cabine" a 55.600 km tira o item do crítico na hora ("Em dia. Faltam 10.000 km"). Depois de `force-stop` e reabrir, continua em dia. O sumiço da troca na rodada anterior não se repetiu.
+* Backup de ponta a ponta: senha de 9 caracteres, arquivo `Garagem-backup-2026-10-17.bkp` (cabeçalho Argon2id) no compartilhamento, restauração pelo seletor de arquivos. O carro tinha sido renomeado para "HB20QA" depois do backup; ao restaurar voltou a "Meu HB20" e o filtro continuou em dia.
+* TalkBack ligado: o foco anda pelos controles com os rótulos do app ("Editar", "Trocar de carro. Atual: Meu HB20", itens com "Crítico"/"Em dia") e o sintetizador de voz dispara. Desligado ao fim do teste.
+
 **`npm audit` (2026-10-17): risco aceito**
 * As 67 ocorrências vêm de 5 pacotes-raiz, todos de ferramentas de build/teste (Metro, Jest, CLI do Expo, drizzle-kit); nada entra no app instalado. `braces`, `node-forge` e `sprintf-js` não têm versão corrigida; `uuid@7` só entra pelo `xcode` (prebuild iOS) e a falha é em v3/v5/v6; o `esbuild` 0.18 do drizzle-kit não usa o servidor de desenvolvimento vulnerável. As "correções" do npm são rebaixamentos (expo@44, react-native@0.72). Reavaliar a cada atualização do SDK.
 
 ### Pendente
-1. **TalkBack** e o restante fino do QA no emulador (criar/restaurar o `.bkp` até o fim; conferir se o vencimento do item acompanha o registro depois de matar o app).
-2. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. Completar só com fonte brasileira; vazio continua melhor que chute.
-3. **Rodar no iOS** (exige macOS ou EAS Build).
+1. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. No Stepway 2010 a traseira ficou vazia de propósito (o manual contradiz psi e bar). Completar só com fonte brasileira; vazio continua melhor que chute.
+2. **Rodar no iOS** (exige macOS ou EAS Build).

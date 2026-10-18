@@ -2932,6 +2932,25 @@
       }
     },
     {
+      "id": "renault-sandero-stepway-1.6-2010",
+      "brand": "Renault",
+      "model": "Sandero Stepway",
+      "engine": "1.6",
+      "yearFrom": 2010,
+      "yearTo": 2010,
+      "oil": null,
+      "tireFrontPsi": 35,
+      "tireRearPsi": null,
+      "wiperDriver": null,
+      "wiperPassenger": null,
+      "batteryAh": null,
+      "sources": {
+        "tires": [
+          "https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/manuais/manuais-sandero/2010/sandero-manual-10.pdf"
+        ]
+      }
+    },
+    {
       "id": "renault-sandero-1.0-2015",
       "brand": "Renault",
       "model": "Sandero",
