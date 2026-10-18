@@ -10,6 +10,7 @@ Antes de mudar comportamento, leia [decisoes_projeto_manutencao_veicular.md](dec
 |---|---|---|
 | `src/domain` | Regras puras: projeção de KM, vencimento, semáforo, presets, formatação e parsing pt-BR | [src/domain/AGENTS.md](src/domain/AGENTS.md) |
 | `src/db` | Schema Drizzle, banco cifrado (SQLCipher), repositório | [src/db/AGENTS.md](src/db/AGENTS.md) |
+| `src/attachments` | Fotos de comprovante: sem EXIF, cifradas (AES-256-GCM) em arquivo, chave própria no Secure Store | comentários de `index.ts`; seção 8.2 do doc |
 | `src/ui` | Design system: tokens, hodômetro, componentes acessíveis | [src/ui/AGENTS.md](src/ui/AGENTS.md) |
 | `src/app` | Telas (expo-router) | seção "Telas" abaixo |
 | `drizzle/` | Migrations geradas | nunca editar à mão |
