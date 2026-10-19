@@ -41,6 +41,10 @@ test('shows an overdue item with "Registrar troca" and a stale-KM hint', async (
 
   await userEvent.setup().press(screen.getByRole('button', { name: 'Registrar troca' }));
   expect(router.push).toHaveBeenCalledWith({ pathname: '/register', params: { itemId: oilId } });
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Editar Troca de óleo e filtro' }));
+  expect(router.push).toHaveBeenCalledWith({ pathname: '/item', params: { itemId: oilId } });
 });
 
 test('shows the all-clear state with the next item, and expands ok items', async () => {
@@ -88,6 +92,8 @@ test('shows the selected car, whose sheets get its id, and offers the car list i
   expect(router.push).toHaveBeenCalledWith({ pathname: '/adjust-km', params: { vehicleId: gol } });
   await user.press(screen.getByRole('button', { name: 'Óleo: Adicionar' }));
   expect(router.push).toHaveBeenCalledWith({ pathname: '/specs', params: { vehicleId: gol } });
+  await user.press(screen.getByRole('button', { name: 'Adicionar manutenção' }));
+  expect(router.push).toHaveBeenCalledWith({ pathname: '/item', params: { vehicleId: gol } });
 
   await user.press(screen.getByRole('button', { name: 'Trocar de carro. Atual: Meu Gol' }));
   expect(router.push).toHaveBeenCalledWith('/vehicles');

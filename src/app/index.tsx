@@ -79,6 +79,7 @@ function CarSwitcher({ nickname }: { nickname: string }) {
 
 function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
   const db = useDb();
+  const { c } = useTheme();
   const readings = useLiveQuery(readingsQuery(db, vehicle.id), [vehicle.id]);
   const items = useLiveQuery(itemsQuery(db, vehicle.id), [vehicle.id]);
   const specs = useLiveQuery(specsQuery(db, vehicle.id), [vehicle.id]);
@@ -116,6 +117,16 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
         secondary={label.secondary}
         onPress={() => register(item.id)}
         action={{ label: 'Registrar troca', onPress: () => register(item.id) }}
+        end={
+          <Pressable
+            onPress={() => router.push({ pathname: '/item', params: { itemId: item.id } })}
+            accessibilityRole="button"
+            accessibilityLabel={`Editar ${item.name}`}
+            style={({ pressed }) => [styles.edit, pressed && { backgroundColor: c.line }]}
+          >
+            <Icon name="pencil" size={24} color={c.inkMuted} />
+          </Pressable>
+        }
       />
     );
   };
@@ -205,6 +216,14 @@ function Garage({ vehicle }: { vehicle: typeof vehicles.$inferSelect }) {
           {showOk ? feed.ok.map(row) : null}
         </View>
       ) : null}
+
+      <View style={styles.start}>
+        <Button
+          variant="quiet"
+          label="Adicionar manutenção"
+          onPress={() => router.push({ pathname: '/item', params })}
+        />
+      </View>
     </Screen>
   );
 }
@@ -216,5 +235,6 @@ const styles = StyleSheet.create({
   start: { alignItems: 'flex-start' },
   switcher: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 48 },
   shrink: { flexShrink: 1 },
+  edit: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.82 },
 });

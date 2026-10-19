@@ -2,7 +2,7 @@
 
 Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura, dados e segurança definidos para continuidade do desenvolvimento.
 
-**Última revisão:** 2026-10-17
+**Última revisão:** 2026-10-19
 
 ---
 
@@ -74,6 +74,7 @@ Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura
   * 🟢 **Em dia:** demais itens, colapsados no rodapé.
 * **Estado "tudo verde":** mostrar a próxima coisa que vai acontecer ("Óleo em ~4 meses").
 * **Alerta de projeção desatualizada:** sem ajuste de KM há 30+ dias → "Seu KM está certo?".
+* **`[Adicionar manutenção]`:** item fora da pré-lista (nome + intervalo em km, meses ou os dois). Começa a contar hoje, no KM projetado. Lápis em cada item: editar nome e intervalos ou remover.
 
 ### Tela 3: Bottom Sheet de Registro (< 10 segundos)
 * **KM:** pré-preenchido com o projetado (editável).
@@ -313,7 +314,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 | `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
 | `src/app` (telas) | Jest + RNTL | Fluxos com banco em memória: onboarding, registro de troca, ajuste/correção de KM, cola de bolso, histórico, troca/adição/remoção de carros. |
 
-* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 42 suítes, 728 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
+* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 43 suítes, 749 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
 * **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela, câmera e notificações. Parte disso foi revalidada no emulador Android em 2026-10-17 (ver seção 12).
 * `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
 
@@ -394,6 +395,10 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 
 **`npm audit` (2026-10-17): risco aceito**
 * As 67 ocorrências vêm de 5 pacotes-raiz, todos de ferramentas de build/teste (Metro, Jest, CLI do Expo, drizzle-kit); nada entra no app instalado. `braces`, `node-forge` e `sprintf-js` não têm versão corrigida; `uuid@7` só entra pelo `xcode` (prebuild iOS) e a falha é em v3/v5/v6; o `esbuild` 0.18 do drizzle-kit não usa o servidor de desenvolvimento vulnerável. As "correções" do npm são rebaixamentos (expo@44, react-native@0.72). Reavaliar a cada atualização do SDK.
+
+**Manutenção fora da pré-lista (2026-10-19)**
+* "Adicionar manutenção" no dashboard abre uma sheet com nome e intervalo (km, meses ou os dois; vale o que chegar primeiro). O item nasce sem `template_key`, com marco zero hoje no KM projetado (`addItem`); projeção não vira leitura de hodômetro, e uma leitura real menor depois ajusta a linha de base como em qualquer item.
+* Lápis em cada linha do dashboard abre a mesma sheet para editar nome e intervalos de qualquer item (da pré-lista ou não). A linha de base não muda: o próximo vencimento se recalcula a partir da última troca. "Remover manutenção" pede confirmação e faz soft delete só do item; as trocas continuam no histórico com o nome dele.
 
 ### Pendente
 1. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. No Stepway 2010 a traseira ficou vazia de propósito (o manual contradiz psi e bar). Completar só com fonte brasileira; vazio continua melhor que chute.
