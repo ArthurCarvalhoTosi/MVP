@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { CAR_MODELS, MAX_KM, modelSpecs, READING_ERRORS, ValidationError } from '@/domain';
 import type { Db } from '../client';
 import {
+  addItem,
   addOdometerReading,
   allItemsQuery,
   allReadingsQuery,
@@ -12,6 +13,7 @@ import {
   readingsQuery,
   registerMaintenance,
   removedAttachmentsQuery,
+  removeItem,
   removeMaintenance,
   removeVehicle,
   renameVehicle,
@@ -19,6 +21,7 @@ import {
   selectVehicle,
   setSnooze,
   specsQuery,
+  updateItem,
   updateMaintenance,
   upsertSpecs,
   vehiclesQuery,
@@ -828,6 +831,114 @@ describe('renameVehicle', () => {
     await expectValidation(renameVehicle(db, 'nope', 'Carro'), 'Carro não encontrado.');
     await expectValidation(renameVehicle(db, removed, 'Carro'), 'Carro não encontrado.');
     expect(vehiclesQuery(db).all()).toEqual([expect.objectContaining({ nickname: 'Meu carro' })]);
+  });
+});
+
+describe('addItem', () => {
+  test('starts a custom item today at the projected km, with its marco zero there too', async () => {
+    const vehicleId = await seed();
+    // A month after onboarding at ~1.000 km/month: projected 51.000 km.
+    const id = await addItem(
+      db,
+      vehicleId,
+      { templateKey: null, name: ' Fluido de freio ', intervalKm: null, intervalMonths: 24 },
+      '2026-10-31',
+    );
+
+    expect(item(id)).toMatchObject({
+      vehicleId,
+      templateKey: null,
+      name: 'Fluido de freio',
+      intervalKm: null,
+      intervalMonths: 24,
+      baselineKm: 51000,
+      baselineDate: '2026-10-31',
+      startKm: 51000,
+      startDate: '2026-10-31',
+      active: true,
+    });
+    expect(
+      itemsQuery(db, vehicleId)
+        .all()
+        .map((i) => i.name),
+    ).toEqual([OIL.name, TIRES.name, 'Fluido de freio']);
+    // Only the item: a projection is never stored as a reading.
+    expect(readingsQuery(db, vehicleId).all()).toHaveLength(1);
+  });
+
+  test('rejects a missing name or interval, and an unknown or removed car', async () => {
+    const vehicleId = await seed();
+    const removed = await seed();
+    await removeVehicle(db, removed);
+    const ok = { templateKey: null, name: 'Fluido', intervalKm: 20000, intervalMonths: null };
+
+    await expectValidation(
+      addItem(db, vehicleId, { ...ok, name: '  ' }, TODAY),
+      'Informe o nome do item.',
+    );
+    await expectValidation(
+      addItem(db, vehicleId, { ...ok, intervalKm: null }, TODAY),
+      'Informe um intervalo em km ou em meses.',
+    );
+    await expectValidation(
+      addItem(db, vehicleId, { ...ok, intervalKm: 0 }, TODAY),
+      'Intervalo inválido.',
+    );
+    await expectValidation(addItem(db, 'nope', ok, TODAY), 'Carro não encontrado.');
+    await expectValidation(addItem(db, removed, ok, TODAY), 'Carro não encontrado.');
+    expect(itemsQuery(db, vehicleId).all()).toHaveLength(2);
+  });
+});
+
+describe('updateItem and removeItem', () => {
+  test('updateItem saves the trimmed name and new intervals, keeping key and baseline', async () => {
+    const { vehicleId, oilId } = await seedWithItems();
+    await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: TODAY, km: 50500 });
+
+    await updateItem(db, oilId, { name: ' Óleo ', intervalKm: null, intervalMonths: 6 });
+
+    expect(item(oilId)).toMatchObject({
+      templateKey: 'oil',
+      name: 'Óleo',
+      intervalKm: null,
+      intervalMonths: 6,
+      baselineKm: 50500,
+      baselineDate: TODAY,
+    });
+  });
+
+  test('updateItem validates like a new item and rejects an unknown or removed item', async () => {
+    const { oilId, tiresId } = await seedWithItems();
+    await removeItem(db, tiresId);
+    const ok = { name: 'Óleo', intervalKm: 5000, intervalMonths: null };
+
+    await expectValidation(updateItem(db, oilId, { ...ok, name: ' ' }), 'Informe o nome do item.');
+    await expectValidation(
+      updateItem(db, oilId, { ...ok, intervalKm: null }),
+      'Informe um intervalo em km ou em meses.',
+    );
+    await expectValidation(updateItem(db, 'nope', ok), 'Item de manutenção não encontrado.');
+    await expectValidation(updateItem(db, tiresId, ok), 'Item de manutenção não encontrado.');
+    expect(item(oilId)).toMatchObject({ name: OIL.name, intervalKm: 10000 });
+  });
+
+  test('removeItem soft-deletes the item only; its logs keep showing its name', async () => {
+    const { vehicleId, oilId, tiresId } = await seedWithItems();
+    await registerMaintenance(db, { vehicleId, itemId: oilId, performedAt: TODAY, km: 50500 });
+
+    await removeItem(db, oilId);
+
+    expect(item(oilId).deletedAt).not.toBeNull();
+    expect(
+      itemsQuery(db, vehicleId)
+        .all()
+        .map((i) => i.id),
+    ).toEqual([tiresId]);
+    expect(logsQuery(db, vehicleId).all()).toEqual([
+      expect.objectContaining({ itemId: oilId, itemName: OIL.name }),
+    ]);
+    expect(readingsQuery(db, vehicleId).all()).toHaveLength(2);
+    await expectValidation(removeItem(db, oilId), 'Item de manutenção não encontrado.');
   });
 });
 

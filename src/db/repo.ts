@@ -19,6 +19,7 @@ import {
   findModel,
   MAX_KM,
   modelSpecs,
+  projectOdometer,
   READING_ERRORS,
   ValidationError,
   type ISODate,
@@ -160,7 +161,8 @@ export function itemsQuery(db: Db, vehicleId: string) {
 export function logsQuery(db: Db, vehicleId: string) {
   // useLiveQuery only watches maintenance_logs: a photo only changes through updateMaintenance or
   // removeMaintenance, which also write the log row.
-  // shortcut: an item rename won't refresh itemName until a log changes; fine while items can't be renamed.
+  // shortcut: an item rename won't refresh itemName until a log changes; fine while items are only
+  // edited from the dashboard, which history opens above, so history always mounts after a rename.
   return (
     db
       .select({
@@ -285,12 +287,7 @@ export async function createVehicle(
     severeUse: boolean;
     /** A seed model id; its specs fill the car's cola de bolso. */
     modelRef?: string | null;
-    items: {
-      templateKey: string | null;
-      name: string;
-      intervalKm: number | null;
-      intervalMonths: number | null;
-    }[];
+    items: NewItem[];
   },
   today: ISODate,
 ): Promise<string> {
@@ -301,27 +298,14 @@ export async function createVehicle(
   const model = input.modelRef ? findModel(input.modelRef) : undefined;
   if (input.modelRef && !model) throw new ValidationError('Modelo não encontrado.');
   const vehicleId = uuidv7();
-  const items = input.items.map((item) => {
-    if (item.intervalKm === null && item.intervalMonths === null) {
-      throw new ValidationError('Informe um intervalo em km ou em meses.');
-    }
-    for (const n of [item.intervalKm, item.intervalMonths]) {
-      if (n !== null && (!Number.isInteger(n) || n <= 0))
-        throw new ValidationError('Intervalo inválido.');
-    }
-    return {
-      id: uuidv7(),
-      vehicleId,
-      templateKey: item.templateKey,
-      name: requiredText(item.name, 'Informe o nome do item.'),
-      intervalKm: item.intervalKm,
-      intervalMonths: item.intervalMonths,
-      baselineKm: input.odometerKm,
-      baselineDate: today,
-      startKm: input.odometerKm,
-      startDate: today,
-    };
-  });
+  const items = input.items.map((item) => ({
+    ...newItem(item),
+    vehicleId,
+    baselineKm: input.odometerKm,
+    baselineDate: today,
+    startKm: input.odometerKm,
+    startDate: today,
+  }));
 
   db.transaction((tx) => {
     tx.insert(vehicles)
@@ -352,6 +336,97 @@ export async function createVehicle(
     setSelectedVehicle(tx, vehicleId);
   });
   return vehicleId;
+}
+
+type ItemFields = { name: string; intervalKm: number | null; intervalMonths: number | null };
+type NewItem = ItemFields & { templateKey: string | null };
+
+function itemFields(item: ItemFields) {
+  if (item.intervalKm === null && item.intervalMonths === null) {
+    throw new ValidationError('Informe um intervalo em km ou em meses.');
+  }
+  for (const n of [item.intervalKm, item.intervalMonths]) {
+    if (n !== null && (!Number.isInteger(n) || n <= 0))
+      throw new ValidationError('Intervalo inválido.');
+  }
+  return {
+    name: requiredText(item.name, 'Informe o nome do item.'),
+    intervalKm: item.intervalKm,
+    intervalMonths: item.intervalMonths,
+  };
+}
+
+function newItem(item: NewItem) {
+  return { id: uuidv7(), templateKey: item.templateKey, ...itemFields(item) };
+}
+
+/**
+ * Starts tracking a maintenance on an existing car (one outside the presets has no templateKey).
+ * Marco zero is today at the projected km, as onboarding does with the typed km.
+ */
+export async function addItem(
+  db: Db,
+  vehicleId: string,
+  input: NewItem,
+  today: ISODate,
+): Promise<string> {
+  isoDate(today);
+  const values = newItem(input);
+  db.transaction((tx) => {
+    const vehicle = tx
+      .select({ monthlyKmEstimate: vehicles.monthlyKmEstimate })
+      .from(vehicles)
+      .where(and(eq(vehicles.id, vehicleId), isNull(vehicles.deletedAt)))
+      .get();
+    if (!vehicle) throw new ValidationError('Carro não encontrado.');
+    // A projection, not a reading: like any baseline, a later lower real reading clamps it (rebase).
+    const km = projectOdometer(
+      readingsQuery(tx, vehicleId).all(),
+      vehicle.monthlyKmEstimate,
+      today,
+    );
+    tx.insert(maintenanceItems)
+      .values({
+        ...values,
+        vehicleId,
+        baselineKm: km,
+        baselineDate: today,
+        startKm: km,
+        startDate: today,
+      })
+      .run();
+  });
+  return values.id;
+}
+
+/** Renames an item or changes its intervals; the baseline stays, so the next due date moves with them. */
+export async function updateItem(db: Db, itemId: string, input: ItemFields): Promise<void> {
+  const fields = itemFields(input);
+  db.transaction((tx) => {
+    liveItem(tx, itemId);
+    tx.update(maintenanceItems).set(fields).where(eq(maintenanceItems.id, itemId)).run();
+  });
+}
+
+/** Stops tracking an item. Its logs stay in history, still under its name (see logsQuery). */
+export async function removeItem(db: Db, itemId: string): Promise<void> {
+  db.transaction((tx) => {
+    liveItem(tx, itemId);
+    const now = new Date().toISOString();
+    tx.update(maintenanceItems)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(eq(maintenanceItems.id, itemId))
+      .run();
+  });
+}
+
+function liveItem(tx: Db, itemId: string) {
+  const found = tx
+    .select({ id: maintenanceItems.id })
+    .from(maintenanceItems)
+    .where(and(eq(maintenanceItems.id, itemId), isNull(maintenanceItems.deletedAt)))
+    .get();
+  if (!found) throw new ValidationError('Item de manutenção não encontrado.');
 }
 
 export async function addOdometerReading(
