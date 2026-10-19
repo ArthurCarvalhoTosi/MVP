@@ -314,7 +314,7 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 | `src/ui` | Jest + React Native Testing Library | Comportamento e acessibilidade dos componentes (papéis, estados, rótulos, anúncios). Sem snapshots. |
 | `src/app` (telas) | Jest + RNTL | Fluxos com banco em memória: onboarding, registro de troca, ajuste/correção de KM, cola de bolso, histórico, troca/adição/remoção de carros. |
 
-* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 43 suítes, 745 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
+* **Antes de todo commit:** `npm test`, `npm run typecheck` e `npm run lint` devem passar. Situação atual: 43 suítes, 749 testes, lint sem avisos. O CI roda os três em todo PR para a `main`.
 * **Não coberto por testes automatizados (exige dispositivo):** abertura do banco cifrado (SQLCipher + Secure Store), teclado nas sheets, leitores de tela, câmera e notificações. Parte disso foi revalidada no emulador Android em 2026-10-17 (ver seção 12).
 * `better-sqlite3` foi descartado nos testes (falha nativa no Windows); `sql.js` não exige build nativo.
 

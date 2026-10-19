@@ -18,6 +18,15 @@ export function parseBRL(s: string): number | null {
   return Number.isSafeInteger(cents) ? cents : null;
 }
 
+/**
+ * Formats a date while it's typed: digits only, slashes added as each part starts ("1502" →
+ * "15/02"). No trailing slash, so backspace over one never gets stuck re-adding it.
+ */
+export function maskBRDate(s: string): string {
+  const d = s.replace(/\D/g, '').slice(0, 8);
+  return [d.slice(0, 2), d.slice(2, 4), d.slice(4)].filter(Boolean).join('/');
+}
+
 /** "DD/MM/AAAA" (day and month may have one digit) up to `today`; null when impossible or in the future. */
 export function parseBRDate(s: string, today: ISODate): ISODate | null {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s.trim());

@@ -16,6 +16,7 @@ import {
 } from '@/db/repo';
 import {
   addDays,
+  maskBRDate,
   MAX_KM,
   parseBRDate,
   parseBRL,
@@ -261,9 +262,12 @@ export default function Register() {
           {dateChoice === 'other' ? (
             <TextField
               label="Data (DD/MM/AAAA)"
-              keyboardType="numbers-and-punctuation"
+              placeholder="15/03/2026"
+              // The mask adds the slashes, so the plain number pad (no "/" on Android) is enough.
+              keyboardType="number-pad"
+              maxLength={10}
               value={otherDate}
-              onChangeText={setOtherDate}
+              onChangeText={(s) => setOtherDate(maskBRDate(s))}
               error={errors.date}
             />
           ) : null}

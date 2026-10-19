@@ -1,4 +1,4 @@
-import { parseBRDate, parseBRL, parseIntBR } from '../parse';
+import { maskBRDate, parseBRDate, parseBRL, parseIntBR } from '../parse';
 
 describe('parseIntBR', () => {
   it('accepts plain digits and pt-BR thousands separators', () => {
@@ -59,6 +59,31 @@ describe('parseBRL', () => {
     ]) {
       expect(parseBRL(s)).toBeNull();
     }
+  });
+});
+
+describe('maskBRDate', () => {
+  it('adds the slashes as each part starts', () => {
+    expect(maskBRDate('')).toBe('');
+    expect(maskBRDate('1')).toBe('1');
+    expect(maskBRDate('15')).toBe('15');
+    expect(maskBRDate('150')).toBe('15/0');
+    expect(maskBRDate('1503')).toBe('15/03');
+    expect(maskBRDate('15032')).toBe('15/03/2');
+    expect(maskBRDate('15032026')).toBe('15/03/2026');
+  });
+
+  it('keeps an already formatted date, drops other characters and extra digits', () => {
+    expect(maskBRDate('15/03/2026')).toBe('15/03/2026');
+    expect(maskBRDate('15-03-2026')).toBe('15/03/2026');
+    expect(maskBRDate('15/03/20261')).toBe('15/03/2026');
+    expect(maskBRDate('ab')).toBe('');
+  });
+
+  it('lets backspace remove a slash', () => {
+    // Deleting the "/" of "15/" leaves "15", which must stay "15".
+    expect(maskBRDate('15')).toBe('15');
+    expect(maskBRDate('15/0')).toBe('15/0');
   });
 });
 

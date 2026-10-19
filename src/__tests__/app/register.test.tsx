@@ -121,6 +121,23 @@ test('saves once when the button is tapped twice in a row', async () => {
   expect(button).toBeBusy();
 });
 
+test('formats a date typed as digits only', async () => {
+  const day = addDays(todayISO(), -30);
+  const [y, m, d] = day.split('-');
+  await render(<Register />);
+  const user = userEvent.setup();
+
+  await user.press(screen.getByRole('radio', { name: 'Outra data' }));
+  const field = screen.getByLabelText('Data (DD/MM/AAAA)');
+  await user.type(field, `${d}${m}`);
+  expect(field).toHaveDisplayValue(`${d}/${m}`);
+  await user.type(field, y);
+  expect(field).toHaveDisplayValue(`${d}/${m}/${y}`);
+  await user.press(screen.getByRole('button', { name: 'Registrar troca' }));
+
+  expect(logsQuery(db, vehicleId).all()).toEqual([expect.objectContaining({ performedAt: day })]);
+});
+
 test('asks for a valid past date and a readable cost', async () => {
   await render(<Register />);
   const user = userEvent.setup();
