@@ -4,6 +4,7 @@ import { signInWithGoogle, signOut } from '@/account';
 import Account from '@/app/account';
 import type { Db } from '@/db/client';
 import { ValidationError } from '@/domain';
+import { syncNow, type SyncStatus } from '@/sync/useSync';
 import { setupScreen, spyAlert } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
@@ -16,10 +17,17 @@ jest.mock('@/account', () => ({
   signOut: jest.fn(async () => {}),
 }));
 
+let mockSync: SyncStatus = { state: 'idle', lastSyncAt: null };
+jest.mock('@/sync/useSync', () => ({
+  useSyncStatus: () => mockSync,
+  syncNow: jest.fn(),
+}));
+
 let db: Db;
 beforeEach(async () => {
   db = await setupScreen();
   mockAccount = { status: 'signed-out' };
+  mockSync = { state: 'idle', lastSyncAt: null };
 });
 
 test('signed out: explains the optional account and signs in with Google', async () => {
@@ -89,4 +97,34 @@ test('renders nothing while the stored session loads', async () => {
   mockAccount = { status: 'loading' };
   await render(<Account />);
   expect(screen.toJSON()).toBeNull();
+});
+
+describe('signed in: sync status', () => {
+  beforeEach(() => {
+    mockAccount = { status: 'signed-in', email: 'ana@example.com' };
+  });
+
+  test.each<[SyncStatus, RegExp]>([
+    [{ state: 'idle', lastSyncAt: null }, /^Seus dados ainda não foram para a nuvem\.$/],
+    [{ state: 'syncing', lastSyncAt: null }, /^Sincronizando…$/],
+    [{ state: 'failed', lastSyncAt: null }, /^Não foi possível sincronizar agora\./],
+    [
+      { state: 'idle', lastSyncAt: new Date().toISOString() },
+      /^Dados na nuvem: sincronizado hoje às \d\d:\d\d\.$/,
+    ],
+  ])('%j reads %s', async (sync, line) => {
+    mockSync = sync;
+    await render(<Account />);
+    expect(screen.getByText(line)).toBeOnTheScreen();
+  });
+
+  test('syncs on request, and shows it busy while syncing', async () => {
+    await render(<Account />);
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Sincronizar agora' }));
+    expect(syncNow).toHaveBeenCalledTimes(1);
+
+    mockSync = { state: 'syncing', lastSyncAt: null };
+    await render(<Account />);
+    expect(screen.getByRole('button', { name: 'Sincronizar agora' })).toBeBusy();
+  });
 });

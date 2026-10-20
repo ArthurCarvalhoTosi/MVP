@@ -5,13 +5,16 @@
 // library still relies on Google's deprecated Android sign-in API. Only this app holds the
 // PKCE verifier, so another app catching the garagem:// redirect can't finish the sign-in.
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
+import type { AESEncryptionKey } from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import type { Db } from '@/db/client';
 import { readAuthItem, removeAuthItem, writeAuthItem } from '@/db/repo';
+import { clearSyncState } from '@/db/sync';
 import { ValidationError } from '@/domain';
+import { importDataKey } from '@/sync/rows';
 
 // garagem-dev. Both are public by design: access is enforced by RLS and the Edge Functions.
 // shortcut: hard-coded to the dev project; read them from the build environment when
@@ -90,11 +93,7 @@ export async function signInWithGoogle(db: Db): Promise<SignInResult> {
   if (exchanged.error) throw new ValidationError(SIGN_IN_FAILED);
 
   try {
-    const key = await sb.functions.invoke<{ dek?: unknown }>('user-key', { method: 'POST' });
-    if (key.error || !isDataKey(key.data?.dek)) throw new ValidationError(SIGN_IN_FAILED);
-    await SecureStore.setItemAsync(DEK_NAME, key.data.dek, {
-      keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-    });
+    await fetchDataKey(sb);
   } catch (e) {
     // Signed in without a key would upload nothing and look broken: start over instead.
     await sb.auth.signOut({ scope: 'local' });
@@ -103,9 +102,28 @@ export async function signInWithGoogle(db: Db): Promise<SignInResult> {
   return 'signed-in';
 }
 
-/** Signs this device out. Data on the phone stays; the data key leaves with the session. */
+async function fetchDataKey(sb: SupabaseClient): Promise<string> {
+  const key = await sb.functions.invoke<{ dek?: unknown }>('user-key', { method: 'POST' });
+  if (key.error || !isDataKey(key.data?.dek)) throw new ValidationError(SIGN_IN_FAILED);
+  await SecureStore.setItemAsync(DEK_NAME, key.data.dek, {
+    keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+  });
+  return key.data.dek;
+}
+
+/** The signed-in user's data key, fetched again if this phone lost it. */
+export async function dataKey(db: Db): Promise<AESEncryptionKey> {
+  const stored = await SecureStore.getItemAsync(DEK_NAME);
+  return importDataKey(stored ?? (await fetchDataKey(cloud(db))));
+}
+
+/**
+ * Signs this device out. Data on the phone stays; the data key and the sync bookkeeping leave
+ * with the session, so another account signing in here starts from scratch.
+ */
 export async function signOut(db: Db): Promise<void> {
   await SecureStore.deleteItemAsync(DEK_NAME);
+  clearSyncState(db);
   // Local scope: other phones signed in to the same account stay signed in.
   await cloud(db).auth.signOut({ scope: 'local' });
 }

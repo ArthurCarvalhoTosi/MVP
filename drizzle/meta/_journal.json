@@ -22,6 +22,13 @@
       "when": 1792282690338,
       "tag": "0002_magenta_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792525812400,
+      "tag": "0003_low_blizzard",
+      "breakpoints": true
     }
   ]
 }

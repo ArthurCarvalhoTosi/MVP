@@ -1,5 +1,13 @@
 import type { Due } from '../due';
-import { dueLabel, formatBRL, formatDate, formatKm, formatPair, intervalLabel } from '../format';
+import {
+  dueLabel,
+  formatBRL,
+  formatDate,
+  formatKm,
+  formatMoment,
+  formatPair,
+  intervalLabel,
+} from '../format';
 
 const NBSP = '\u00a0';
 
@@ -128,5 +136,25 @@ describe('formatPair', () => {
     expect(formatPair(32, null, 'psi')).toBe('32 / – psi');
     expect(formatPair(undefined, '16"')).toBe('– / 16"');
     expect(formatPair(null, undefined, 'psi')).toBeNull();
+  });
+});
+
+describe('formatMoment', () => {
+  // Local-time constructors: the result must not depend on the machine's time zone.
+  const now = new Date(2026, 9, 20, 14, 32);
+
+  it('says today or yesterday with the time', () => {
+    expect(formatMoment(new Date(2026, 9, 20, 9, 5), now)).toBe('hoje às 09:05');
+    expect(formatMoment(new Date(2026, 9, 19, 23, 59), now)).toBe('ontem às 23:59');
+  });
+
+  it('names the day further back, across a month and a year', () => {
+    expect(formatMoment(new Date(2026, 9, 18, 8, 0), now)).toMatch(/^18 de out\.? às 08:00$/);
+    expect(formatMoment(new Date(2026, 9, 31, 22, 0), new Date(2026, 10, 1, 7, 0))).toBe(
+      'ontem às 22:00',
+    );
+    expect(formatMoment(new Date(2025, 11, 31, 10, 0), new Date(2026, 0, 1, 10, 0))).toBe(
+      'ontem às 10:00',
+    );
   });
 });

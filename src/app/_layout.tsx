@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSessionRefresh } from '@/account';
 import { DatabaseProvider, useDb } from '@/db/provider';
 import { useNotifications } from '@/notifications/useNotifications';
+import { useSync } from '@/sync/useSync';
 import { fonts, type, useTheme } from '@/ui';
 
 SplashScreen.preventAutoHideAsync();
@@ -31,7 +32,9 @@ export default function RootLayout() {
 function AppStack() {
   const { c } = useTheme();
   useNotifications();
-  useSessionRefresh(useDb());
+  const db = useDb();
+  useSessionRefresh(db);
+  useSync(db);
 
   // Sheets draw their own title: native headers aren't reliable inside formSheet on Android.
   // The content keeps full-screen height at a lower detent, so a Screen footer only shows at detent 1:

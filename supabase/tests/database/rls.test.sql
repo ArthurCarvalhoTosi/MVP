@@ -7,7 +7,7 @@ begin;
 set local role postgres;
 set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(31);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -151,6 +151,24 @@ select ok(
 
 set local role postgres;
 
+-- The upsert PostgREST sends for the app's push: every sent column is set on conflict.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select lives_ok($$
+  insert into public.sync_records (table_name, id, updated_at, deleted_at, ciphertext, nonce,
+                                   key_version)
+  values ('vehicles', '11111111-1111-1111-1111-111111111111', '2026-10-20T12:00:00Z', null,
+          '\x0d', '\x000000000000000000000000', 1)
+  on conflict (user_id, table_name, id) do update set
+    table_name = excluded.table_name, id = excluded.id, updated_at = excluded.updated_at,
+    deleted_at = excluded.deleted_at, ciphertext = excluded.ciphertext, nonce = excluded.nonce,
+    key_version = excluded.key_version
+$$, 'the app''s upsert (PostgREST merge-duplicates) runs');
+select is(
+  (select ciphertext from public.sync_records
+   where table_name = 'vehicles' and id = '11111111-1111-1111-1111-111111111111'),
+  '\x0d'::bytea, '... and stores the newer copy');
+set local role postgres;
+
 -- user_keys -----------------------------------------------------------------------------
 
 insert into public.user_keys (user_id, wrapped_dek, kek_version)
@@ -192,9 +210,14 @@ select is((select count(*)::int from public.dossier_shares), 1, '... but removes
 
 delete from auth.users where id = '00000000-0000-0000-0000-00000000000a';
 
+-- Only this user's rows: other local runs (the sync e2e test) may have left their own.
 select is(
-  (select count(*)::int from public.sync_records) + (select count(*)::int from public.user_keys)
-    + (select count(*)::int from public.dossier_shares),
+  (select count(*)::int from public.sync_records
+   where user_id = '00000000-0000-0000-0000-00000000000a')
+    + (select count(*)::int from public.user_keys
+       where user_id = '00000000-0000-0000-0000-00000000000a')
+    + (select count(*)::int from public.dossier_shares
+       where user_id = '00000000-0000-0000-0000-00000000000a'),
   0, 'deleting the account removes rows, the wrapped key and shares');
 
 select * from finish();

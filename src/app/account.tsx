@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { signInWithGoogle, signOut, useAccount } from '@/account';
 import { useDb } from '@/db/provider';
+import { formatMoment } from '@/domain';
+import { syncNow, useSyncStatus, type SyncStatus } from '@/sync/useSync';
 import { AppText, Button, FormError, GoogleButton, Screen, Section, space } from '@/ui';
 
 export default function Account() {
@@ -9,6 +11,7 @@ export default function Account() {
   const account = useAccount(db);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const sync = useSyncStatus();
 
   if (account.status === 'loading') return null;
 
@@ -50,13 +53,22 @@ export default function Account() {
         footer={
           <>
             <FormError error={error} />
-            <Button variant="secondary" label="Sair da conta" onPress={leave} />
+            <Button
+              variant="secondary"
+              label="Sincronizar agora"
+              loading={sync.state === 'syncing'}
+              onPress={syncNow}
+            />
+            <Button variant="quiet" label="Sair da conta" onPress={leave} />
           </>
         }
       >
         <Section title="Conta">
           <View style={styles.body}>
             <AppText>Conectado como {account.email}.</AppText>
+            <AppText color="inkMuted" accessibilityLiveRegion="polite">
+              {syncLine(sync)}
+            </AppText>
           </View>
         </Section>
       </Screen>
@@ -86,6 +98,14 @@ export default function Account() {
       </Section>
     </Screen>
   );
+}
+
+function syncLine(sync: SyncStatus): string {
+  if (sync.state === 'syncing') return 'Sincronizando…';
+  if (sync.state === 'failed')
+    return 'Não foi possível sincronizar agora. O app tenta de novo sozinho.';
+  if (!sync.lastSyncAt) return 'Seus dados ainda não foram para a nuvem.';
+  return `Dados na nuvem: sincronizado ${formatMoment(new Date(sync.lastSyncAt), new Date())}.`;
 }
 
 const styles = StyleSheet.create({
