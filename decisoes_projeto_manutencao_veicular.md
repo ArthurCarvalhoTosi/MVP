@@ -2,7 +2,7 @@
 
 Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura, dados e segurança definidos para continuidade do desenvolvimento.
 
-**Última revisão:** 2026-10-19
+**Última revisão:** 2026-10-20
 
 ---
 
@@ -275,7 +275,7 @@ dossier_shares                       -- v1
 | Fase | Escopo |
 |---|---|
 | **v0** | 100% local, sem conta. SQLCipher. PDF do dossiê. Backup cifrado por arquivo. Esquema já com campos de sync. |
-| **v1** | Login opcional (Google/Apple). Upload inicial de todos os dados locais cifrados. Sync push/pull incremental por `updated_at`, *last-write-wins* por linha, soft delete. Link do dossiê. |
+| **v1** | Login opcional (Google/Apple). Upload inicial de todos os dados locais cifrados. Sync push/pull incremental, *last-write-wins* por linha (pelo `updated_at` do cliente), soft delete; o cursor do pull é um carimbo do servidor (ver "Plano da v1" na seção 12). Link do dossiê. |
 | **Futuro** | Opção E2E (chave de recuperação / passkeys), motos, crowdsourcing de specs. |
 
 **Migração v0 → v1:** ao criar conta, o app gera a DEK, cifra cada linha local e envia; a partir daí o SyncAgent assume. A chave do SQLCipher local continua independente da DEK da nuvem.
@@ -403,3 +403,26 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 ### Pendente
 1. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. No Stepway 2010 a traseira ficou vazia de propósito (o manual contradiz psi e bar). Completar só com fonte brasileira; vazio continua melhor que chute.
 2. **Rodar no iOS** (exige macOS ou EAS Build).
+
+### Plano da v1 (2026-10-20)
+
+A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
+
+**Correção de desenho: cursor do sync.** O `updated_at` vem do relógio do aparelho; usado como cursor do pull, um relógio atrasado faz outro aparelho pular linhas. Cada `sync_records` ganha um carimbo do servidor (`server_updated_at`, gravado pelo Postgres, ou uma sequência), e o pull pede "tudo depois do último carimbo visto". O `updated_at` do cliente continua decidindo o *last-write-wins*. O cursor fica em `device_prefs`; o esquema local não muda.
+
+**Achado: HTML nas Edge Functions.** No domínio padrão `*.supabase.co`, respostas `text/html` são reescritas como `text/plain`; HTML só com domínio próprio, que no Supabase é add-on pago (exige plano Pro). Proposta: a página do dossiê fica num host estático gratuito (ex.: Cloudflare Pages) no domínio do app, e a Edge Function só devolve o snapshot em JSON. Substitui o `GET /d/{token}` da seção 5 quando decidido.
+
+**Fatias, em ordem** (cada uma entregável sozinha):
+1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. `eas.json` com perfis de desenvolvimento e produção.
+2. **Login e chave:** Google (Apple quando houver iOS); Edge Function que embrulha/desembrulha a DEK; DEK no Secure Store.
+3. **SyncAgent** (`src/sync`): upload inicial, push/pull incremental, soft delete; merge LWW como função pura testada com sql.js.
+4. **Fotos na nuvem:** recifradas com a DEK, bucket privado, `remote_path`.
+5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit.
+6. **Excluir conta no app:** apaga a DEK (crypto-shredding).
+7. **Publicação:** EAS Build com keystore própria; política de privacidade publicada antes.
+
+**Decisões em aberto:**
+* **Supabase:** criar a conta; região São Paulo; projetos separados de dev e prod (o plano gratuito dá 2 e pausa projetos parados há 1 semana — ok para dev, não para prod).
+* **KEK:** proposta é segredo de Edge Function (256 bits aleatórios, `supabase secrets set`), sem conta extra; KMS externo fica para depois. Decide-se na fatia 2.
+* **Domínio:** necessário na fatia 5 (página do dossiê) e para a URL da política de privacidade.
+* **iOS / Apple:** sem conta Apple Developer. Proposta: v1 sai primeiro no Android, só com login Google; "Entrar com Apple" (obrigatório na App Store quando há login Google) entra junto com o iOS.
