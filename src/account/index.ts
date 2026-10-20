@@ -15,6 +15,7 @@ import { readAuthItem, removeAuthItem, writeAuthItem } from '@/db/repo';
 import { clearSyncState } from '@/db/sync';
 import { ValidationError } from '@/domain';
 import { importDataKey } from '@/sync/rows';
+import { installWebCrypto } from './webcrypto';
 
 // garagem-dev. Both are public by design: access is enforced by RLS and the Edge Functions.
 // shortcut: hard-coded to the dev project; read them from the build environment when
@@ -27,6 +28,9 @@ export const AUTH_REDIRECT = 'garagem://auth-callback';
 const DEK_NAME = 'garagem.cloud.dek';
 
 const SIGN_IN_FAILED = 'Não foi possível entrar. Confira a internet e tente de novo.';
+
+// Before any client exists: the PKCE verifier and challenge come from it.
+installWebCrypto();
 
 let current: { db: Db; client: SupabaseClient } | undefined;
 
