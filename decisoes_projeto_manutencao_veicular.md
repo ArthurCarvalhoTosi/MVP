@@ -240,7 +240,7 @@ dossier_shares                       -- v1
   ```
   Anexos no Storage também vão cifrados com a DEK.
 * **Gestão da DEK — DECIDIDO: chave gerenciada pelo servidor.**
-  * A DEK de cada usuário é gerada no cliente no momento da criação da conta e embrulhada (*wrapped*) por uma **chave mestra (KEK)** mantida fora do banco (segredo de Edge Function / KMS). No banco fica apenas a DEK embrulhada.
+  * A DEK de cada usuário é gerada **na Edge Function `user-key`** no primeiro login e embrulhada (*wrapped*) por uma **chave mestra (KEK)** mantida fora do banco (segredo `KEKS` da Edge Function). No banco fica apenas a DEK embrulhada. *(Antes: gerada no cliente. O servidor vê a DEK de qualquer forma ao embrulhar, então a segurança é a mesma, e gerar no servidor evita que dois aparelhos entrando ao mesmo tempo criem chaves diferentes.)*
   * Ao logar em novo dispositivo, o app obtém a DEK via Edge Function autenticada (JWT do Supabase) e a guarda no Secure Store do aparelho. **Zero atrito para o usuário.**
   * **Protege contra:** vazamento de dump/backup do banco, falha de RLS, acesso indevido ao Storage.
   * **Não protege contra:** comprometimento total do servidor (banco + segredos das Edge Functions).
@@ -278,7 +278,7 @@ dossier_shares                       -- v1
 | **v1** | Login opcional (Google/Apple). Upload inicial de todos os dados locais cifrados. Sync push/pull incremental, *last-write-wins* por linha (pelo `updated_at` do cliente), soft delete; o cursor do pull é um carimbo do servidor (ver "Plano da v1" na seção 12). Link do dossiê. |
 | **Futuro** | Opção E2E (chave de recuperação / passkeys), motos, crowdsourcing de specs. |
 
-**Migração v0 → v1:** ao criar conta, o app gera a DEK, cifra cada linha local e envia; a partir daí o SyncAgent assume. A chave do SQLCipher local continua independente da DEK da nuvem.
+**Migração v0 → v1:** ao criar conta, o app obtém a DEK (`user-key`), cifra cada linha local e envia; a partir daí o SyncAgent assume. A chave do SQLCipher local continua independente da DEK da nuvem.
 
 ---
 
@@ -431,8 +431,15 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 
 **Fatia 2 em andamento: login Google (2026-10-20).** Login nativo no Android (seletor de contas do sistema → token de identidade → `signInWithIdToken` do Supabase). Google Cloud: projeto `garagem-dev`, tela de consentimento externa em modo de teste (só usuários de teste entram), escopos básicos (e-mail e perfil). Dois clientes OAuth: **Web** (`680900132295-1njieevhtrcll6rpuslbs5i0v2cukh61.apps.googleusercontent.com`, usado pelo Supabase para validar o token; o *secret* fica só no painel do Supabase) e **Android** (`br.com.garagem.app` + SHA-1 da chave de debug padrão do React Native, pública; a publicação exige outro cliente com o SHA-1 da chave da Play Store).
 
+**Edge Function `user-key` (2026-10-20).** `POST /functions/v1/user-key` com a sessão do usuário devolve `{ dek }` (base64, `Cache-Control: no-store`), criando a chave no primeiro uso. Detalhes:
+* KEK: segredo `KEKS` da função, JSON `{"<versão>": "<base64 de 32 bytes>"}`; a maior versão embrulha chaves novas, as antigas continuam abrindo as delas (rotação = acrescentar versão, nunca trocar). Sem KMS externo por ora. **Perder a KEK perde os dados de todos os usuários na nuvem**: ela fica também num cofre de senhas do dono do projeto (o Supabase não mostra segredos depois de gravados).
+* Formato embrulhado: nonce (12) + AES-256-GCM (48) = 60 bytes, com o id do usuário como dado associado (uma DEK copiada para outra linha não abre).
+* Corrida de primeiro login: `insert … on conflict do nothing` e releitura; todos recebem a chave que ficou gravada.
+* Login validado pelo `@supabase/server` (`auth: 'user'`, JWKS do projeto). Erros devolvem só `internal`; nada de chave em log.
+* Testes: Deno (`npm run test:functions`: lint, check e 14 testes de cifra, corrida e rotação; roda no CI). Ponta a ponta no Supabase local: login real, mesma chave em chamadas seguidas e em 5 chamadas simultâneas, chave diferente por usuário, 401 sem token ou com token adulterado, 403 ao ler `user_keys` pela API.
+* `supabase/functions` é código Deno: fora do `tsc` e do ESLint do app; Deno fixado como devDependency.
+
 **Decisões em aberto:**
 * **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.
-* **KEK:** proposta é segredo de Edge Function (256 bits aleatórios, `supabase secrets set`), sem conta extra; KMS externo fica para depois. Decide-se na fatia 2.
 * **Domínio:** necessário na fatia 5 (página do dossiê) e para a URL da política de privacidade.
 * **iOS / Apple:** sem conta Apple Developer. Proposta: v1 sai primeiro no Android, só com login Google; "Entrar com Apple" (obrigatório na App Store quando há login Google) entra junto com o iOS.

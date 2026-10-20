@@ -9,5 +9,6 @@ module.exports = defineConfig([
     files: ['**/__tests__/**', 'src/test-utils/**', 'src/db/test-utils/**'],
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
-  { ignores: ['dist/*', 'android/*', 'ios/*', 'drizzle/*', '.expo/*'] },
+  // supabase/functions is Deno code, checked with deno check / deno lint (npm run test:functions).
+  { ignores: ['dist/*', 'android/*', 'ios/*', 'drizzle/*', '.expo/*', 'supabase/functions/*'] },
 ]);

@@ -48,6 +48,7 @@
     "@types/react": "~19.3.0",
     "@types/sql.js": "^1.4.11",
     "babel-plugin-inline-import": "^3.0.0",
+    "deno": "^2.9.6",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
@@ -67,7 +68,8 @@
     "format": "prettier --write .",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "test:functions": "deno lint supabase/functions && deno check --config supabase/functions/user-key/deno.json supabase/functions/user-key && deno test --config supabase/functions/user-key/deno.json supabase/functions/user-key"
   },
   "private": true
 }
