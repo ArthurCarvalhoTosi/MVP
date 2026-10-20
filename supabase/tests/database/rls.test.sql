@@ -1,6 +1,11 @@
 -- Row level security and grants for the v1 tables. Each block acts as a real client role
 -- (anon or authenticated with a JWT subject) and resets to postgres to inspect the result.
 begin;
+-- On the hosted project the CLI logs in as a temporary role that can become postgres but
+-- cannot see the extensions schema; locally it is postgres already. Hence "set local role
+-- postgres" instead of "reset role" throughout.
+set local role postgres;
+set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
 select plan(29);
 
@@ -32,7 +37,7 @@ select throws_ok('select * from public.dossier_shares', '42501', null,
   'anon cannot read shares');
 select throws_ok('select * from public.user_keys', '42501', null,
   'anon cannot read keys');
-reset role;
+set local role postgres;
 
 -- sync_records ------------------------------------------------------------------------
 
@@ -83,7 +88,7 @@ $$, '42501', null, 'a row cannot change owner');
 select throws_ok($$ delete from public.sync_records $$, '42501', null,
   'rows are never hard-deleted by the app');
 
-reset role;
+set local role postgres;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 
 select is((select count(*)::int from public.sync_records), 0,
@@ -93,7 +98,7 @@ select lives_ok($$
   update public.sync_records set ciphertext = '\xff', updated_at = '2030-01-01'
 $$, 'another user''s update runs');
 
-reset role;
+set local role postgres;
 select is(
   (select count(*)::int from public.sync_records where ciphertext = '\xff'), 0,
   '... but changes nothing');
@@ -144,7 +149,7 @@ select ok(
    where table_name = 'vehicles' and id = '11111111-1111-1111-1111-111111111111'),
   '... replaces the row and moves the server cursor');
 
-reset role;
+set local role postgres;
 
 -- user_keys -----------------------------------------------------------------------------
 
@@ -154,7 +159,7 @@ values ('00000000-0000-0000-0000-00000000000a', '\xdeadbeef', 1);
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select throws_ok('select * from public.user_keys', '42501', null,
   'not even the owner reads the wrapped key directly');
-reset role;
+set local role postgres;
 
 -- dossier_shares --------------------------------------------------------------------------
 
@@ -172,7 +177,7 @@ $$, '42501', null, 'the snapshot is frozen');
 select lives_ok($$ update public.dossier_shares set revoked_at = now() $$,
   'an owner revokes a share');
 
-reset role;
+set local role postgres;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 
 select is((select count(*)::int from public.dossier_shares), 0,
@@ -180,7 +185,7 @@ select is((select count(*)::int from public.dossier_shares), 0,
 
 select lives_ok($$ delete from public.dossier_shares $$, 'another user''s delete runs');
 
-reset role;
+set local role postgres;
 select is((select count(*)::int from public.dossier_shares), 1, '... but removes nothing');
 
 -- Account deletion ------------------------------------------------------------------------

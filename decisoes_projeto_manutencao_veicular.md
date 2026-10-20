@@ -426,7 +426,7 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 * `user_keys`: sem política e sem permissão para o app; só Edge Functions (service role) leem a DEK embrulhada.
 * `dossier_shares`: snapshot em `jsonb` (≤ 256 KiB) congelado; o dono só muda `expires_at` e `revoked_at`, ou apaga.
 * Permissões por coluna: o app não escolhe o dono da linha (`user_id` vem de `auth.uid()`) nem forja o cursor; não há `delete` em `sync_records` (soft delete). Excluir o usuário em `auth.users` apaga em cascata linhas, DEK e links.
-* Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
+* Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). Migration aplicada no `garagem-dev` e os mesmos testes passam lá (`supabase test db --linked`; o teste assume o papel `postgres`, porque o login temporário da CLI não enxerga o schema `extensions`). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
 * Portas locais do Supabase em 443xx (`config.toml`): o Windows reserva 54242–54941 em algumas máquinas.
 
 **Decisões em aberto:**
