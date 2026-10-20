@@ -413,16 +413,24 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 **Achado: HTML nas Edge Functions.** No domínio padrão `*.supabase.co`, respostas `text/html` são reescritas como `text/plain`; HTML só com domínio próprio, que no Supabase é add-on pago (exige plano Pro). Proposta: a página do dossiê fica num host estático gratuito (ex.: Cloudflare Pages) no domínio do app, e a Edge Function só devolve o snapshot em JSON. Substitui o `GET /d/{token}` da seção 5 quando decidido.
 
 **Fatias, em ordem** (cada uma entregável sozinha):
-1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. `eas.json` com perfis de desenvolvimento e produção.
+1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. ✅ (ver abaixo)
 2. **Login e chave:** Google (Apple quando houver iOS); Edge Function que embrulha/desembrulha a DEK; DEK no Secure Store.
 3. **SyncAgent** (`src/sync`): upload inicial, push/pull incremental, soft delete; merge LWW como função pura testada com sql.js.
 4. **Fotos na nuvem:** recifradas com a DEK, bucket privado, `remote_path`.
 5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit.
 6. **Excluir conta no app:** apaga a DEK (crypto-shredding).
-7. **Publicação:** EAS Build com keystore própria; política de privacidade publicada antes.
+7. **Publicação:** EAS Build com keystore própria (`eas.json` e conta Expo entram aqui; saíram da fatia 1 porque o iOS ficou para depois); política de privacidade publicada antes.
+
+**Fatia 1 entregue (2026-10-20).** Migration `supabase/migrations/…_sync_keys_shares.sql`:
+* `sync_records`: chave `(user_id, table_name, id)` (`vehicle_specs` reusa o id do carro); só as 6 tabelas sincronizáveis (`device_prefs` recusada); payload ≤ 64 KiB, nonce de 12 bytes. Um gatilho garante o *last-write-wins* no servidor (cópia com `updated_at` igual ou mais velho é ignorada, sem quebrar o lote) e grava `server_updated_at` com o relógio do Postgres. Esse carimbo sai na execução, não no commit: o pull relê uma pequena janela antes do cursor (a fusão é idempotente).
+* `user_keys`: sem política e sem permissão para o app; só Edge Functions (service role) leem a DEK embrulhada.
+* `dossier_shares`: snapshot em `jsonb` (≤ 256 KiB) congelado; o dono só muda `expires_at` e `revoked_at`, ou apaga.
+* Permissões por coluna: o app não escolhe o dono da linha (`user_id` vem de `auth.uid()`) nem forja o cursor; não há `delete` em `sync_records` (soft delete). Excluir o usuário em `auth.users` apaga em cascata linhas, DEK e links.
+* Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
+* Portas locais do Supabase em 443xx (`config.toml`): o Windows reserva 54242–54941 em algumas máquinas.
 
 **Decisões em aberto:**
-* **Supabase:** criar a conta; região São Paulo; projetos separados de dev e prod (o plano gratuito dá 2 e pausa projetos parados há 1 semana — ok para dev, não para prod).
+* **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.
 * **KEK:** proposta é segredo de Edge Function (256 bits aleatórios, `supabase secrets set`), sem conta extra; KMS externo fica para depois. Decide-se na fatia 2.
 * **Domínio:** necessário na fatia 5 (página do dossiê) e para a URL da política de privacidade.
 * **iOS / Apple:** sem conta Apple Developer. Proposta: v1 sai primeiro no Android, só com login Google; "Entrar com Apple" (obrigatório na App Store quando há login Google) entra junto com o iOS.

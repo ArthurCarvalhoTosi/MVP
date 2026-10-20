@@ -45,6 +45,20 @@ Schema em `src/db/schema.ts`. Depois de alterá-lo:
 npm run db:generate   # gera a migration em drizzle/ (não editar à mão)
 ```
 
+## Backend (v1)
+
+Supabase. Migrations em `supabase/migrations/`, testes de RLS (pgTAP) em `supabase/tests/database/`. Exige Docker.
+
+```bash
+npx supabase migration new <nome>   # cria a migration
+npx supabase db start               # Postgres local; aplica as migrations
+npx supabase db reset               # recria o banco local depois de mudar uma migration
+npx supabase test db                # testes de RLS (o CI roda os mesmos)
+npx supabase db push                # aplica no projeto ligado (garagem-dev)
+```
+
+O projeto remoto é ligado uma vez por máquina: `npx supabase login` e `npx supabase link --project-ref <ref>`. As portas locais são 443xx porque o Windows pode reservar a faixa padrão 543xx.
+
 ## Estrutura
 
 | Pasta | Conteúdo |
@@ -53,3 +67,4 @@ npm run db:generate   # gera a migration em drizzle/ (não editar à mão)
 | `src/db` | Schema, abertura cifrada, repositório |
 | `src/ui` | Design system (tokens, hodômetro, componentes) |
 | `src/app` | Telas (expo-router) |
+| `supabase` | Backend da v1 (migrations e testes de RLS) |

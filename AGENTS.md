@@ -16,6 +16,7 @@ Antes de mudar comportamento, leia [decisoes_projeto_manutencao_veicular.md](dec
 | `src/app` | Telas (expo-router) | seção "Telas" abaixo |
 | `src/notifications` | Lembrete de sábado: agendador (expo-notifications), respostas aos toques, pedido de permissão | reagenda tudo a cada abertura e mudança de dados; nunca quebra a tela se a permissão for negada |
 | `drizzle/` | Migrations geradas | nunca editar à mão |
+| `supabase/` | Backend da v1: migrations do Postgres e testes pgTAP de RLS | toda tabela com RLS, `revoke all` e permissões por coluna; toda política ganha teste em `supabase/tests/database` |
 
 Importe pelo alias `@/` (`@/domain`, `@/db/repo`, `@/ui`). `src/domain` não importa nada de fora dele.
 
@@ -27,6 +28,8 @@ npm run typecheck
 npm run lint         # inclui as regras do React Compiler
 npm run format       # Prettier; o editor também formata ao salvar
 npm run db:generate  # depois de mudar src/db/schema.ts
+npx supabase db start   # Postgres local (Docker); depois de nova migration: npx supabase db reset
+npx supabase test db    # testes de RLS
 npx expo run:android # dev build; o Expo Go não funciona (SQLCipher exige build nativo)
 ```
 
