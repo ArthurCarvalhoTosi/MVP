@@ -29,7 +29,7 @@ test('signed out: explains the optional account and signs in with Google', async
     screen.getByText('É opcional. Sem conta, tudo continua só neste aparelho.'),
   ).toBeOnTheScreen();
 
-  await userEvent.setup().press(screen.getByRole('button', { name: 'Entrar com Google' }));
+  await userEvent.setup().press(screen.getByRole('button', { name: 'Continuar com o Google' }));
   expect(signInWithGoogle).toHaveBeenCalledWith(db);
 });
 
@@ -40,7 +40,7 @@ test('a second tap while signing in is ignored', async () => {
   );
   await render(<Account />);
   const user = userEvent.setup();
-  const button = screen.getByRole('button', { name: 'Entrar com Google' });
+  const button = screen.getByRole('button', { name: 'Continuar com o Google' });
 
   await user.press(button);
   await user.press(button);
@@ -56,7 +56,7 @@ test('shows the plain message when signing in fails, and nothing when cancelled'
     .mockResolvedValueOnce('cancelled');
   await render(<Account />);
   const user = userEvent.setup();
-  const button = screen.getByRole('button', { name: 'Entrar com Google' });
+  const button = screen.getByRole('button', { name: 'Continuar com o Google' });
 
   await user.press(button);
   expect(

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { signInWithGoogle, signOut, useAccount } from '@/account';
 import { useDb } from '@/db/provider';
-import { AppText, Button, FormError, Screen, Section, space } from '@/ui';
+import { AppText, Button, FormError, GoogleButton, Screen, Section, space } from '@/ui';
 
 export default function Account() {
   const db = useDb();
@@ -69,7 +69,7 @@ export default function Account() {
       footer={
         <>
           <FormError error={error} />
-          <Button label="Entrar com Google" loading={busy} onPress={signIn} />
+          <GoogleButton loading={busy} onPress={signIn} />
         </>
       }
     >
