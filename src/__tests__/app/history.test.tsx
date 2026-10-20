@@ -173,6 +173,21 @@ describe('a record', () => {
     expect(screen.getByText('Não foi possível abrir a foto. Tente de novo.')).toBeOnTheScreen();
   });
 
+  test('says when a photo from another phone has not arrived yet', async () => {
+    attachmentsMock.hasPhoto.mockReturnValueOnce(false);
+    await seedLog(PHOTO);
+    await render(<History />);
+
+    await userEvent
+      .setup()
+      .press(screen.getByRole('button', { name: `Ver foto do comprovante de ${WHAT}` }));
+
+    expect(
+      screen.getByText('A foto ainda está vindo da nuvem. Tente de novo daqui a pouco.'),
+    ).toBeOnTheScreen();
+    expect(attachmentsMock.readPhoto).not.toHaveBeenCalled();
+  });
+
   test('is deleted only after confirming, with its reading, and the baseline goes back', async () => {
     await seedLog(PHOTO);
     const { alert, press } = spyAlert();

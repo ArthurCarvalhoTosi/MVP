@@ -1,8 +1,9 @@
 // Local side of the cloud sync: which rows wait to upload, and how rows from the cloud land.
 // The device's own bookkeeping (sync_state, sync:* prefs) never leaves the phone.
-import { eq, like } from 'drizzle-orm';
+import { and, eq, inArray, isNull, like } from 'drizzle-orm';
 import type { Db } from './client';
 import {
+  attachments,
   devicePrefs,
   maintenanceItems,
   maintenanceLogs,
@@ -13,13 +14,13 @@ import {
 } from './schema';
 
 // In foreign-key order: parents land before their children inside one transaction.
-// shortcut: attachments stay local until slice 4 uploads the photo files; a synced row
-// without its file would offer a photo the other phone can't open.
 export const SYNC_TABLES = {
   vehicles: { table: vehicles, key: vehicles.id, keyName: 'id' },
   maintenance_items: { table: maintenanceItems, key: maintenanceItems.id, keyName: 'id' },
   maintenance_logs: { table: maintenanceLogs, key: maintenanceLogs.id, keyName: 'id' },
   odometer_readings: { table: odometerReadings, key: odometerReadings.id, keyName: 'id' },
+  // The photo file itself travels on its own (src/sync), before its row.
+  attachments: { table: attachments, key: attachments.id, keyName: 'id' },
   // One row per car, keyed by the car's id.
   vehicle_specs: { table: vehicleSpecs, key: vehicleSpecs.vehicleId, keyName: 'vehicleId' },
 } as const;
@@ -29,6 +30,28 @@ export const SYNC_TABLE_NAMES = Object.keys(SYNC_TABLES) as SyncTable[];
 
 export function isSyncTable(name: string): name is SyncTable {
   return Object.hasOwn(SYNC_TABLES, name);
+}
+
+// Columns about this phone's own copy of something: they never leave it, and a row from the
+// cloud gets a value made here instead. file_path names the photo file sealed with this
+// phone's key; a photo from the cloud is written under its id, in @/attachments' folder.
+const DEVICE_ONLY: Partial<Record<SyncTable, Record<string, (id: string) => unknown>>> = {
+  attachments: { filePath: (id) => `attachments/${id}.bin` },
+};
+
+/** A row as it travels: without the columns that only mean something on this phone. */
+export function sharedRow(table: SyncTable, row: Record<string, unknown>): Record<string, unknown> {
+  const local = DEVICE_ONLY[table];
+  if (!local) return row;
+  const out = { ...row };
+  for (const column of Object.keys(local)) delete out[column];
+  return out;
+}
+
+function deviceDefaults(table: SyncTable, id: string): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(DEVICE_ONLY[table] ?? {}).map(([column, make]) => [column, make(id)]),
+  );
 }
 
 /** A whole local row, as Drizzle reads it (camelCase keys). */
@@ -108,11 +131,13 @@ export function applyRemote(
           // A savepoint: a failing row rolls back alone.
           // The same copy (re-read by the pull overlap) only refreshes the bookkeeping.
           const lands = !local || local.updatedAt < r.updatedAt;
+          // Stripped here too: whatever arrives, this phone's own columns stay its own.
+          const shared = sharedRow(name, r.row);
           tx.transaction((sp) => {
             if (lands) {
               sp.insert(table)
-                .values(r.row as never)
-                .onConflictDoUpdate({ target: key, set: r.row as never })
+                .values({ ...deviceDefaults(name, r.id), ...shared } as never)
+                .onConflictDoUpdate({ target: key, set: shared as never })
                 .run();
             }
             setSynced(sp, name, r.id, r.updatedAt);
@@ -125,6 +150,42 @@ export function applyRemote(
     }
   });
   return { applied, skipped };
+}
+
+// --- Photo files ---
+
+// Photos whose file is already in the cloud, kept in sync_state under this name (not a table):
+// signing out forgets them with the rest, so another account uploads its own copy.
+const PHOTO_FILES = 'photo_files';
+
+export function isPhotoUploaded(db: Db, attachmentId: string): boolean {
+  return !!db
+    .select({ id: syncState.rowId })
+    .from(syncState)
+    .where(and(eq(syncState.tableName, PHOTO_FILES), eq(syncState.rowId, attachmentId)))
+    .get();
+}
+
+export function markPhotoUploaded(db: Db, attachmentId: string): void {
+  db.insert(syncState)
+    .values({ tableName: PHOTO_FILES, rowId: attachmentId, syncedUpdatedAt: '' })
+    .onConflictDoNothing()
+    .run();
+}
+
+export function forgetPhotos(db: Db, attachmentIds: string[]): void {
+  db.delete(syncState)
+    .where(and(eq(syncState.tableName, PHOTO_FILES), inArray(syncState.rowId, attachmentIds)))
+    .run();
+}
+
+/** Photos still on show, each with this phone's file (which may not have arrived yet). */
+export function livePhotos(db: Db): { id: string; filePath: string }[] {
+  return db
+    .select({ id: attachments.id, filePath: attachments.filePath })
+    .from(attachments)
+    .where(isNull(attachments.deletedAt))
+    .all();
 }
 
 // --- Device-local sync prefs ---

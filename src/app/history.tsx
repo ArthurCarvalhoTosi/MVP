@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
-import { deleteRemovedPhotos, readPhoto } from '@/attachments';
+import { deleteRemovedPhotos, hasPhoto, readPhoto } from '@/attachments';
 import { useDb } from '@/db/provider';
 import { logsQuery, removeMaintenance, vehiclesQuery } from '@/db/repo';
 import { formatBRL, formatDate, formatKm, todayISO, ValidationError } from '@/domain';
@@ -139,6 +139,12 @@ function LogRow({ log, onEdit, onRemove }: { log: Log; onEdit: () => void; onRem
     setOpen(true);
     if (photo) return;
     setPhotoError(null);
+    // A photo from another phone downloads after its row: the next sync brings it.
+    if (!hasPhoto(log.photo)) {
+      return setPhotoError(
+        new ValidationError('A foto ainda está vindo da nuvem. Tente de novo daqui a pouco.'),
+      );
+    }
     try {
       setPhoto(await readPhoto(log.photo));
     } catch {

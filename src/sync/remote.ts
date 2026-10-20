@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Remote, SealedRow } from '.';
 
 const PAGE = 1000;
+const BUCKET = 'attachments';
 const COLUMNS =
   'table_name, id, updated_at, deleted_at, ciphertext, nonce, key_version, server_updated_at';
 
@@ -37,8 +38,28 @@ export function isoMs(timestamp: string): string {
   return new Date(timestamp).toISOString();
 }
 
-/** The sync_records table, as the signed-in user sees it through RLS. */
+// React Native's Blob has no arrayBuffer(); its FileReader reads one.
+async function blobBytes(blob: Blob): Promise<Uint8Array> {
+  if (typeof blob.arrayBuffer === 'function') return new Uint8Array(await blob.arrayBuffer());
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+    reader.onerror = () => reject(new Error('could not read the photo'));
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+/**
+ * The sync_records table and the photo bucket, as the signed-in user sees them through RLS.
+ * Photos live in the user's own folder: "<user id>/<attachment id>.bin".
+ */
 export function supabaseRemote(sb: SupabaseClient): Remote {
+  const photoPath = async (attachmentId: string) => {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) throw new Error('sync photos: signed out');
+    return `${data.session.user.id}/${attachmentId}.bin`;
+  };
+
   return {
     async pull(since) {
       const out: Awaited<ReturnType<Remote['pull']>> = [];
@@ -85,5 +106,37 @@ export function supabaseRemote(sb: SupabaseClient): Remote {
       );
       if (error) throw new Error(`sync push failed: ${error.code}`);
     },
+
+    async uploadPhoto(attachmentId, sealed) {
+      // An ArrayBuffer: React Native can't send a Blob made from bytes.
+      const body = sealed.slice().buffer;
+      const { error } = await sb.storage.from(BUCKET).upload(await photoPath(attachmentId), body, {
+        contentType: 'application/octet-stream',
+        upsert: true,
+      });
+      if (error) throw new Error(`photo upload failed: ${storageStatus(error)}`);
+    },
+
+    async downloadPhoto(attachmentId) {
+      const { data, error } = await sb.storage.from(BUCKET).download(await photoPath(attachmentId));
+      if (error) {
+        // Storage answers a missing object with 400 and "not_found" or a 404 status code.
+        if (storageStatus(error) === '404') return null;
+        throw new Error(`photo download failed: ${storageStatus(error)}`);
+      }
+      return blobBytes(data);
+    },
+
+    async removePhotos(attachmentIds) {
+      if (attachmentIds.length === 0) return;
+      const paths = await Promise.all(attachmentIds.map(photoPath));
+      const { error } = await sb.storage.from(BUCKET).remove(paths);
+      if (error) throw new Error(`photo removal failed: ${storageStatus(error)}`);
+    },
   };
+}
+
+function storageStatus(error: unknown): string {
+  const e = error as { statusCode?: unknown; status?: unknown };
+  return String(e.statusCode ?? e.status ?? 'unknown');
 }

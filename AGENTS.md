@@ -15,7 +15,7 @@ Antes de mudar comportamento, leia [decisoes_projeto_manutencao_veicular.md](dec
 | `src/ui` | Design system: tokens, hodômetro, componentes acessíveis | [src/ui/AGENTS.md](src/ui/AGENTS.md) |
 | `src/app` | Telas (expo-router) | seção "Telas" abaixo |
 | `src/account` | Conta opcional (v1): login Google pelo navegador (PKCE), sessão no banco cifrado, DEK no Secure Store | comentários de `index.ts`; seção 12 do doc |
-| `src/sync` | Sync com a nuvem: linhas cifradas com a DEK, pull/push, *last-write-wins*; lado local em `src/db/sync.ts` | seção 12 do doc ("Fatia 3") |
+| `src/sync` | Sync com a nuvem: linhas e fotos cifradas com a DEK, pull/push, *last-write-wins*; lado local em `src/db/sync.ts` | seção 12 do doc ("Fatia 3" e "Fatia 4") |
 | `src/notifications` | Lembrete de sábado: agendador (expo-notifications), respostas aos toques, pedido de permissão | reagenda tudo a cada abertura e mudança de dados; nunca quebra a tela se a permissão for negada |
 | `drizzle/` | Migrations geradas | nunca editar à mão |
 | `supabase/` | Backend da v1: migrations do Postgres e testes pgTAP de RLS | toda tabela com RLS, `revoke all` e permissões por coluna; toda política ganha teste em `supabase/tests/database` |

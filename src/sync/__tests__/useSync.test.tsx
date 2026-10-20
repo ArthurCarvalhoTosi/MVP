@@ -30,6 +30,7 @@ jest.mock('expo-sqlite', () => ({
   },
 }));
 jest.mock('../remote', () => ({ supabaseRemote: () => 'REMOTE' }));
+jest.mock('@/attachments', () => ({ localPhotos: 'PHOTOS' }));
 jest.mock('..', () => ({
   ...jest.requireActual('..'),
   syncOnce: jest.fn(async (db: Db) => {
@@ -66,7 +67,7 @@ test('syncs on opening and after signing in, with the data key', async () => {
   const { result } = await mount();
   await act(async () => mockAuthListener('INITIAL_SESSION'));
   await settle();
-  expect(syncOnce).toHaveBeenCalledWith(db, 'REMOTE', 'KEY');
+  expect(syncOnce).toHaveBeenCalledWith(db, 'REMOTE', 'KEY', 'PHOTOS');
   expect(result.current).toEqual({ state: 'idle', lastSyncAt: '2026-10-20T14:32:00.000Z' });
 
   await act(async () => mockAuthListener('SIGNED_IN'));

@@ -1,7 +1,7 @@
 // Each synced row travels as AES-256-GCM ciphertext under the user's data key (DEK). The table
 // and id ride along as associated data: the server can't pass one row off as another.
 import { AESEncryptionKey, AESSealedData, aesDecryptAsync, aesEncryptAsync } from 'expo-crypto';
-import { isSyncTable, SYNC_TABLES, type SyncRow, type SyncTable } from '@/db/sync';
+import { isSyncTable, sharedRow, SYNC_TABLES, type SyncRow, type SyncTable } from '@/db/sync';
 
 /** A row as the server keeps it: only the envelope is readable there. */
 export type SealedRow = {
@@ -40,7 +40,7 @@ export function importDataKey(base64: string): Promise<AESEncryptionKey> {
 
 export async function sealRow(key: AESEncryptionKey, r: SyncRow): Promise<SealedRow> {
   const sealed = await aesEncryptAsync(
-    asciiBytes(asciiJson({ v: ENVELOPE_VERSION, row: r.row })),
+    asciiBytes(asciiJson({ v: ENVELOPE_VERSION, row: sharedRow(r.table, r.row) })),
     key,
     {
       additionalData: aad(r.table, r.id),

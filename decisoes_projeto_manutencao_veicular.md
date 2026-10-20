@@ -416,7 +416,7 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. ✅ (ver abaixo)
 2. **Login e chave:** Google (Apple quando houver iOS); Edge Function que embrulha/desembrulha a DEK; DEK no Secure Store.
 3. **SyncAgent** (`src/sync`): upload inicial, push/pull incremental, soft delete; merge LWW como função pura testada com sql.js.
-4. **Fotos na nuvem:** recifradas com a DEK, bucket privado, `remote_path`.
+4. **Fotos na nuvem:** recifradas com a DEK, bucket privado. ✅ (ver abaixo; `remote_path` acabou sem uso)
 5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit.
 6. **Excluir conta no app:** apaga a DEK (crypto-shredding).
 7. **Publicação:** EAS Build com keystore própria (`eas.json` e conta Expo entram aqui; saíram da fatia 1 porque o iOS ficou para depois); política de privacidade publicada antes.
@@ -446,7 +446,7 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 * `supabase/functions` é código Deno: fora do `tsc` e do ESLint do app; Deno fixado como devDependency.
 
 **Fatia 3: sincronização (2026-10-20).** Módulo `src/sync` (lado local em `src/db/sync.ts`).
-* **O que vai:** carros, itens, trocas, leituras de hodômetro e cola de bolso, inclusive as linhas apagadas (soft delete). Anexos ficam para a fatia 4 (a linha sem o arquivo mostraria uma foto que o outro celular não abre). `device_prefs` e a sessão nunca saem do aparelho.
+* **O que vai:** carros, itens, trocas, leituras de hodômetro e cola de bolso, inclusive as linhas apagadas (soft delete). Anexos ficaram para a fatia 4 (a linha sem o arquivo mostraria uma foto que o outro celular não abre) e entraram lá. `device_prefs` e a sessão nunca saem do aparelho.
 * **Cifra:** cada linha vira um envelope JSON (`{v:1,row}`) cifrado com a DEK (AES-256-GCM); `tabela:id` entra como dado associado, então o servidor não consegue fazer uma linha passar por outra. Ao abrir, o app também confere que o id e o `updated_at` de dentro batem com os de fora. Linha que não abre (chave errada, bytes adulterados, tabela desconhecida) é pulada e contada.
 * **O que falta subir:** tabela local `sync_state` com o `updated_at` de cada linha na última ida/vinda. Pendente é quem está *diferente* (não "mais novo que um cursor"): relógio atrasado não esconde edição, e uma edição feita durante o envio continua pendente.
 * **Ciclo:** pull (cursor = carimbo do servidor, relendo 1 minuto antes) → aplica numa transação, pais antes dos filhos, cada linha num savepoint → push em lotes de 200 → marca enviado. A cópia mais nova vence (comparação dos `updated_at`, normalizados para o formato do app: o Postgres devolve `+00:00`).
@@ -457,6 +457,17 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 * **Celular novo:** o primeiro uso oferece "Já usei o app: entrar na minha conta" (ao lado de restaurar backup). O cadastro sai para a garagem quando carros chegam por outro caminho; a sheet "Conta" aberta num aparelho sem carros também fecha sozinha quando os carros da conta chegam (conta vazia: fica na sheet).
 * **PKCE de verdade no Hermes:** sem WebCrypto, o supabase-js gerava o segredo do PKCE com `Math.random` e o mandava sem hash ("plain"). `src/account/webcrypto.ts` preenche só o que ele usa (`getRandomValues` e SHA-256 nativos do `expo-crypto`); o aviso sumiu e o login usa S256.
 * **Validado no emulador Android (2026-10-20):** login → "Dados na nuvem: sincronizado"; app desinstalado e reinstalado (aparelho novo, sem dados nem chave) → entrar na conta → o carro volta da nuvem, decifrado, e o app abre na garagem.
+
+**Fatia 4: fotos na nuvem (2026-10-20).** As linhas de `attachments` entram no sync, e o arquivo de cada foto vai para o Storage.
+* **Bucket `attachments`** (migration `…_attachments_bucket`): privado, até 5 MiB, só `application/octet-stream`. Um objeto por foto em `<id do usuário>/<id do anexo>.bin`; as políticas em `storage.objects` só deixam o dono ler, enviar, substituir e apagar na própria pasta, e só nomes nesse formato. pgTAP: 12 casos novos (43 no total), conferidos abrindo brechas de propósito (3 falham).
+* **Cifra:** o JPEG é decifrado com a chave local do aparelho e cifrado de novo com a DEK (AES-256-GCM, com o id do anexo como dado associado: o servidor não troca uma foto por outra). Formato: 1 byte de versão + nonce + cifra + tag. No celular que recebe, a foto é recifrada com a chave local dele.
+* **`file_path` não sai do aparelho:** cada celular guarda a foto com a própria chave e o próprio nome de arquivo. A linha viaja sem essa coluna; no celular que recebe, o arquivo ganha o nome `attachments/<id>.bin`, e uma cópia vinda da nuvem nunca sobrescreve o nome local (senão o arquivo certo não seria apagado na remoção).
+* **Ordem:** a foto sobe antes da linha (linha na nuvem garante que o arquivo está lá); falha no envio interrompe o sync e tudo é tentado de novo. Foto que o aparelho não consegue ler fica só nele, com a linha, e o resto sobe. Foto removida sai do Storage antes de a linha apagada subir. Depois do envio, o app baixa as fotos que ainda não tem; uma que não chegou à nuvem espera o próximo sync, e uma adulterada é pulada.
+* **Remoção em outro aparelho:** ao receber a linha apagada, o arquivo local some na hora (notas fiscais têm CPF e endereço).
+* **"Já subiu"** fica no `sync_state` local (nome `photo_files`), não em `remote_path`: sair da conta zera, e outra conta no mesmo aparelho envia a própria cópia. O caminho na nuvem sai do id do usuário e do anexo, então `remote_path` continua sem uso.
+* **Histórico:** foto que ainda não baixou mostra "A foto ainda está vindo da nuvem. Tente de novo daqui a pouco."
+* **Testes:** dois celulares com servidor falso (foto chega cifrada e com nome próprio, ordem do envio, foto ilegível, remoção nos dois lados, adulteração, troca de conta) e ponta a ponta no Supabase local com Storage real (outra conta não baixa nem sobrescreve; o objeto some depois da remoção). Para rodar, o `supabase start` local precisa incluir o `storage-api`.
+* **Fica para a fatia 6:** excluir a conta precisa esvaziar a pasta do usuário pela API do Storage (apagar o usuário não apaga os objetos; a DEK apagada já os deixa ilegíveis).
 
 **Decisões em aberto:**
 * **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.

@@ -2,6 +2,7 @@ import { addDatabaseChangeListener } from 'expo-sqlite';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { cloud, dataKey } from '@/account';
+import { localPhotos } from '@/attachments';
 import type { Db } from '@/db/client';
 import { isSyncTable, readSyncPref } from '@/db/sync';
 import { createSyncRunner, syncOnce } from '.';
@@ -49,7 +50,7 @@ export function useSync(db: Db) {
       if (!data.session) return;
       setStatus({ ...status, state: 'syncing' });
       try {
-        await syncOnce(db, supabaseRemote(sb), await dataKey(db));
+        await syncOnce(db, supabaseRemote(sb), await dataKey(db), localPhotos);
         setStatus({ state: 'idle', lastSyncAt: readSyncPref(db, 'lastSyncAt') });
       } catch (e) {
         // Offline is routine; the next trigger retries. Never the payload or the key in logs.

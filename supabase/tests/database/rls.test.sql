@@ -7,7 +7,7 @@ begin;
 set local role postgres;
 set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(43);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -205,6 +205,71 @@ select lives_ok($$ delete from public.dossier_shares $$, 'another user''s delete
 
 set local role postgres;
 select is((select count(*)::int from public.dossier_shares), 1, '... but removes nothing');
+
+-- Photos (storage.objects, bucket attachments) --------------------------------------------
+
+-- Storage blocks plain SQL deletes unless asked; the policies are what this file checks.
+set local storage.allow_delete_query = 'true';
+
+select is((select public from storage.buckets where id = 'attachments'), false,
+  'the photo bucket is private');
+
+set local role anon;
+select throws_ok($$
+  insert into storage.objects (bucket_id, name)
+  values ('attachments', '00000000-0000-0000-0000-00000000000a/66666666-6666-6666-6666-666666666666.bin')
+$$, '42501', null, 'anon cannot upload a photo');
+set local role postgres;
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+
+select lives_ok($$
+  insert into storage.objects (bucket_id, name)
+  values ('attachments', '00000000-0000-0000-0000-00000000000a/66666666-6666-6666-6666-666666666666.bin')
+$$, 'a user uploads a photo to their own folder');
+
+select throws_ok($$
+  insert into storage.objects (bucket_id, name)
+  values ('attachments', '00000000-0000-0000-0000-00000000000b/77777777-7777-7777-7777-777777777777.bin')
+$$, '42501', null, 'a user cannot upload into someone else''s folder');
+
+select throws_ok($$
+  insert into storage.objects (bucket_id, name)
+  values ('attachments', '00000000-0000-0000-0000-00000000000a/sub/receipt.jpg')
+$$, '42501', null, 'only "<user>/<attachment id>.bin" names are accepted');
+
+set local role postgres;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+
+select is((select count(*)::int from storage.objects where bucket_id = 'attachments'), 0,
+  'another user sees none of the photos');
+
+select lives_ok($$ update storage.objects set metadata = '{"forged": true}' $$,
+  'another user''s update runs');
+
+select lives_ok($$ delete from storage.objects $$, 'another user''s delete runs');
+
+set local role anon;
+select is((select count(*)::int from storage.objects where bucket_id = 'attachments'), 0,
+  'anon sees none of the photos');
+set local role postgres;
+
+select is(
+  (select count(*)::int from storage.objects
+   where bucket_id = 'attachments' and metadata is null
+     and name = '00000000-0000-0000-0000-00000000000a/66666666-6666-6666-6666-666666666666.bin'),
+  1, '... and neither changed nor removed the photo');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select lives_ok($$
+  delete from storage.objects
+  where name = '00000000-0000-0000-0000-00000000000a/66666666-6666-6666-6666-666666666666.bin'
+$$, 'the owner removes their photo');
+set local role postgres;
+select is(
+  (select count(*)::int from storage.objects
+   where name = '00000000-0000-0000-0000-00000000000a/66666666-6666-6666-6666-666666666666.bin'),
+  0, '... and it is gone');
 
 -- Account deletion ------------------------------------------------------------------------
 
