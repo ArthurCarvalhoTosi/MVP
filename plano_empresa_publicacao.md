@@ -54,7 +54,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 - [ ] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare).
 - [ ] C: passar os registros de e-mail para o Cloudflare, conferindo os valores na tela do Workspace na hora: MX, SPF (TXT), DKIM (gerado no Admin do Workspace) e DMARC (começar com `p=none`).
 - [ ] U: criar apelidos `contato@`, `privacidade@`, `dev@`.
-- [ ] U: comprar o `acttechsoftware.com` no Cloudflare Registrar.
+- [x] U: comprar o `acttechsoftware.com` no Cloudflare Registrar (2026-10-20). Fica como proteção de marca; o principal continua o `.com.br`. Depois, pode entrar no Workspace como domínio alternativo (gratuito) para receber e-mails `@acttechsoftware.com`.
 
 ### 2. D-U-N-S (disparar cedo: leva de alguns dias úteis a até 30 dias)
 - [ ] U: pedir pelo site oficial da Dun & Bradstreet (gratuito; ignorar sites que cobram). Razão social e endereço **idênticos** ao cartão CNPJ, site da empresa e e-mail do domínio.
