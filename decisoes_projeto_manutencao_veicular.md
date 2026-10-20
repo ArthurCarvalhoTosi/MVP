@@ -467,6 +467,7 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 * **"Já subiu"** fica no `sync_state` local (nome `photo_files`), não em `remote_path`: sair da conta zera, e outra conta no mesmo aparelho envia a própria cópia. O caminho na nuvem sai do id do usuário e do anexo, então `remote_path` continua sem uso.
 * **Histórico:** foto que ainda não baixou mostra "A foto ainda está vindo da nuvem. Tente de novo daqui a pouco."
 * **Testes:** dois celulares com servidor falso (foto chega cifrada e com nome próprio, ordem do envio, foto ilegível, remoção nos dois lados, adulteração, troca de conta) e ponta a ponta no Supabase local com Storage real (outra conta não baixa nem sobrescreve; o objeto some depois da remoção). Para rodar, o `supabase start` local precisa incluir o `storage-api`.
+* **Validado no emulador Android (2026-10-20):** migration aplicada no `garagem-dev` (`db push`, testes `--linked` passando). Troca com foto da câmera → "sincronizado"; app desinstalado e reinstalado (aparelho novo) → entrar na conta → carro, troca e "Com comprovante" voltam, o arquivo chega como `attachments/<id>.bin` cifrado com a chave nova do aparelho e "Ver foto" mostra a imagem.
 * **Fica para a fatia 6:** excluir a conta precisa esvaziar a pasta do usuário pela API do Storage (apagar o usuário não apaga os objetos; a DEK apagada já os deixa ilegíveis).
 
 **Decisões em aberto:**
