@@ -1,4 +1,5 @@
-import { router, Stack } from 'expo-router';
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { Redirect, router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import { useDb } from '@/db/provider';
@@ -53,6 +54,8 @@ export default function Onboarding() {
   const [errors, setErrors] = useState<Errors>({});
   const [saveError, setSaveError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
+  // First use: cars can also arrive from the cloud (signing in) or a restored backup.
+  const cars = useLiveQuery(vehiclesQuery(db));
 
   const chosen = model === 'none' ? undefined : (model ?? undefined);
   const presets = presetsFor(chosen);
@@ -115,6 +118,9 @@ export default function Onboarding() {
     }
   };
 
+  // Not while saving: our own new car is already on its way to the garage.
+  if (!adding && !saving && (cars.data?.length ?? 0) > 0) return <Redirect href="/" />;
+
   return (
     <Screen
       scroll
@@ -129,6 +135,11 @@ export default function Onboarding() {
       {adding ? <Stack.Screen options={{ title: 'Adicionar carro' }} /> : null}
       {adding ? null : (
         <View style={styles.start}>
+          <Button
+            variant="quiet"
+            label="Já usei o app: entrar na minha conta"
+            onPress={() => router.push('/account')}
+          />
           <Button
             variant="quiet"
             label="Já usei o app: restaurar backup"
