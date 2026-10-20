@@ -19,11 +19,29 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 - **App num subdomínio** da empresa, por exemplo `garagem.<empresa>.com.br`: dossiê e política de privacidade. Domínio próprio da marca só se ela crescer.
 - **Play Console: conta de organização.** O tipo de conta não muda depois da verificação.
 
+## Empresa
+
+- **Nome empresarial (razão social):** ARTHUR CARVALHO TOSI TECNOLOGIA DA INFORMACAO LTDA
+- **Nome de fantasia:** ACT TECH & SOFTWARE
+- **Endereço do CNPJ:** não é residencial (confirmado em 2026-10-20), então pode aparecer na loja sem problema.
+- No D-U-N-S e no Play, razão social e endereço **exatamente** como no cartão CNPJ. O nome de desenvolvedor exibido na loja pode ser o de fantasia.
+
 ## Em aberto (decidir antes de comprar)
 
-1. **Nome do domínio** da empresa.
-2. **Endereço do CNPJ.** O Play mostra publicamente razão social, endereço, e-mail e telefone de desenvolvedor da organização. Se o CNPJ estiver no endereço residencial, ele fica visível na loja.
-3. **Supabase de produção:** criar `garagem-prod` antes do primeiro teste com outras pessoas, ou testar no `garagem-dev`. O plano gratuito permite 2 projetos e pausa projetos parados há 1 semana. Hoje URL e chave do `garagem-dev` estão fixas em `src/account/index.ts` (atalho anotado para a fatia 7).
+1. **Nome do domínio.** Consulta pública (RDAP do Registro.br e da Verisign) em 2026-10-20, sem valor de reserva (a confirmação final é na compra):
+
+   | Domínio | Situação |
+   |---|---|
+   | `acttechsoftware.com.br` | livre |
+   | `acttechsoftware.com` | livre |
+   | `actsoftware.com.br` | livre (o `.com` já tem dono) |
+   | `actsoft.com.br` | livre (o `.com` já tem dono) |
+   | `acttech.dev.br`, `acttech.tec.br` | livres |
+   | `acttech.com.br` / `act-tech.com.br` | registrado (o Registro.br trata os dois como o mesmo) |
+   | `acttech.com`, `actsoft.com`, `actsoftware.com` | registrados |
+
+   Sugestão: **`acttechsoftware.com.br`** (nome de fantasia completo, e o `.com` igual também está livre para proteger a marca). Mais curto: `actsoftware.com.br`, mas sem o `.com` correspondente.
+2. **Supabase de produção:** criar `garagem-prod` antes do primeiro teste com outras pessoas, ou testar no `garagem-dev`. O plano gratuito permite 2 projetos e pausa projetos parados há 1 semana. Hoje URL e chave do `garagem-dev` estão fixas em `src/account/index.ts` (atalho anotado para a fatia 7).
 
 ## Passos
 
