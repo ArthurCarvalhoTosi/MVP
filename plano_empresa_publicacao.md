@@ -49,8 +49,8 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código, textos, configuração no repo).
 
 ### 1. Domínio e e-mail
-- [ ] U: comprar `acttechsoftware.com.br` no Registro.br, titular o CNPJ.
-- [ ] U: criar conta no Cloudflare com o e-mail definitivo (ou pessoal e trocar depois), adicionar o domínio, trocar os servidores DNS no Registro.br pelos que o Cloudflare indicar.
+- [x] U: comprar `acttechsoftware.com.br` no Registro.br, titular o CNPJ (2026-10-20).
+- [x] U (2026-10-20; delegação em transição, ~2 h no Registro.br): servidores `elliott.ns.cloudflare.com` e `nina.ns.cloudflare.com`; registros de "domínio sem e-mail" do Registro.br (MX nulo, SPF `-all`, DMARC `reject`) importados e mantidos até o Workspace; IA: busca e agentes liberados, treinamento bloqueado. Criar conta no Cloudflare com o e-mail definitivo (ou pessoal e trocar depois), adicionar o domínio, trocar os servidores DNS no Registro.br pelos que o Cloudflare indicar.
 - [ ] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare).
 - [ ] C: passar os registros de e-mail para o Cloudflare, conferindo os valores na tela do Workspace na hora: MX, SPF (TXT), DKIM (gerado no Admin do Workspace) e DMARC (começar com `p=none`).
 - [ ] U: criar apelidos `contato@`, `privacidade@`, `dev@`.
