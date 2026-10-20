@@ -4,12 +4,7 @@
 // Sign-in runs in the browser with PKCE rather than the native Google sheet: the free native
 // library still relies on Google's deprecated Android sign-in API. Only this app holds the
 // PKCE verifier, so another app catching the garagem:// redirect can't finish the sign-in.
-import {
-  createClient,
-  processLock,
-  type Session,
-  type SupabaseClient,
-} from '@supabase/supabase-js';
+import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
@@ -49,7 +44,6 @@ export function cloud(db: Db): SupabaseClient {
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: false,
-          lock: processLock,
         },
       }),
     };

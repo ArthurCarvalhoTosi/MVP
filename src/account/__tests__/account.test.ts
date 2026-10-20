@@ -28,7 +28,6 @@ const mockCreateClient = jest.fn((..._args: unknown[]) => ({
   functions: mockFunctions,
 }));
 jest.mock('@supabase/supabase-js', () => ({
-  processLock: 'processLock',
   createClient: (...args: unknown[]) => mockCreateClient(...args),
 }));
 
