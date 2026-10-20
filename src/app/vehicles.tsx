@@ -132,6 +132,7 @@ export default function Vehicles() {
           label="Restaurar backup"
           onPress={() => router.replace('/restore')}
         />
+        <Button variant="quiet" label="Conta" onPress={() => router.replace('/account')} />
       </View>
     </Screen>
   );

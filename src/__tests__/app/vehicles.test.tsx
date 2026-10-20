@@ -135,7 +135,7 @@ test('adds a car through onboarding', async () => {
   expect(router.replace).toHaveBeenCalledWith('/onboarding');
 });
 
-test('opens the backup and restore sheets', async () => {
+test('opens the backup, restore and account sheets', async () => {
   await render(<Vehicles />);
   const user = userEvent.setup();
 
@@ -143,6 +143,8 @@ test('opens the backup and restore sheets', async () => {
   expect(router.replace).toHaveBeenLastCalledWith('/backup');
   await user.press(screen.getByRole('button', { name: 'Restaurar backup' }));
   expect(router.replace).toHaveBeenLastCalledWith('/restore');
+  await user.press(screen.getByRole('button', { name: 'Conta' }));
+  expect(router.replace).toHaveBeenLastCalledWith('/account');
 });
 
 test('shows a plain message when switching fails', async () => {

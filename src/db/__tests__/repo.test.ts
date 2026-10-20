@@ -6,17 +6,21 @@ import {
   addOdometerReading,
   allItemsQuery,
   allReadingsQuery,
+  backupRows,
   createVehicle,
   itemsQuery,
   logsQuery,
   OdometerError,
+  readAuthItem,
   readingsQuery,
   registerMaintenance,
+  removeAuthItem,
   removedAttachmentsQuery,
   removeItem,
   removeMaintenance,
   removeVehicle,
   renameVehicle,
+  replaceAllData,
   selectedVehicleIdQuery,
   selectVehicle,
   setSnooze,
@@ -25,6 +29,7 @@ import {
   updateMaintenance,
   upsertSpecs,
   vehiclesQuery,
+  writeAuthItem,
 } from '../repo';
 import {
   attachments,
@@ -629,6 +634,35 @@ describe('selectVehicle', () => {
     await expectValidation(selectVehicle(db, 'nope'), 'Carro não encontrado.');
     await expectValidation(selectVehicle(db, first), 'Carro não encontrado.');
     expect(selectedVehicleIdQuery(db).all()).toEqual([{ value: second }]);
+  });
+});
+
+describe('auth items', () => {
+  test('write, overwrite, read and remove, apart from other prefs', async () => {
+    const car = await seed();
+    expect(readAuthItem(db, 'session')).toBeNull();
+
+    writeAuthItem(db, 'session', '{"a":1}');
+    writeAuthItem(db, 'session', '{"a":2}');
+    writeAuthItem(db, 'verifier', 'v');
+    expect(readAuthItem(db, 'session')).toBe('{"a":2}');
+    expect(readAuthItem(db, 'verifier')).toBe('v');
+
+    removeAuthItem(db, 'session');
+    removeAuthItem(db, 'missing');
+    expect(readAuthItem(db, 'session')).toBeNull();
+    expect(readAuthItem(db, 'verifier')).toBe('v');
+    expect(selectedVehicleIdQuery(db).all()).toEqual([{ value: car }]);
+  });
+
+  test('stay out of backups and survive a restore', async () => {
+    await seed();
+    writeAuthItem(db, 'session', 's');
+    const rows = backupRows(db);
+    expect(JSON.stringify(rows)).not.toContain('auth:');
+
+    await replaceAllData(db, rows);
+    expect(readAuthItem(db, 'session')).toBe('s');
   });
 });
 

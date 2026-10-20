@@ -3,7 +3,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { DatabaseProvider } from '@/db/provider';
+import { useSessionRefresh } from '@/account';
+import { DatabaseProvider, useDb } from '@/db/provider';
 import { useNotifications } from '@/notifications/useNotifications';
 import { fonts, type, useTheme } from '@/ui';
 
@@ -30,6 +31,7 @@ export default function RootLayout() {
 function AppStack() {
   const { c } = useTheme();
   useNotifications();
+  useSessionRefresh(useDb());
 
   // Sheets draw their own title: native headers aren't reliable inside formSheet on Android.
   // The content keeps full-screen height at a lower detent, so a Screen footer only shows at detent 1:
@@ -65,6 +67,7 @@ function AppStack() {
         <Stack.Screen name="dossier" options={{ ...sheet, sheetAllowedDetents: [0.5, 1] }} />
         <Stack.Screen name="backup" options={{ ...sheet, sheetAllowedDetents: [1] }} />
         <Stack.Screen name="restore" options={{ ...sheet, sheetAllowedDetents: [1] }} />
+        <Stack.Screen name="account" options={{ ...sheet, sheetAllowedDetents: [1] }} />
       </Stack>
     </>
   );
