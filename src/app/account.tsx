@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { signInWithGoogle, signOut, useAccount } from '@/account';
 import { useDb } from '@/db/provider';
+import { vehiclesQuery } from '@/db/repo';
 import { formatMoment } from '@/domain';
 import { syncNow, useSyncStatus, type SyncStatus } from '@/sync/useSync';
 import { AppText, Button, FormError, GoogleButton, Screen, Section, space } from '@/ui';
@@ -12,6 +15,13 @@ export default function Account() {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const sync = useSyncStatus();
+  // Opened from a new phone's first screen: once the account's cars land, show the garage.
+  const [firstRun] = useState(() => vehiclesQuery(db).all().length === 0);
+  const cars = useLiveQuery(vehiclesQuery(db));
+  const landed = firstRun && account.status === 'signed-in' && (cars.data?.length ?? 0) > 0;
+  useEffect(() => {
+    if (landed) router.dismissTo('/');
+  }, [landed]);
 
   if (account.status === 'loading') return null;
 

@@ -5,10 +5,11 @@ import Account from '@/app/account';
 import type { Db } from '@/db/client';
 import { ValidationError } from '@/domain';
 import { syncNow, type SyncStatus } from '@/sync/useSync';
-import { setupScreen, spyAlert } from '@/test-utils/screens';
+import { router, seedVehicle, setupScreen, spyAlert } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('@/db/provider', () => require('@/test-utils/screens').providerMock);
+jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
 
 let mockAccount: AccountState = { status: 'signed-out' };
 jest.mock('@/account', () => ({
@@ -126,5 +127,31 @@ describe('signed in: sync status', () => {
     mockSync = { state: 'syncing', lastSyncAt: null };
     await render(<Account />);
     expect(screen.getByRole('button', { name: 'Sincronizar agora' })).toBeBusy();
+  });
+});
+
+describe('opened from a new phone (no cars yet)', () => {
+  test("goes to the garage once the account's cars land", async () => {
+    const view = await render(<Account />);
+    mockAccount = { status: 'signed-in', email: 'ana@example.com' };
+    await view.rerender(<Account />);
+    expect(router.dismissTo).not.toHaveBeenCalled(); // signed in, nothing synced yet
+
+    await seedVehicle(db); // what the first sync lands
+    await view.rerender(<Account />);
+    expect(router.dismissTo).toHaveBeenCalledWith('/');
+  });
+
+  test('an account with no cars stays here', async () => {
+    mockAccount = { status: 'signed-in', email: 'ana@example.com' };
+    await render(<Account />);
+    expect(router.dismissTo).not.toHaveBeenCalled();
+  });
+
+  test('opened from a garage that already has cars, it never navigates', async () => {
+    await seedVehicle(db);
+    mockAccount = { status: 'signed-in', email: 'ana@example.com' };
+    await render(<Account />);
+    expect(router.dismissTo).not.toHaveBeenCalled();
   });
 });
