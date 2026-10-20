@@ -429,6 +429,8 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 * Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). Migration aplicada no `garagem-dev` e os mesmos testes passam lá (`supabase test db --linked`; o teste assume o papel `postgres`, porque o login temporário da CLI não enxerga o schema `extensions`). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
 * Portas locais do Supabase em 443xx (`config.toml`): o Windows reserva 54242–54941 em algumas máquinas.
 
+**Fatia 2 em andamento: login Google (2026-10-20).** Login nativo no Android (seletor de contas do sistema → token de identidade → `signInWithIdToken` do Supabase). Google Cloud: projeto `garagem-dev`, tela de consentimento externa em modo de teste (só usuários de teste entram), escopos básicos (e-mail e perfil). Dois clientes OAuth: **Web** (`680900132295-1njieevhtrcll6rpuslbs5i0v2cukh61.apps.googleusercontent.com`, usado pelo Supabase para validar o token; o *secret* fica só no painel do Supabase) e **Android** (`br.com.garagem.app` + SHA-1 da chave de debug padrão do React Native, pública; a publicação exige outro cliente com o SHA-1 da chave da Play Store).
+
 **Decisões em aberto:**
 * **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.
 * **KEK:** proposta é segredo de Edge Function (256 bits aleatórios, `supabase secrets set`), sem conta extra; KMS externo fica para depois. Decide-se na fatia 2.
