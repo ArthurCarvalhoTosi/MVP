@@ -18,6 +18,7 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 - **Google Workspace com um usuário** (Business Starter, cobrado em dólar mais IOF). Outros endereços (`contato@`, `privacidade@`, `dev@`) como apelidos gratuitos do mesmo usuário.
 - **App num subdomínio** da empresa, por exemplo `garagem.<empresa>.com.br`: dossiê e política de privacidade. Domínio próprio da marca só se ela crescer.
 - **Play Console: conta de organização.** O tipo de conta não muda depois da verificação.
+- **Domínio: `acttechsoftware.com.br`** (decidido em 2026-10-20), mais o **`acttechsoftware.com`** no Cloudflare Registrar para proteger a marca. App em `garagem.acttechsoftware.com.br`.
 
 ## Empresa
 
@@ -28,7 +29,7 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 
 ## Em aberto (decidir antes de comprar)
 
-1. **Nome do domínio.** Consulta pública (RDAP do Registro.br e da Verisign) em 2026-10-20, sem valor de reserva (a confirmação final é na compra):
+1. ~~**Nome do domínio.**~~ Decidido: `acttechsoftware.com.br` (ver acima). Consulta pública (RDAP do Registro.br e da Verisign) em 2026-10-20, sem valor de reserva (a confirmação final é na compra):
 
    | Domínio | Situação |
    |---|---|
@@ -48,12 +49,12 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código, textos, configuração no repo).
 
 ### 1. Domínio e e-mail
-- [ ] U: comprar `<empresa>.com.br` no Registro.br, titular o CNPJ.
+- [ ] U: comprar `acttechsoftware.com.br` no Registro.br, titular o CNPJ.
 - [ ] U: criar conta no Cloudflare com o e-mail definitivo (ou pessoal e trocar depois), adicionar o domínio, trocar os servidores DNS no Registro.br pelos que o Cloudflare indicar.
 - [ ] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare).
 - [ ] C: passar os registros de e-mail para o Cloudflare, conferindo os valores na tela do Workspace na hora: MX, SPF (TXT), DKIM (gerado no Admin do Workspace) e DMARC (começar com `p=none`).
 - [ ] U: criar apelidos `contato@`, `privacidade@`, `dev@`.
-- [ ] Opcional U: comprar o `.com` no Cloudflare Registrar.
+- [ ] U: comprar o `acttechsoftware.com` no Cloudflare Registrar.
 
 ### 2. D-U-N-S (disparar cedo: leva de alguns dias úteis a até 30 dias)
 - [ ] U: pedir pelo site oficial da Dun & Bradstreet (gratuito; ignorar sites que cobram). Razão social e endereço **idênticos** ao cartão CNPJ, site da empresa e e-mail do domínio.
