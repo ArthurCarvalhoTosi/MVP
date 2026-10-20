@@ -15,7 +15,7 @@ Criado em 2026-10-20. Este arquivo abre um contexto só sobre formalizar o Garag
 - **Domínio principal `.com.br` no Registro.br**, no CNPJ. O Cloudflare Registrar não vende `.br`.
 - **DNS no Cloudflare** (plano gratuito): o registro continua no Registro.br, os servidores DNS apontam para o Cloudflare.
 - `.com` do mesmo nome no Cloudflare Registrar: opcional, só para proteger a marca.
-- **Google Workspace com um usuário** (Business Starter, cobrado em dólar mais IOF). Outros endereços (`contato@`, `privacidade@`, `dev@`) como apelidos gratuitos do mesmo usuário.
+- **Google Workspace com um usuário** (Business Starter, plano mensal flexível, cobrado em reais: R$ 39,20/mês nos 12 primeiros meses, depois R$ 49,00; teste de 14 dias iniciado em 2026-10-20). Outros endereços (`contato@`, `privacidade@`, `dev@`) como apelidos gratuitos do mesmo usuário.
 - **App num subdomínio** da empresa, por exemplo `garagem.<empresa>.com.br`: dossiê e política de privacidade. Domínio próprio da marca só se ela crescer.
 - **Play Console: conta de organização.** O tipo de conta não muda depois da verificação.
 - **Domínio: `acttechsoftware.com.br`** (decidido em 2026-10-20), mais o **`acttechsoftware.com`** no Cloudflare Registrar para proteger a marca. App em `garagem.acttechsoftware.com.br`.
