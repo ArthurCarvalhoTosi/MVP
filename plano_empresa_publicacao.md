@@ -51,8 +51,8 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 ### 1. Domínio e e-mail
 - [x] U: comprar `acttechsoftware.com.br` no Registro.br, titular o CNPJ (2026-10-20).
 - [x] U (2026-10-20; delegação em transição, ~2 h no Registro.br): servidores `elliott.ns.cloudflare.com` e `nina.ns.cloudflare.com`; registros de "domínio sem e-mail" do Registro.br (MX nulo, SPF `-all`, DMARC `reject`) importados e mantidos até o Workspace; IA: busca e agentes liberados, treinamento bloqueado. Criar conta no Cloudflare com o e-mail definitivo (ou pessoal e trocar depois), adicionar o domínio, trocar os servidores DNS no Registro.br pelos que o Cloudflare indicar.
-- [ ] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare).
-- [ ] C: passar os registros de e-mail para o Cloudflare, conferindo os valores na tela do Workspace na hora: MX, SPF (TXT), DKIM (gerado no Admin do Workspace) e DMARC (começar com `p=none`).
+- [x] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare). Usuário administrador `arthur@acttechsoftware.com.br` (2026-10-20).
+- [x] C: registros de e-mail no Cloudflare, conferidos no DNS público em 2026-10-20: MX `smtp.google.com` prioridade 1 (MX nulo do Registro.br apagado), SPF `v=spf1 include:_spf.google.com ~all`, DKIM `google._domainkey` (RSA 2048) e DMARC `v=DMARC1; p=none; rua=mailto:arthur@acttechsoftware.com.br`. Endurecer o DMARC para `quarantine` e depois `reject` quando os relatórios mostrarem só envios legítimos.
 - [ ] U: criar apelidos `contato@`, `privacidade@`, `dev@`.
 - [x] U: comprar o `acttechsoftware.com` no Cloudflare Registrar (2026-10-20). Fica como proteção de marca; o principal continua o `.com.br`. Depois, pode entrar no Workspace como domínio alternativo (gratuito) para receber e-mails `@acttechsoftware.com`.
 
