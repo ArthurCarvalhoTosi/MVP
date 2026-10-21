@@ -15,7 +15,7 @@
     <header><a href="/">Garagem</a></header>
     <main>
       <h1>Política de privacidade</h1>
-      <p class="muted">Vigente desde 20 de outubro de 2026.</p>
+      <p class="muted">Vigente desde 21 de outubro de 2026.</p>
 
       <div class="summary">
         <p><strong>Em resumo:</strong></p>
@@ -153,15 +153,18 @@
       <h2>6. Link do dossiê</h2>
       <p>
         Se você criar um link para mostrar o histórico do carro a um comprador, o app monta uma
-        cópia do histórico naquele momento e a envia sem cifra, porque quem abrir o link precisa
-        conseguir ler. Placa, chassi e observações não entram. Fotos só entram se você ligar essa
-        opção, e o app avisa que notas fiscais podem ter CPF e endereço.
+        cópia do histórico naquele momento e a cifra no seu celular com uma chave que só existe no
+        próprio link. Nós guardamos a cópia cifrada e uma impressão digital (hash) do link, nunca o
+        link em si, então não conseguimos ler o que está no dossiê. Quem abre o link decifra a cópia
+        no próprio navegador. Placa, chassi, observações e fotos não entram; para mostrar as fotos
+        dos comprovantes, use o PDF.
       </p>
       <p>
         Qualquer pessoa com o link pode ver essa cópia. Você pode definir uma validade e desativar o
-        link quando quiser; desativado, ele para de funcionar na hora. Edições feitas depois no app
-        não mudam um link já criado. Nós guardamos só uma impressão digital (hash) do link, não o
-        link em si.
+        link quando quiser; desativado, ele para de funcionar na hora e a cópia é apagada. Edições
+        feitas depois no app não mudam um link já criado. Para limitar quantas vezes um link pode
+        ser aberto, guardamos por alguns minutos uma impressão digital (hash) do endereço IP de quem
+        abre, nunca o endereço em si.
       </p>
 
       <h2>7. Com quem os dados são compartilhados</h2>

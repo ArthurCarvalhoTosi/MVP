@@ -9,7 +9,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # PRs drop stale runs; main queues instead, so a deploy is never cut off mid-migration.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -77,10 +78,39 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
 
+  supabase:
+    name: Deploy database and functions
+    # main applies new migrations and deploys every Edge Function to garagem-dev once the checks
+    # and the RLS tests pass. Function settings (verify_jwt, entrypoints) come from config.toml;
+    # their secrets (KEKS) stay in the Supabase dashboard and are never touched here.
+    # shortcut: points at garagem-dev; add garagem-prod (own secrets, protected environment) at
+    # publishing (slice 7).
+    needs: [check, database]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: bphuqkvehtmmktuyuxyc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx supabase link --project-ref "$PROJECT_REF"
+      - run: npx supabase db push --yes
+      # Bundled by the Supabase API: no Docker needed.
+      - run: npx supabase functions deploy --project-ref "$PROJECT_REF" --use-api
+
   sites:
     name: Publish sites
     # Static files, nothing to build: main publishes both Cloudflare Pages projects. The token
     # only has "Cloudflare Pages: Edit"; Cloudflare gets no access to the repository.
+    # After the backend: a page may call a function or column that only exists from this push on.
+    needs: [supabase]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10

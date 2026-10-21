@@ -71,7 +71,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "test:functions": "deno lint supabase/functions && deno check --config supabase/functions/user-key/deno.json supabase/functions/user-key && deno test --config supabase/functions/user-key/deno.json supabase/functions/user-key"
+    "test:functions": "deno lint supabase/functions && deno check --config supabase/functions/user-key/deno.json supabase/functions/user-key && deno test --config supabase/functions/user-key/deno.json supabase/functions/user-key && deno check --config supabase/functions/dossier/deno.json supabase/functions/dossier && deno test --config supabase/functions/dossier/deno.json supabase/functions/dossier"
   },
   "private": true
 }

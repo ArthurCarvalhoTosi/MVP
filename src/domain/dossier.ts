@@ -44,7 +44,8 @@ const escape = (s: string) =>
     .replace(/'/g, '&#39;');
 
 /**
- * The resale dossier as a self-contained HTML page for expo-print. Leaves out notes, plate and VIN
+ * The resale dossier as a self-contained HTML page, for expo-print and for the dossier link (opened
+ * in a phone browser, hence the viewport). Leaves out notes, plate and VIN
  * (sensitive, section 8.1 of the decisions doc); receipt photos only come in when passed.
  */
 export function dossierHtml(input: DossierInput): string {
@@ -90,6 +91,7 @@ export function dossierHtml(input: DossierInput): string {
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Histórico de manutenção: ${escape(input.nickname)}</title>
 <style>
   body { font-family: sans-serif; color: #1a1a1a; margin: 32px; font-size: 13px; line-height: 1.4; }
@@ -105,6 +107,7 @@ export function dossierHtml(input: DossierInput): string {
   .tag.ok { border-color: #2d6a4f; color: #2d6a4f; }
   img { display: block; max-width: 100%; max-height: 520px; margin-top: 8px; border: 1px solid #ddd; }
   footer { margin-top: 24px; font-size: 11px; color: #555; }
+  @media screen and (max-width: 600px) { body { margin: 16px; font-size: 15px; } }
 </style>
 </head>
 <body>

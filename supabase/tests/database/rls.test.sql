@@ -7,7 +7,7 @@ begin;
 set local role postgres;
 set local search_path = extensions, public;
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(52);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -24,7 +24,7 @@ $$;
 select ok(
   (select bool_and(relrowsecurity) from pg_class
    where oid in ('public.sync_records'::regclass, 'public.user_keys'::regclass,
-                 'public.dossier_shares'::regclass)),
+                 'public.dossier_shares'::regclass, 'public.dossier_opens'::regclass)),
   'RLS is enabled on every v1 table'
 );
 
@@ -184,16 +184,19 @@ set local role postgres;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 
 select lives_ok($$
-  insert into public.dossier_shares (vehicle_id, token_hash, snapshot)
-  values ('11111111-1111-1111-1111-111111111111', sha256('token-a'), '{"items": []}')
+  insert into public.dossier_shares (vehicle_id, token_hash, ciphertext, expires_at)
+  values ('11111111-1111-1111-1111-111111111111', sha256('token-a'), '\x01aa',
+          now() + interval '30 days')
 $$, 'an owner creates a share');
 
 select throws_ok($$
-  update public.dossier_shares set snapshot = '{"items": ["forged"]}'
-$$, '42501', null, 'the snapshot is frozen');
+  update public.dossier_shares set ciphertext = '\x01bb'
+$$, '42501', null, 'a share is frozen');
 
-select lives_ok($$ update public.dossier_shares set revoked_at = now() $$,
-  'an owner revokes a share');
+select throws_ok($$
+  update public.dossier_shares set expires_at = null
+$$, '42501', null, '... expiry included');
+
 
 set local role postgres;
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
@@ -205,6 +208,47 @@ select lives_ok($$ delete from public.dossier_shares $$, 'another user''s delete
 
 set local role postgres;
 select is((select count(*)::int from public.dossier_shares), 1, '... but removes nothing');
+
+-- Opening a link (what the dossier Edge Function does, as service_role) -------------------
+
+select ok(
+  not has_function_privilege('anon', 'public.open_dossier(bytea, text)', 'execute')
+    and not has_function_privilege('authenticated', 'public.open_dossier(bytea, text)',
+                                   'execute'),
+  'only the Edge Function opens a dossier: no execute for anon or app users');
+
+insert into public.dossier_shares (user_id, vehicle_id, token_hash, ciphertext, created_at,
+                                   expires_at)
+values ('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
+        sha256('token-old'), '\x01cc', now() - interval '2 days', now() - interval '1 day');
+
+set local role service_role;
+
+select is(public.open_dossier(sha256('token-a'), 'client-1'), '\x01aa'::bytea,
+  'a live link opens');
+select is(public.open_dossier(sha256('token-unknown'), 'client-1'), null,
+  'an unknown link opens nothing');
+select is(public.open_dossier(sha256('token-old'), 'client-1'), null,
+  'an expired link opens nothing');
+
+select lives_ok($$
+  select count(public.open_dossier(sha256('token-a'), 'client-1')) from generate_series(1, 27)
+$$, '30 opens from one caller in 10 minutes pass');
+select throws_ok($$ select public.open_dossier(sha256('token-a'), 'client-1') $$, 'GA429',
+  null, 'the 31st is refused');
+select is(public.open_dossier(sha256('token-a'), 'client-2'), '\x01aa'::bytea,
+  '... while another caller still opens the link');
+
+set local role postgres;
+update public.dossier_opens set window_start = now() - interval '11 minutes'
+where client = 'client-1';
+set local role service_role;
+select is(public.open_dossier(sha256('token-a'), 'client-1'), '\x01aa'::bytea,
+  'the first caller opens it again in a new window');
+
+set local role postgres;
+select is((select schedule from cron.job where jobname = 'dossier-cleanup'), '7 * * * *',
+  'expired links and old counters are deleted every hour');
 
 -- Photos (storage.objects, bucket attachments) --------------------------------------------
 
