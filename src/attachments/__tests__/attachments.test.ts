@@ -213,6 +213,21 @@ describe('writePhoto and readPhoto', () => {
   });
 });
 
+describe('localPhotos', () => {
+  test('writes a photo from the cloud at the name its row got, sealed with this phone key', async () => {
+    const { localPhotos } = attachmentsModule;
+    const filePath = 'attachments/0190a1b2-0000-7000-8000-000000000001.bin';
+    expect(localPhotos.exists(filePath)).toBe(false);
+
+    await localPhotos.write(filePath, JPEG);
+
+    expect(localPhotos.exists(filePath)).toBe(true);
+    const onDisk = mockFiles.get(`file:///docs/${filePath}`)!;
+    expect(NodeBuffer.from(onDisk).includes(NodeBuffer.from(JPEG, 'base64'))).toBe(false);
+    await expect(localPhotos.read(filePath)).resolves.toBe(JPEG);
+  });
+});
+
 describe('saveWithPhoto', () => {
   test('writes the file first and hands it to the save', async () => {
     const save = jest.fn(async (a: NewAttachment | null | undefined) => {

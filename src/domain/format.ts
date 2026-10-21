@@ -24,6 +24,19 @@ export function formatDate(d: ISODate): string {
   return dateFormat.format(new Date(Date.UTC(y, m - 1, day)));
 }
 
+// Device-local time zone: these describe a moment on this phone, not a calendar day.
+const timeFormat = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const dayMonthFormat = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' });
+
+/** "hoje às 14:32", "ontem às 09:10", or "18 de out. às 08:00". */
+export function formatMoment(at: Date, now: Date): string {
+  const time = timeFormat.format(at);
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (at.toDateString() === now.toDateString()) return `hoje às ${time}`;
+  if (at.toDateString() === yesterday.toDateString()) return `ontem às ${time}`;
+  return `${dayMonthFormat.format(at)} às ${time}`;
+}
+
 function daysLabel(d: number | null): string {
   if (d === null) return 'Sem previsão';
   if (d < 0) return `Vencido há ${-d} ${d === -1 ? 'dia' : 'dias'}`;

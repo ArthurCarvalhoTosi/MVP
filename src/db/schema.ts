@@ -3,6 +3,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   sqliteTable,
   text,
   type AnySQLiteColumn,
@@ -125,3 +126,16 @@ export const devicePrefs = sqliteTable('device_prefs', {
   value: text('value').notNull(),
   updatedAt: timestamps.updatedAt,
 });
+
+// Device-local sync bookkeeping, never synced: each row's updated_at as last sent to or received
+// from the cloud. A row whose updated_at differs is waiting to upload. Comparing for a difference
+// rather than "newer than a cursor" keeps a phone clock running late from hiding edits.
+export const syncState = sqliteTable(
+  'sync_state',
+  {
+    tableName: text('table_name').notNull(),
+    rowId: text('row_id').notNull(),
+    syncedUpdatedAt: text('synced_updated_at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.tableName, t.rowId] })],
+);

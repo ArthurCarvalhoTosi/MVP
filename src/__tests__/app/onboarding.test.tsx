@@ -16,7 +16,7 @@ import {
   todayISO,
   type CarModel,
 } from '@/domain';
-import { router, seedVehicle, setupScreen } from '@/test-utils/screens';
+import { redirect, router, seedVehicle, setupScreen } from '@/test-utils/screens';
 
 jest.mock('expo-router', () => require('@/test-utils/screens').expoRouterMock);
 jest.mock('drizzle-orm/expo-sqlite', () => require('@/test-utils/screens').liveQueryMock);
@@ -123,6 +123,23 @@ test('on first use offers to restore a backup instead', async () => {
     .setup()
     .press(screen.getByRole('button', { name: 'Já usei o app: restaurar backup' }));
   expect(router.push).toHaveBeenCalledWith('/restore');
+});
+
+test('first use: offers signing in to bring the cars back from the cloud', async () => {
+  await render(<Onboarding />);
+  await userEvent
+    .setup()
+    .press(screen.getByRole('button', { name: 'Já usei o app: entrar na minha conta' }));
+  expect(router.push).toHaveBeenCalledWith('/account');
+});
+
+test('first use: cars arriving from the cloud open the garage', async () => {
+  const view = await render(<Onboarding />);
+  expect(redirect).not.toHaveBeenCalled();
+
+  await seedVehicle(db); // what a sync landing the account's cars does
+  await view.rerender(<Onboarding />);
+  expect(redirect).toHaveBeenCalledWith('/');
 });
 
 test('adds another car and opens it in the garage', async () => {

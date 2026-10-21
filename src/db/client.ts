@@ -90,6 +90,8 @@ export async function resetDatabase(): Promise<void> {
     if (!(e instanceof Error && /not found/i.test(e.message))) throw e;
   }
   await SecureStore.deleteItemAsync(KEY_NAME);
+  // The cloud data key src/account stores; the session went with the database file.
+  await SecureStore.deleteItemAsync('garagem.cloud.dek');
   // Same folder src/attachments writes to. Files stay encrypted, but they are still the user's data.
   try {
     const dir = new Directory(Paths.document, 'attachments');

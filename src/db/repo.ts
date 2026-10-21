@@ -243,6 +243,36 @@ export async function selectVehicle(db: Db, vehicleId: string): Promise<void> {
   setSelectedVehicle(db, vehicleId);
 }
 
+// --- Cloud session storage (device-local: never synced nor in backups) ---
+
+// supabase-js keeps its session and the sign-in PKCE verifier here. The encrypted database
+// holds them rather than the Secure Store, whose values are capped at ~2 KB: a session with
+// the Google profile is bigger than that.
+const AUTH_PREFIX = 'auth:';
+
+export function readAuthItem(db: Db, key: string): string | null {
+  return (
+    db
+      .select({ value: devicePrefs.value })
+      .from(devicePrefs)
+      .where(eq(devicePrefs.key, AUTH_PREFIX + key))
+      .get()?.value ?? null
+  );
+}
+
+export function writeAuthItem(db: Db, key: string, value: string): void {
+  db.insert(devicePrefs)
+    .values({ key: AUTH_PREFIX + key, value })
+    .onConflictDoUpdate({ target: devicePrefs.key, set: { value } })
+    .run();
+}
+
+export function removeAuthItem(db: Db, key: string): void {
+  db.delete(devicePrefs)
+    .where(eq(devicePrefs.key, AUTH_PREFIX + key))
+    .run();
+}
+
 export async function renameVehicle(db: Db, vehicleId: string, nickname: string): Promise<void> {
   const name = requiredText(nickname, 'Informe um apelido para o veículo.');
   db.transaction((tx) => {

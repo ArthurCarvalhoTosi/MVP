@@ -89,6 +89,7 @@ test('generates the key once, stores it device-only, and sends it first as a raw
         m0000: expect.stringContaining('CREATE TABLE `vehicles`'),
         m0001: expect.stringContaining('CREATE TABLE `device_prefs`'),
         m0002: expect.stringContaining('ADD `log_id`'),
+        m0003: expect.stringContaining('CREATE TABLE `sync_state`'),
       },
     }),
   );

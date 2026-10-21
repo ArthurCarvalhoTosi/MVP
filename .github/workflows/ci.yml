@@ -29,10 +29,26 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
+      - run: npm run test:functions
+
+  database:
+    name: Database migrations and RLS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # The Supabase CLI comes from devDependencies, same version as on the dev machine.
+      - run: npm ci
+      - run: npx supabase db start
+      - run: npx supabase test db
 
   android:
     name: Android APK
-    needs: check
+    needs: [check, database]
     # Only main ships a build; PRs stop at the checks.
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest

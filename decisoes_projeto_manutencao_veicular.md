@@ -2,7 +2,7 @@
 
 Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura, dados e segurança definidos para continuidade do desenvolvimento.
 
-**Última revisão:** 2026-10-19
+**Última revisão:** 2026-10-20
 
 ---
 
@@ -240,7 +240,7 @@ dossier_shares                       -- v1
   ```
   Anexos no Storage também vão cifrados com a DEK.
 * **Gestão da DEK — DECIDIDO: chave gerenciada pelo servidor.**
-  * A DEK de cada usuário é gerada no cliente no momento da criação da conta e embrulhada (*wrapped*) por uma **chave mestra (KEK)** mantida fora do banco (segredo de Edge Function / KMS). No banco fica apenas a DEK embrulhada.
+  * A DEK de cada usuário é gerada **na Edge Function `user-key`** no primeiro login e embrulhada (*wrapped*) por uma **chave mestra (KEK)** mantida fora do banco (segredo `KEKS` da Edge Function). No banco fica apenas a DEK embrulhada. *(Antes: gerada no cliente. O servidor vê a DEK de qualquer forma ao embrulhar, então a segurança é a mesma, e gerar no servidor evita que dois aparelhos entrando ao mesmo tempo criem chaves diferentes.)*
   * Ao logar em novo dispositivo, o app obtém a DEK via Edge Function autenticada (JWT do Supabase) e a guarda no Secure Store do aparelho. **Zero atrito para o usuário.**
   * **Protege contra:** vazamento de dump/backup do banco, falha de RLS, acesso indevido ao Storage.
   * **Não protege contra:** comprometimento total do servidor (banco + segredos das Edge Functions).
@@ -275,10 +275,10 @@ dossier_shares                       -- v1
 | Fase | Escopo |
 |---|---|
 | **v0** | 100% local, sem conta. SQLCipher. PDF do dossiê. Backup cifrado por arquivo. Esquema já com campos de sync. |
-| **v1** | Login opcional (Google/Apple). Upload inicial de todos os dados locais cifrados. Sync push/pull incremental por `updated_at`, *last-write-wins* por linha, soft delete. Link do dossiê. |
+| **v1** | Login opcional (Google/Apple). Upload inicial de todos os dados locais cifrados. Sync push/pull incremental, *last-write-wins* por linha (pelo `updated_at` do cliente), soft delete; o cursor do pull é um carimbo do servidor (ver "Plano da v1" na seção 12). Link do dossiê. |
 | **Futuro** | Opção E2E (chave de recuperação / passkeys), motos, crowdsourcing de specs. |
 
-**Migração v0 → v1:** ao criar conta, o app gera a DEK, cifra cada linha local e envia; a partir daí o SyncAgent assume. A chave do SQLCipher local continua independente da DEK da nuvem.
+**Migração v0 → v1:** ao criar conta, o app obtém a DEK (`user-key`), cifra cada linha local e envia; a partir daí o SyncAgent assume. A chave do SQLCipher local continua independente da DEK da nuvem.
 
 ---
 
@@ -403,3 +403,74 @@ Testes unitários desde o primeiro commit; nenhuma lógica não trivial entra se
 ### Pendente
 1. **Seed:** palhetas (e muita calibragem) continuam vazias — os manuais mandam ver a etiqueta. Falta o Tiggo 7. No Stepway 2010 a traseira ficou vazia de propósito (o manual contradiz psi e bar). Completar só com fonte brasileira; vazio continua melhor que chute.
 2. **Rodar no iOS** (exige macOS ou EAS Build).
+
+### Plano da v1 (2026-10-20)
+
+A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
+
+**Correção de desenho: cursor do sync.** O `updated_at` vem do relógio do aparelho; usado como cursor do pull, um relógio atrasado faz outro aparelho pular linhas. Cada `sync_records` ganha um carimbo do servidor (`server_updated_at`, gravado pelo Postgres, ou uma sequência), e o pull pede "tudo depois do último carimbo visto". O `updated_at` do cliente continua decidindo o *last-write-wins*. O cursor fica em `device_prefs`; o esquema local não muda.
+
+**Achado: HTML nas Edge Functions.** No domínio padrão `*.supabase.co`, respostas `text/html` são reescritas como `text/plain`; HTML só com domínio próprio, que no Supabase é add-on pago (exige plano Pro). Proposta: a página do dossiê fica num host estático gratuito (ex.: Cloudflare Pages) no domínio do app, e a Edge Function só devolve o snapshot em JSON. Substitui o `GET /d/{token}` da seção 5 quando decidido.
+
+**Fatias, em ordem** (cada uma entregável sozinha):
+1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. ✅ (ver abaixo)
+2. **Login e chave:** Google (Apple quando houver iOS); Edge Function que embrulha/desembrulha a DEK; DEK no Secure Store.
+3. **SyncAgent** (`src/sync`): upload inicial, push/pull incremental, soft delete; merge LWW como função pura testada com sql.js.
+4. **Fotos na nuvem:** recifradas com a DEK, bucket privado. ✅ (ver abaixo; `remote_path` acabou sem uso)
+5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit.
+6. **Excluir conta no app:** apaga a DEK (crypto-shredding).
+7. **Publicação:** EAS Build com keystore própria (`eas.json` e conta Expo entram aqui; saíram da fatia 1 porque o iOS ficou para depois); política de privacidade publicada antes.
+
+**Fatia 1 entregue (2026-10-20).** Migration `supabase/migrations/…_sync_keys_shares.sql`:
+* `sync_records`: chave `(user_id, table_name, id)` (`vehicle_specs` reusa o id do carro); só as 6 tabelas sincronizáveis (`device_prefs` recusada); payload ≤ 64 KiB, nonce de 12 bytes. Um gatilho garante o *last-write-wins* no servidor (cópia com `updated_at` igual ou mais velho é ignorada, sem quebrar o lote) e grava `server_updated_at` com o relógio do Postgres. Esse carimbo sai na execução, não no commit: o pull relê uma pequena janela antes do cursor (a fusão é idempotente).
+* `user_keys`: sem política e sem permissão para o app; só Edge Functions (service role) leem a DEK embrulhada.
+* `dossier_shares`: snapshot em `jsonb` (≤ 256 KiB) congelado; o dono só muda `expires_at` e `revoked_at`, ou apaga.
+* Permissões por coluna: o app não escolhe o dono da linha (`user_id` vem de `auth.uid()`) nem forja o cursor; não há `delete` em `sync_records` (soft delete). Excluir o usuário em `auth.users` apaga em cascata linhas, DEK e links.
+* Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). Migration aplicada no `garagem-dev` e os mesmos testes passam lá (`supabase test db --linked`; o teste assume o papel `postgres`, porque o login temporário da CLI não enxerga o schema `extensions`). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
+* Portas locais do Supabase em 443xx (`config.toml`): o Windows reserva 54242–54941 em algumas máquinas.
+
+**Fatia 2 em andamento: login Google (2026-10-20).** Login pelo navegador com PKCE (`signInWithOAuth` → aba segura com a tela do Google → `garagem://auth-callback` → `exchangeCodeForSession`). *Mudou do login nativo:* a versão gratuita de `@react-native-google-signin/google-signin` ainda usa a API de login do Android que o Google descontinuou; a moderna (Credential Manager) só existe na versão paga. O navegador não exige código nativo nem licença, funciona igual no iOS e custa um toque a mais, uma vez por aparelho. O PKCE impede que outro app que capture o `garagem://` termine o login. Google Cloud: projeto `garagem-dev`, tela de consentimento externa em modo de teste (só usuários de teste entram), escopos básicos (e-mail e perfil). Dois clientes OAuth: **Web** (`680900132295-1njieevhtrcll6rpuslbs5i0v2cukh61.apps.googleusercontent.com`, usado pelo Supabase para validar o token; o *secret* fica só no painel do Supabase) e **Android** (`br.com.garagem.app` + SHA-1 da chave de debug; criado para o login nativo e hoje sem uso). Supabase: `garagem://auth-callback` na lista de *Redirect URLs*.
+
+**App: conta (2026-10-20).** "Conta" em "Seus carros" abre a sheet: sem conta, explica que é opcional e oferece o botão padrão do Google ("Continuar com o Google", `GoogleButton` em `src/ui`: G colorido oficial em SVG via `expo-image`, cores, Roboto e texto das diretrizes de marca do Google, versões clara e escura com o G sobre branco; só a altura sobe para 48dp; as cores são tokens próprios, fora da paleta); com conta, mostra o e-mail e "Sair da conta" (com confirmação; os dados continuam no aparelho). Módulo `src/account`:
+* Sessão do Supabase guardada em `device_prefs` (chaves `auth:*`), dentro do banco cifrado: a sessão com o perfil do Google passa do limite de ~2 KB do Secure Store. Fica fora do backup e sobrevive a uma restauração.
+* Depois do login, o app busca a DEK em `user-key` e a guarda no Secure Store (`garagem.cloud.dek`, só neste aparelho). Se a chave não vier, o app sai da conta: logado sem chave não sincronizaria nada.
+* Sair apaga a DEK e encerra só a sessão deste aparelho; "apagar e recomeçar" também apaga a DEK.
+* A sessão se renova só com o app em primeiro plano. URL e chave publicável do `garagem-dev` fixas no código (públicas por definição) até existir o projeto de produção.
+
+**Edge Function `user-key` (2026-10-20).** `POST /functions/v1/user-key` com a sessão do usuário devolve `{ dek }` (base64, `Cache-Control: no-store`), criando a chave no primeiro uso. Detalhes:
+* KEK: segredo `KEKS` da função, JSON `{"<versão>": "<base64 de 32 bytes>"}`; a maior versão embrulha chaves novas, as antigas continuam abrindo as delas (rotação = acrescentar versão, nunca trocar). Sem KMS externo por ora. **Perder a KEK perde os dados de todos os usuários na nuvem**: ela fica também num cofre de senhas do dono do projeto (o Supabase não mostra segredos depois de gravados).
+* Formato embrulhado: nonce (12) + AES-256-GCM (48) = 60 bytes, com o id do usuário como dado associado (uma DEK copiada para outra linha não abre).
+* Corrida de primeiro login: `insert … on conflict do nothing` e releitura; todos recebem a chave que ficou gravada.
+* Login validado pelo `@supabase/server` (`auth: 'user'`, JWKS do projeto). Erros devolvem só `internal`; nada de chave em log.
+* Testes: Deno (`npm run test:functions`: lint, check e 14 testes de cifra, corrida e rotação; roda no CI). Ponta a ponta no Supabase local: login real, mesma chave em chamadas seguidas e em 5 chamadas simultâneas, chave diferente por usuário, 401 sem token ou com token adulterado, 403 ao ler `user_keys` pela API.
+* `supabase/functions` é código Deno: fora do `tsc` e do ESLint do app; Deno fixado como devDependency.
+
+**Fatia 3: sincronização (2026-10-20).** Módulo `src/sync` (lado local em `src/db/sync.ts`).
+* **O que vai:** carros, itens, trocas, leituras de hodômetro e cola de bolso, inclusive as linhas apagadas (soft delete). Anexos ficaram para a fatia 4 (a linha sem o arquivo mostraria uma foto que o outro celular não abre) e entraram lá. `device_prefs` e a sessão nunca saem do aparelho.
+* **Cifra:** cada linha vira um envelope JSON (`{v:1,row}`) cifrado com a DEK (AES-256-GCM); `tabela:id` entra como dado associado, então o servidor não consegue fazer uma linha passar por outra. Ao abrir, o app também confere que o id e o `updated_at` de dentro batem com os de fora. Linha que não abre (chave errada, bytes adulterados, tabela desconhecida) é pulada e contada.
+* **O que falta subir:** tabela local `sync_state` com o `updated_at` de cada linha na última ida/vinda. Pendente é quem está *diferente* (não "mais novo que um cursor"): relógio atrasado não esconde edição, e uma edição feita durante o envio continua pendente.
+* **Ciclo:** pull (cursor = carimbo do servidor, relendo 1 minuto antes) → aplica numa transação, pais antes dos filhos, cada linha num savepoint → push em lotes de 200 → marca enviado. A cópia mais nova vence (comparação dos `updated_at`, normalizados para o formato do app: o Postgres devolve `+00:00`).
+* **Quando:** ao abrir o app, ao voltar para ele, logo após entrar na conta e 3 s depois de uma pausa nas edições; uma execução por vez (pedido no meio enfileira mais uma). Falha (sem internet) só marca o status; o próximo gatilho tenta de novo.
+* **Tela "Conta":** "Dados na nuvem: sincronizado hoje às 14:32", "Sincronizando…" ou "Não foi possível sincronizar agora. O app tenta de novo sozinho.", e "Sincronizar agora". Sair da conta apaga a DEK e o `sync_state`/cursor deste aparelho (outra conta começa do zero).
+* **Servidor:** o upsert do PostgREST regrava todas as colunas enviadas, inclusive `table_name` e `id`: migration `…_sync_upsert_grants` libera `update` nessas duas (o dono continua sem poder mexer em `user_id`). O pgTAP agora imita esse upsert (31 casos).
+* **Testes:** banco local (pendências, relógio atrasado, edição durante o envio, LWW, filhos antes do pai, linha estragada), dois celulares com servidor falso (cifra real via Node), adulteração/troca de linha, agendador, gancho. Ponta a ponta contra o Supabase local real (`SYNC_E2E=1 npx jest src/sync/__tests__/supabase.e2e.test.ts`): dois celulares convergem e outra conta não vê nem sobrescreve nada. O typecheck pegou a opção errada do `expo-crypto` (`includeTag`) que o mock aceitava.
+* **Celular novo:** o primeiro uso oferece "Já usei o app: entrar na minha conta" (ao lado de restaurar backup). O cadastro sai para a garagem quando carros chegam por outro caminho; a sheet "Conta" aberta num aparelho sem carros também fecha sozinha quando os carros da conta chegam (conta vazia: fica na sheet).
+* **PKCE de verdade no Hermes:** sem WebCrypto, o supabase-js gerava o segredo do PKCE com `Math.random` e o mandava sem hash ("plain"). `src/account/webcrypto.ts` preenche só o que ele usa (`getRandomValues` e SHA-256 nativos do `expo-crypto`); o aviso sumiu e o login usa S256.
+* **Validado no emulador Android (2026-10-20):** login → "Dados na nuvem: sincronizado"; app desinstalado e reinstalado (aparelho novo, sem dados nem chave) → entrar na conta → o carro volta da nuvem, decifrado, e o app abre na garagem.
+
+**Fatia 4: fotos na nuvem (2026-10-20).** As linhas de `attachments` entram no sync, e o arquivo de cada foto vai para o Storage.
+* **Bucket `attachments`** (migration `…_attachments_bucket`): privado, até 5 MiB, só `application/octet-stream`. Um objeto por foto em `<id do usuário>/<id do anexo>.bin`; as políticas em `storage.objects` só deixam o dono ler, enviar, substituir e apagar na própria pasta, e só nomes nesse formato. pgTAP: 12 casos novos (43 no total), conferidos abrindo brechas de propósito (3 falham).
+* **Cifra:** o JPEG é decifrado com a chave local do aparelho e cifrado de novo com a DEK (AES-256-GCM, com o id do anexo como dado associado: o servidor não troca uma foto por outra). Formato: 1 byte de versão + nonce + cifra + tag. No celular que recebe, a foto é recifrada com a chave local dele.
+* **`file_path` não sai do aparelho:** cada celular guarda a foto com a própria chave e o próprio nome de arquivo. A linha viaja sem essa coluna; no celular que recebe, o arquivo ganha o nome `attachments/<id>.bin`, e uma cópia vinda da nuvem nunca sobrescreve o nome local (senão o arquivo certo não seria apagado na remoção).
+* **Ordem:** a foto sobe antes da linha (linha na nuvem garante que o arquivo está lá); falha no envio interrompe o sync e tudo é tentado de novo. Foto que o aparelho não consegue ler fica só nele, com a linha, e o resto sobe. Foto removida sai do Storage antes de a linha apagada subir. Depois do envio, o app baixa as fotos que ainda não tem; uma que não chegou à nuvem espera o próximo sync, e uma adulterada é pulada.
+* **Remoção em outro aparelho:** ao receber a linha apagada, o arquivo local some na hora (notas fiscais têm CPF e endereço).
+* **"Já subiu"** fica no `sync_state` local (nome `photo_files`), não em `remote_path`: sair da conta zera, e outra conta no mesmo aparelho envia a própria cópia. O caminho na nuvem sai do id do usuário e do anexo, então `remote_path` continua sem uso.
+* **Histórico:** foto que ainda não baixou mostra "A foto ainda está vindo da nuvem. Tente de novo daqui a pouco."
+* **Testes:** dois celulares com servidor falso (foto chega cifrada e com nome próprio, ordem do envio, foto ilegível, remoção nos dois lados, adulteração, troca de conta) e ponta a ponta no Supabase local com Storage real (outra conta não baixa nem sobrescreve; o objeto some depois da remoção). Para rodar, o `supabase start` local precisa incluir o `storage-api`.
+* **Validado no emulador Android (2026-10-20):** migration aplicada no `garagem-dev` (`db push`, testes `--linked` passando). Troca com foto da câmera → "sincronizado"; app desinstalado e reinstalado (aparelho novo) → entrar na conta → carro, troca e "Com comprovante" voltam, o arquivo chega como `attachments/<id>.bin` cifrado com a chave nova do aparelho e "Ver foto" mostra a imagem.
+* **Fica para a fatia 6:** excluir a conta precisa esvaziar a pasta do usuário pela API do Storage (apagar o usuário não apaga os objetos; a DEK apagada já os deixa ilegíveis).
+
+**Decisões em aberto:**
+* **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.
+* **Domínio:** necessário na fatia 5 (página do dossiê) e para a URL da política de privacidade. **Direção (2026-10-20):** formalizar em nome da empresa (CNPJ): domínio `.com.br` no Registro.br com DNS no Cloudflare, Google Workspace, D-U-N-S e conta de organização no Play Console (sem a exigência dos 12 testadores por 14 dias das contas pessoais). Plano e passos em [plano_empresa_publicacao.md](plano_empresa_publicacao.md).
+* **iOS / Apple:** sem conta Apple Developer. Proposta: v1 sai primeiro no Android, só com login Google; "Entrar com Apple" (obrigatório na App Store quando há login Google) entra junto com o iOS.

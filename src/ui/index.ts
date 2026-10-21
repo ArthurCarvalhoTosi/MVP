@@ -6,6 +6,7 @@ export type { IconName } from './Icon';
 export { AppText } from './AppText';
 export { Screen } from './Screen';
 export { Button } from './Button';
+export { GoogleButton } from './GoogleButton';
 export { Odometer } from './Odometer';
 export { ItemRow } from './ItemRow';
 export type { Urgency } from './ItemRow';

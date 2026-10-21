@@ -17,6 +17,11 @@ const light = {
   okTint: '#E4F1EA',
   drum: '#1B2226',
   drumDigit: '#F4F4EE',
+  // Fixed by Google's sign-in branding guidelines, not by our palette.
+  googleFill: '#FFFFFF',
+  googleStroke: '#747775',
+  googleText: '#1F1F1F',
+  googleLogoBg: '#FFFFFF',
 };
 
 export type ColorName = keyof typeof light;
@@ -39,6 +44,11 @@ const dark: Colors = {
   okTint: '#16302A',
   drum: '#262E34',
   drumDigit: '#F4F4EE',
+  googleFill: '#131314',
+  googleStroke: '#8E918F',
+  googleText: '#E3E3E3',
+  // The guidelines want the G on white, so it sits in a white disc on the dark button.
+  googleLogoBg: '#FFFFFF',
 };
 
 export const type = {

@@ -13,6 +13,7 @@ import * as SecureStore from 'expo-secure-store';
 import type { Db } from '@/db/client';
 import { uuidv7 } from '@/db/id';
 import { removedAttachmentsQuery, type NewAttachment } from '@/db/repo';
+import type { LocalPhotos } from '@/sync';
 
 const KEY_NAME = 'garagem.attachments.key';
 const DIR = 'attachments';
@@ -48,14 +49,23 @@ export async function preparePhoto(pickedUri: string): Promise<string> {
 
 /** Encrypts a JPEG (base64) into a new file; the result goes into the attachments row. */
 export async function writePhoto(base64: string): Promise<NewAttachment> {
+  // Relative: the app's folder path changes across iOS updates.
+  const filePath = `${DIR}/${uuidv7()}.bin`;
+  const sizeBytes = await writePhotoAt(filePath, base64);
+  return { filePath, mime: 'image/jpeg', sizeBytes };
+}
+
+async function writePhotoAt(filePath: string, base64: string): Promise<number> {
   const sealed = await aesEncryptAsync(base64, await key());
   const bytes = await sealed.combined();
-  const dir = new Directory(Paths.document, DIR);
-  dir.create({ idempotent: true });
-  const name = `${uuidv7()}.bin`;
-  await new File(dir, name).write(bytes);
-  // Relative: the app's folder path changes across iOS updates.
-  return { filePath: `${DIR}/${name}`, mime: 'image/jpeg', sizeBytes: bytes.length };
+  new Directory(Paths.document, DIR).create({ idempotent: true });
+  await new File(Paths.document, filePath).write(bytes);
+  return bytes.length;
+}
+
+/** False for a photo from another phone that hasn't downloaded yet. */
+export function hasPhoto(filePath: string): boolean {
+  return new File(Paths.document, filePath).exists;
 }
 
 /** The decrypted JPEG as base64, for memory only (e.g. a data URI with caching off). */
@@ -94,6 +104,16 @@ export function deleteRemovedPhotos(db: Db): void {
     // Best effort, see above.
   }
 }
+
+/** This phone's photo files, as cloud sync (@/sync) reads and writes them. */
+export const localPhotos: LocalPhotos = {
+  read: readPhoto,
+  write: async (filePath, base64) => {
+    await writePhotoAt(filePath, base64);
+  },
+  exists: hasPhoto,
+  deleteRemoved: deleteRemovedPhotos,
+};
 
 function discard(file: File) {
   try {

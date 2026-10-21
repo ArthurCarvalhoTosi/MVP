@@ -52,6 +52,7 @@ export const liveQueryMock = {
 export const attachmentsMock = {
   preparePhoto: jest.fn(async (_uri: string) => 'PHOTO'),
   readPhoto: jest.fn(async (_filePath: string) => 'SAVED'),
+  hasPhoto: jest.fn((_filePath: string) => true),
   deleteRemovedPhotos: jest.fn(),
   saveWithPhoto: jest.fn(
     async (

@@ -14,8 +14,11 @@ Antes de mudar comportamento, leia [decisoes_projeto_manutencao_veicular.md](dec
 | `src/backup` | Backup por arquivo (`.bkp`): Argon2id da senha + AES-256-GCM, cabeçalho autenticado; restaurar substitui tudo e recifra as fotos | comentários de `index.ts`; seção 8.2 do doc |
 | `src/ui` | Design system: tokens, hodômetro, componentes acessíveis | [src/ui/AGENTS.md](src/ui/AGENTS.md) |
 | `src/app` | Telas (expo-router) | seção "Telas" abaixo |
+| `src/account` | Conta opcional (v1): login Google pelo navegador (PKCE), sessão no banco cifrado, DEK no Secure Store | comentários de `index.ts`; seção 12 do doc |
+| `src/sync` | Sync com a nuvem: linhas e fotos cifradas com a DEK, pull/push, *last-write-wins*; lado local em `src/db/sync.ts` | seção 12 do doc ("Fatia 3" e "Fatia 4") |
 | `src/notifications` | Lembrete de sábado: agendador (expo-notifications), respostas aos toques, pedido de permissão | reagenda tudo a cada abertura e mudança de dados; nunca quebra a tela se a permissão for negada |
 | `drizzle/` | Migrations geradas | nunca editar à mão |
+| `supabase/` | Backend da v1: migrations do Postgres e testes pgTAP de RLS | toda tabela com RLS, `revoke all` e permissões por coluna; toda política ganha teste em `supabase/tests/database` |
 
 Importe pelo alias `@/` (`@/domain`, `@/db/repo`, `@/ui`). `src/domain` não importa nada de fora dele.
 
@@ -27,6 +30,8 @@ npm run typecheck
 npm run lint         # inclui as regras do React Compiler
 npm run format       # Prettier; o editor também formata ao salvar
 npm run db:generate  # depois de mudar src/db/schema.ts
+npx supabase db start   # Postgres local (Docker); depois de nova migration: npx supabase db reset
+npx supabase test db    # testes de RLS
 npx expo run:android # dev build; o Expo Go não funciona (SQLCipher exige build nativo)
 ```
 
