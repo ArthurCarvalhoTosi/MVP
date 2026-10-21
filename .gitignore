@@ -44,3 +44,6 @@ example
 
 # local databases
 *.db
+
+# Cloudflare Wrangler local state (wrangler pages dev)
+.wrangler/

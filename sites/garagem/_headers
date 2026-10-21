@@ -4,3 +4,10 @@
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000
+
+# The dossier link page runs its own script (decrypts the copy in the browser) and calls the
+# dossier Edge Function. "!" drops the site-wide policy so only this one applies.
+/d
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; connect-src https://bphuqkvehtmmktuyuxyc.supabase.co; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  X-Robots-Tag: noindex

@@ -426,3 +426,10 @@ entrypoint = "./functions/user-key/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/user-key/*.html" ]
+
+# Public: the dossier page calls it without a session. The link secret never reaches it.
+[functions.dossier]
+enabled = true
+verify_jwt = false
+import_map = "./functions/dossier/deno.json"
+entrypoint = "./functions/dossier/index.ts"
