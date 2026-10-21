@@ -84,7 +84,7 @@ Documento consolidado de requisitos, escopo, regras de negócio, UX, arquitetura
 
 ### Tela 4: Histórico & Dossiê
 * Linha do tempo reversa, total financeiro acumulado. Cada registro pode ser editado ou excluído.
-* `[Exportar histórico em PDF]` gera o dossiê no aparelho (`expo-print`) e abre o compartilhamento. Link web fica para a v1.
+* `[Exportar histórico em PDF]` gera o dossiê no aparelho (`expo-print`) e abre o compartilhamento. Com conta (v1), também `[Criar e enviar link]`: o mesmo histórico, sem fotos, numa página web cifrada pelo próprio link (8.4).
 * Fotos **desligadas por padrão** no dossiê (notas fiscais contêm CPF e endereço); usuário liga explicitamente. Observações, placa e chassi não entram.
 
 ---
@@ -139,7 +139,7 @@ $$\text{Vencimento} = \min(\text{baseline\_date} + \text{interval\_months},\ \te
 └───────────────────────────┬──────────────┘
                             ↓ (v1, só se logado)
         Supabase: Auth · Postgres+RLS (blobs cifrados) · Storage
-        Edge Function: GET /d/{token} → página do dossiê
+        Edge Function dossier: cópia cifrada pelo hash → página /d (Cloudflare Pages)
 ```
 
 ---
@@ -206,9 +206,9 @@ vehicle_specs                        -- override do seed (cola de bolso)
 device_prefs                         -- estado de UI local do aparelho; NUNCA sincronizado
   key PK, value, updated_at          -- ex.: selectedVehicleId (carro aberto por último)
 
-dossier_shares                       -- v1
-  id, vehicle_id, token_hash, include_photos,
-  created_at, expires_at, revoked_at
+dossier_shares                       -- v1; cópia cifrada pelo segredo do link (8.4)
+  id, user_id, vehicle_id, token_hash, ciphertext,
+  created_at, expires_at
 ```
 
 ---
@@ -253,10 +253,11 @@ dossier_shares                       -- v1
 * **Exclusão de conta = crypto-shredding:** apagar a DEK torna ilegível todo dado remanescente, inclusive em backups.
 
 ### 8.4 Dossiê público (v1)
-* Token aleatório de 128 bits; **somente o hash** é gravado.
-* Conteúdo é um **snapshot congelado** gerado e (necessariamente) decifrado no aparelho no momento do compartilhamento, com consentimento explícito. Fotos, placa e chassi excluídos por padrão.
-* Servido por Edge Function com rate limit — nunca por tabela pública.
-* Revogável, com expiração opcional.
+* Link `https://garagem.acttechsoftware.com.br/d#<segredo>`: segredo aleatório de 128 bits depois do `#`, que o navegador nunca envia a servidor nenhum.
+* Do segredo saem o **hash** (SHA-256, único dado que identifica o link no servidor) e a **chave** AES-256-GCM (HKDF-SHA256). O servidor guarda só cifra e hash: nem um vazamento do banco nem nós lemos um dossiê.
+* Conteúdo é um **snapshot congelado** gerado no aparelho no momento do compartilhamento. Placa, chassi, observações e fotos ficam fora (as fotos só vão no PDF).
+* Servido por Edge Function com rate limit (30 aberturas por IP a cada 10 minutos) — nunca por tabela pública. A página decifra no navegador.
+* Validade opcional (30 dias, 90 dias ou sem prazo); desativar apaga o link. Links vencidos são apagados de hora em hora.
 
 ### 8.5 Backend (v1)
 * RLS em todas as tabelas (`user_id = auth.uid()`).
@@ -410,21 +411,21 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 
 **Correção de desenho: cursor do sync.** O `updated_at` vem do relógio do aparelho; usado como cursor do pull, um relógio atrasado faz outro aparelho pular linhas. Cada `sync_records` ganha um carimbo do servidor (`server_updated_at`, gravado pelo Postgres, ou uma sequência), e o pull pede "tudo depois do último carimbo visto". O `updated_at` do cliente continua decidindo o *last-write-wins*. O cursor fica em `device_prefs`; o esquema local não muda.
 
-**Achado: HTML nas Edge Functions.** No domínio padrão `*.supabase.co`, respostas `text/html` são reescritas como `text/plain`; HTML só com domínio próprio, que no Supabase é add-on pago (exige plano Pro). Proposta: a página do dossiê fica num host estático gratuito (ex.: Cloudflare Pages) no domínio do app, e a Edge Function só devolve o snapshot em JSON. Substitui o `GET /d/{token}` da seção 5 quando decidido.
+**Achado: HTML nas Edge Functions.** No domínio padrão `*.supabase.co`, respostas `text/html` são reescritas como `text/plain`; HTML só com domínio próprio, que no Supabase é add-on pago (exige plano Pro). Decidido: a página do dossiê fica no Cloudflare Pages (`/d`) e a Edge Function só devolve a cópia cifrada (fatia 5).
 
 **Fatias, em ordem** (cada uma entregável sozinha):
 1. **Backend base:** pasta `supabase/` no repo (CLI, migrations), `sync_records`, `user_keys`, `dossier_shares`, RLS em tudo, testes de RLS no CI. ✅ (ver abaixo)
 2. **Login e chave:** Google (Apple quando houver iOS); Edge Function que embrulha/desembrulha a DEK; DEK no Secure Store.
 3. **SyncAgent** (`src/sync`): upload inicial, push/pull incremental, soft delete; merge LWW como função pura testada com sql.js.
 4. **Fotos na nuvem:** recifradas com a DEK, bucket privado. ✅ (ver abaixo; `remote_path` acabou sem uso)
-5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit.
+5. **Link do dossiê:** snapshot congelado, token de 128 bits (só o hash gravado), expiração, revogação, rate limit. ✅ (ver abaixo)
 6. **Excluir conta no app:** apaga a DEK (crypto-shredding).
 7. **Publicação:** EAS Build com keystore própria (`eas.json` e conta Expo entram aqui; saíram da fatia 1 porque o iOS ficou para depois); política de privacidade publicada antes.
 
 **Fatia 1 entregue (2026-10-20).** Migration `supabase/migrations/…_sync_keys_shares.sql`:
 * `sync_records`: chave `(user_id, table_name, id)` (`vehicle_specs` reusa o id do carro); só as 6 tabelas sincronizáveis (`device_prefs` recusada); payload ≤ 64 KiB, nonce de 12 bytes. Um gatilho garante o *last-write-wins* no servidor (cópia com `updated_at` igual ou mais velho é ignorada, sem quebrar o lote) e grava `server_updated_at` com o relógio do Postgres. Esse carimbo sai na execução, não no commit: o pull relê uma pequena janela antes do cursor (a fusão é idempotente).
 * `user_keys`: sem política e sem permissão para o app; só Edge Functions (service role) leem a DEK embrulhada.
-* `dossier_shares`: snapshot em `jsonb` (≤ 256 KiB) congelado; o dono só muda `expires_at` e `revoked_at`, ou apaga.
+* `dossier_shares`: snapshot em `jsonb` (≤ 256 KiB) congelado; o dono só muda `expires_at` e `revoked_at`, ou apaga. *(Mudou na fatia 5: só cifra e hash, imutável; ver abaixo.)*
 * Permissões por coluna: o app não escolhe o dono da linha (`user_id` vem de `auth.uid()`) nem forja o cursor; não há `delete` em `sync_records` (soft delete). Excluir o usuário em `auth.users` apaga em cascata linhas, DEK e links.
 * Testes pgTAP (`supabase/tests/database/rls.test.sql`, 29 casos) com anônimo e dois usuários; conferidos abrindo brechas de propósito (6 falham). Migration aplicada no `garagem-dev` e os mesmos testes passam lá (`supabase test db --linked`; o teste assume o papel `postgres`, porque o login temporário da CLI não enxerga o schema `extensions`). CI: job `database` (`supabase db start` + `supabase test db`); o APK da `main` depende dele.
 * Portas locais do Supabase em 443xx (`config.toml`): o Windows reserva 54242–54941 em algumas máquinas.
@@ -472,14 +473,17 @@ A v0 fechou na tag `v0` (`2870790`). A v1 começa no branch `feat/v1-backend`.
 
 **Ordem depois da fatia 4 (2026-10-21).** Com o D-U-N-S em correção (ver plano de publicação), segue o plano: fatia 5 → fatia 6 → registros de acesso por 6 meses (Marco Civil, prometidos na política) → publicação. Uma conversa nova por fatia.
 
-**Fatia 5: desenho decidido (2026-10-21), a construir.** A cópia do dossiê fica **cifrada pelo próprio link**, mais forte do que a política descreve hoje:
-* O app sorteia um segredo de 128 bits e monta o link `https://garagem.acttechsoftware.com.br/d#<segredo em base64url>`. O que vem depois do `#` nunca é enviado a servidor nenhum (nem ao Cloudflare).
-* Do segredo saem duas coisas: o **hash** (SHA-256), único dado que identifica o link no servidor (`dossier_shares.token_hash`), e a **chave** AES-256-GCM (derivada com outro rótulo, ex.: HKDF), que cifra a cópia no celular. O servidor guarda só cifra e hash: nem um vazamento do banco nem nós lemos os dossiês.
-* A página `/d` (Cloudflare Pages, `sites/garagem`) lê o `#`, calcula o hash, pede a cópia cifrada à Edge Function e decifra no navegador (WebCrypto). Precisa de um `_headers` próprio para `/d` liberando script do próprio site e conexão com a Edge Function; o resto do site continua sem script.
-* A Edge Function só procura pelo hash, recusa link desativado ou vencido e limita as aberturas (rate limit). Nunca vê o segredo nem o conteúdo.
-* Conteúdo como no PDF: sinais de credibilidade, sem placa, chassi e observações; fotos só se o dono ligar, com o aviso de CPF/endereço. Fotos não cabem nos 256 KiB do `snapshot`: decidir na fatia se vão cifradas com a mesma chave num bucket próprio, lidas pela Edge Function só com o hash válido.
-* Validade e desativação pelo app (o dono só muda `expires_at` e `revoked_at`, já garantido pela RLS). Edições posteriores não mudam um link criado.
-* **Política:** ajustar a seção 6 ("envia sem cifra") para descrever a cifra pelo link, com a data nova no topo.
+**Fatia 5: link do dossiê (2026-10-21).** A cópia fica **cifrada pelo próprio link**.
+* **Link:** `https://garagem.acttechsoftware.com.br/d#<segredo>`, segredo de 128 bits em base64url (22 caracteres). Do segredo saem o hash (SHA-256 puro, `dossier_shares.token_hash`) e a chave AES-256-GCM (HKDF-SHA256, sem sal, rótulo `garagem/dossier/key/v1`). Formato da cópia: 1 byte de versão + nonce + cifra + tag. O rótulo e o byte de versão estão no app e na página: mudar quebra todo link já enviado.
+* **App** (`src/dossier-link`): a sheet do dossiê ganhou "Link do histórico". Sem conta, aponta para "Entrar na conta". Com conta: validade (30 dias, 90 dias ou sem prazo), "Criar e enviar link" (sorteia o segredo, cifra o mesmo HTML do PDF, grava cifra e hash, abre o compartilhamento do sistema com o link) e "Links ativos" com "Desativar" (com confirmação). O segredo não fica guardado: link perdido, cria-se outro. O link não depende do sync, só do login. `@noble/hashes` (já instalado) faz SHA-256 e HKDF; `TextEncoder` codifica o HTML.
+* **Fotos ficam fora do link** (decidido na fatia): nota fiscal tem CPF e endereço, e link se repassa. O PDF continua com a opção de fotos. Sem fotos, a cópia cabe folgada nos 256 KiB e não precisa de bucket.
+* **Banco** (migration `…_dossier_link`): `snapshot`, `include_photos` e `revoked_at` saíram; entrou `ciphertext` (≤ 256 KiB). A linha é imutável: o dono cria, lista e apaga ("desativar" apaga, nada fica guardado). Links criados no desenho antigo (só dev) foram apagados.
+* **Abrir:** função `open_dossier(hash, cliente)`, só para o service role: conta a abertura (janela fixa de 10 minutos, 30 por cliente, erro `GA429` acima disso) e devolve a cifra se o link existe e não venceu. Cliente = SHA-256 do IP; o IP não é gravado. **pg_cron** (`dossier-cleanup`, de hora em hora) apaga links vencidos e contadores velhos, como a política promete.
+* **Edge Function `dossier`** (`GET /functions/v1/dossier?h=<64 hex>`, `auth: 'none'`, `verify_jwt = false`, CORS padrão): 200 com os bytes, 404 para link desconhecido, apagado ou vencido, 429 com `Retry-After: 600`, 400 para hash malformado; tudo `no-store`. *Atalho:* o IP vem do primeiro `x-forwarded-for`, que quem chama pode forjar para fugir do limite; trocar pelo cabeçalho de IP da plataforma se houver abuso (adivinhar link continua inútil: 128 bits).
+* **Página `/d`** (`sites/garagem/d.html` + `d.js`): lê o `#`, pede a cópia pelo hash, decifra com WebCrypto e troca a página pelo HTML do dossiê via `DOMParser` (scripts dali nunca rodam). Mensagens para link incompleto, desativado/vencido, muitas aberturas e falha de rede. `_headers`: `/d` troca a CSP do site (`!` remove a geral) por uma que libera script do próprio site, estilo inline (o HTML do dossiê traz o próprio `<style>`) e conexão só com o Supabase; `X-Robots-Tag: noindex`. Conferido com `wrangler pages dev`. `dossierHtml` ganhou viewport e margem menor em tela estreita.
+* **Testes:** app cifra e o `d.js` de verdade abre (WebCrypto do Node): hash = SHA-256 do segredo, link de outra cópia, byte adulterado, link cortado sem ir ao servidor. Tela (sem conta, validade, sem fotos mesmo com fotos ligadas no PDF, toque duplo, falha, lista e desativar). Deno: 6 casos da function. pgTAP: 52 casos (função só para o service role, link vencido, limite e nova janela, job do cron), conferidos abrindo brechas de propósito. Ponta a ponta no Supabase local com a function servida (`npx supabase functions serve` + `SYNC_E2E=1 npx jest src/dossier-link`): link abre pela "página", servidor só tem cifra e hash, outra conta não lista nem apaga, desativado dá 404; 429 na 31ª abertura.
+* **Política:** seção 6 reescrita (cifra pelo link, sem fotos), data nova no topo.
+* **Falta (do dono do projeto):** `npx supabase db push`, `npx supabase functions deploy dossier` e publicar `sites/garagem`; depois, validar no emulador (criar link, abrir no Chrome do aparelho, desativar).
 
 **Decisões em aberto:**
 * **Supabase:** conta criada; projeto `garagem-dev` em São Paulo (`sa-east-1`), sem exposição automática de tabelas e com RLS automático. O de prod (`garagem-prod`) fica para a publicação: o plano gratuito dá 2 projetos e pausa os parados há 1 semana — ok para dev, não para prod.
