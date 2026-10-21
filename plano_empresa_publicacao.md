@@ -86,6 +86,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 - [ ] GitHub: pode continuar pessoal.
 
 ### 5. Publicação
+- [ ] U+C: **nome no login do Google.** Hoje a tela do Google diz "para continuar em `bphuqkvehtmmktuyuxyc.supabase.co`": o Google mostra o domínio que recebe a volta do login. Decidido em 2026-10-21: o dev fica assim; no `garagem-prod` (U) contratar o plano Pro com o add-on de domínio próprio do Supabase (ex.: `auth.acttechsoftware.com.br`; conferir o preço, um relato fala em ~US$ 10/mês além do plano) e (U) pedir a verificação da marca no Google Cloud (Branding: nome "Garagem", logo, domínio verificado, política; leva alguns dias úteis; em "Authorized domains" só domínios nossos). (C) Trocar juntos o endereço do Supabase no app, `FUNCTION_URL` em `sites/garagem/d.js` e o `connect-src` de `/d` em `sites/garagem/_headers`. Fontes: [Supabase: Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google), [discussão #2925](https://github.com/orgs/supabase/discussions/2925).
 - [ ] C: primeiro build de produção (AAB) e checklist da ficha.
 - [ ] U: subir num teste interno/fechado curto com quem quiser (sem mínimo de testadores nem prazo na conta de organização), depois produção.
 
