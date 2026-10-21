@@ -58,7 +58,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 
 ### 2. D-U-N-S (disparar cedo: leva de alguns dias úteis a até 30 dias)
 - [x] U: pedir pelo site oficial da Dun & Bradstreet (gratuito; ignorar sites que cobram). Razão social e endereço **idênticos** ao cartão CNPJ, site da empresa e e-mail do domínio. Pedido em 2026-10-20 pela consulta da Apple (`developer.apple.com/enroll/duns-lookup/`; só abriu em janela anônima): a empresa não tinha número; a Apple diz que o número foi enviado ao e-mail informado. Também ficou um contato aberto na CIAL (parceira da D&B na América Latina), que oferece um "expresso" pago: dispensar e avisar do pedido pela Apple.
-- [ ] U: anotar aqui o número D-U-N-S quando chegar e conferir razão social e endereço no e-mail da D&B.
+- [ ] U: **D-U-N-S `571894742` recebido em 2026-10-20 com a razão social errada** ("JOSEMAR T. M. DA S. CARVALHO TECNOLOGIA DA INFORMACAO LTDA"). Não usar no Play até a D&B mostrar a razão social e o endereço atuais do cartão CNPJ: pedir a atualização gratuita (CIAL ou consulta da Apple) com o cartão CNPJ como prova. Se o número for de outra empresa, pedir um novo.
 
 ### 3. Enquanto o D-U-N-S não chega (C, no repo)
 - [ ] Política de privacidade em pt-BR (LGPD): dados coletados, criptografia local e na nuvem, exclusão de conta (fatia 6), contato `privacidade@`. Publicar no Cloudflare Pages no subdomínio.
