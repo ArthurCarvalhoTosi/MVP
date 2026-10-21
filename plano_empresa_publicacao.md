@@ -53,11 +53,12 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 - [x] U (2026-10-20; delegação em transição, ~2 h no Registro.br): servidores `elliott.ns.cloudflare.com` e `nina.ns.cloudflare.com`; registros de "domínio sem e-mail" do Registro.br (MX nulo, SPF `-all`, DMARC `reject`) importados e mantidos até o Workspace; IA: busca e agentes liberados, treinamento bloqueado. Criar conta no Cloudflare com o e-mail definitivo (ou pessoal e trocar depois), adicionar o domínio, trocar os servidores DNS no Registro.br pelos que o Cloudflare indicar.
 - [x] U: contratar o Google Workspace para o domínio; verificar o domínio (registro TXT no Cloudflare). Usuário administrador `arthur@acttechsoftware.com.br` (2026-10-20).
 - [x] C: registros de e-mail no Cloudflare, conferidos no DNS público em 2026-10-20: MX `smtp.google.com` prioridade 1 (MX nulo do Registro.br apagado), SPF `v=spf1 include:_spf.google.com ~all`, DKIM `google._domainkey` (RSA 2048) e DMARC `v=DMARC1; p=none; rua=mailto:arthur@acttechsoftware.com.br`. Endurecer o DMARC para `quarantine` e depois `reject` quando os relatórios mostrarem só envios legítimos.
-- [ ] U: criar apelidos `contato@`, `privacidade@`, `dev@`.
+- [x] U: criar apelidos `contato@`, `privacidade@`, `dev@` (2026-10-20).
 - [x] U: comprar o `acttechsoftware.com` no Cloudflare Registrar (2026-10-20). Fica como proteção de marca; o principal continua o `.com.br`. Depois, pode entrar no Workspace como domínio alternativo (gratuito) para receber e-mails `@acttechsoftware.com`.
 
 ### 2. D-U-N-S (disparar cedo: leva de alguns dias úteis a até 30 dias)
-- [ ] U: pedir pelo site oficial da Dun & Bradstreet (gratuito; ignorar sites que cobram). Razão social e endereço **idênticos** ao cartão CNPJ, site da empresa e e-mail do domínio.
+- [x] U: pedir pelo site oficial da Dun & Bradstreet (gratuito; ignorar sites que cobram). Razão social e endereço **idênticos** ao cartão CNPJ, site da empresa e e-mail do domínio. Pedido em 2026-10-20 pela consulta da Apple (`developer.apple.com/enroll/duns-lookup/`; só abriu em janela anônima): a empresa não tinha número; a Apple diz que o número foi enviado ao e-mail informado. Também ficou um contato aberto na CIAL (parceira da D&B na América Latina), que oferece um "expresso" pago: dispensar e avisar do pedido pela Apple.
+- [ ] U: anotar aqui o número D-U-N-S quando chegar e conferir razão social e endereço no e-mail da D&B.
 
 ### 3. Enquanto o D-U-N-S não chega (C, no repo)
 - [ ] Política de privacidade em pt-BR (LGPD): dados coletados, criptografia local e na nuvem, exclusão de conta (fatia 6), contato `privacidade@`. Publicar no Cloudflare Pages no subdomínio.
