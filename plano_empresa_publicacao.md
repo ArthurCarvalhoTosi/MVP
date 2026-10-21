@@ -61,7 +61,18 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 - [ ] U: **D-U-N-S `571894742` recebido em 2026-10-20 com a razão social errada** ("JOSEMAR T. M. DA S. CARVALHO TECNOLOGIA DA INFORMACAO LTDA"). Não usar no Play até a D&B mostrar a razão social e o endereço atuais do cartão CNPJ: pedir a atualização gratuita (CIAL ou consulta da Apple) com o cartão CNPJ como prova. Se o número for de outra empresa, pedir um novo.
 
 ### 3. Enquanto o D-U-N-S não chega (C, no repo)
-- [ ] Política de privacidade em pt-BR (LGPD): dados coletados, criptografia local e na nuvem, exclusão de conta (fatia 6), contato `privacidade@`. Publicar no Cloudflare Pages no subdomínio.
+- [x] C: sites estáticos em `sites/` (2026-10-20), sem fontes, scripts nem rastreadores de terceiros (CSP em `_headers`):
+  - `sites/acttech`: página da empresa (exigência do Play para conta de organização) → `acttechsoftware.com.br` e `www`.
+  - `sites/garagem`: página do app, `/privacidade` (LGPD) e `/excluir-conta` (o Play pede uma URL de exclusão fora do app) → `garagem.acttechsoftware.com.br`.
+  - Preview local: `.claude/launch.json` (`site-garagem`, porta 4320).
+- [ ] C: trocar `__CNPJ__` e `__ENDERECO__` nos sites pelos dados do cartão CNPJ. Não publicar enquanto `grep -r __ sites/` achar algo.
+- [ ] U: publicar no Cloudflare Pages (dois projetos, `acttech` e `garagem`) e ligar os domínios em Custom domains. Comandos em "Publicar os sites" abaixo.
+- [ ] Antes da produção, a política promete e o app ainda não faz:
+  - **Registros de acesso por 6 meses** (Marco Civil, art. 15; provedor de aplicação PJ com fins econômicos). Os logs do Supabase gratuito duram 1 dia: gravar IP, data e hora dos logins e das chamadas autenticadas numa tabela própria, com expurgo após 6 meses.
+  - **Exclusão de conta no app** (fatia 6) no caminho descrito em `/excluir-conta`: Seus carros → Conta → Excluir conta.
+  - **Link do dossiê** (fatia 5) com o que a política diz: snapshot sem placa, chassi e observações; fotos só se o dono ligar; validade e desativação; só o hash do token gravado.
+  - **`garagem-prod` em São Paulo** (`sa-east-1`): a política diz "servidores em São Paulo".
+  - Mudou fornecedor, dado coletado ou permissão: atualizar a política e a data no topo.
 - [ ] Fatia 5 (link do dossiê): página estática no Cloudflare Pages, snapshot em JSON pela Edge Function. Ver "Achado: HTML nas Edge Functions" na seção 12 do doc.
 - [ ] Fatia 7 adiantada: `eas.json`, build AAB assinado pelo EAS com chave própria (Play App Signing), sair do atalho do `garagem-dev` fixo no código.
 - [ ] Textos da ficha da loja, classificação de conteúdo, formulário de segurança de dados (o que o app coleta, criptografia, exclusão).
@@ -76,6 +87,18 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 ### 5. Publicação
 - [ ] C: primeiro build de produção (AAB) e checklist da ficha.
 - [ ] U: subir num teste interno/fechado curto com quem quiser (sem mínimo de testadores nem prazo na conta de organização), depois produção.
+
+## Publicar os sites
+
+Pelo Wrangler (CLI do Cloudflare). O login abre o navegador uma vez; a primeira publicação cria o projeto.
+
+```bash
+npx wrangler login
+npx wrangler pages deploy sites/garagem --project-name garagem --branch main
+npx wrangler pages deploy sites/acttech --project-name acttech --branch main
+```
+
+Depois, no painel: Workers & Pages → projeto → Custom domains → `garagem.acttechsoftware.com.br` (projeto `garagem`), `acttechsoftware.com.br` e `www.acttechsoftware.com.br` (projeto `acttech`). Como a zona está na mesma conta, o Cloudflare cria os registros DNS e o certificado sozinho. Para atualizar, repita o `pages deploy`.
 
 ## Como começar a nova conversa
 
