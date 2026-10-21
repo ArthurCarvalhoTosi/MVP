@@ -65,7 +65,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
   - `sites/acttech`: página da empresa (exigência do Play para conta de organização) → `acttechsoftware.com.br` e `www`.
   - `sites/garagem`: página do app, `/privacidade` (LGPD) e `/excluir-conta` (o Play pede uma URL de exclusão fora do app) → `garagem.acttechsoftware.com.br`.
   - Preview local: `.claude/launch.json` (`site-garagem`, porta 4320).
-- [ ] C: trocar `__CNPJ__` e `__ENDERECO__` nos sites pelos dados do cartão CNPJ. Não publicar enquanto `grep -r __ sites/` achar algo.
+- [x] C: CNPJ `68.301.882/0001-69` e endereço do cartão CNPJ (R Pais Leme, 215, conj 1713, Pinheiros, São Paulo/SP, CEP 05424-150) nos sites (2026-10-20).
 - [ ] U: publicar no Cloudflare Pages (dois projetos, `acttech` e `garagem`) e ligar os domínios em Custom domains. Comandos em "Publicar os sites" abaixo.
 - [ ] Antes da produção, a política promete e o app ainda não faz:
   - **Registros de acesso por 6 meses** (Marco Civil, art. 15; provedor de aplicação PJ com fins econômicos). Os logs do Supabase gratuito duram 1 dia: gravar IP, data e hora dos logins e das chamadas autenticadas numa tabela própria, com expurgo após 6 meses.
