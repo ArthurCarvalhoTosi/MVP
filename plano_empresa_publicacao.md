@@ -66,7 +66,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
   - `sites/garagem`: página do app, `/privacidade` (LGPD) e `/excluir-conta` (o Play pede uma URL de exclusão fora do app) → `garagem.acttechsoftware.com.br`.
   - Preview local: `.claude/launch.json` (`site-garagem`, porta 4320).
 - [x] C: CNPJ `68.301.882/0001-69` e endereço do cartão CNPJ (R Pais Leme, 215, conj 1713, Pinheiros, São Paulo/SP, CEP 05424-150) nos sites (2026-10-20).
-- [ ] U: publicar no Cloudflare Pages (dois projetos, `acttech` e `garagem`) e ligar os domínios em Custom domains. Comandos em "Publicar os sites" abaixo.
+- [x] U: publicado no Cloudflare Pages em 2026-10-20 (projetos `acttech` e `garagem`, este em `garagem-f1r.pages.dev`), domínios ligados. Conferido no ar: as 5 páginas com 200, CSP e HSTS, HTTP redireciona para HTTPS. Comandos em "Publicar os sites" abaixo.
 - [ ] Antes da produção, a política promete e o app ainda não faz:
   - **Registros de acesso por 6 meses** (Marco Civil, art. 15; provedor de aplicação PJ com fins econômicos). Os logs do Supabase gratuito duram 1 dia: gravar IP, data e hora dos logins e das chamadas autenticadas numa tabela própria, com expurgo após 6 meses.
   - **Exclusão de conta no app** (fatia 6) no caminho descrito em `/excluir-conta`: Seus carros → Conta → Excluir conta.
@@ -90,7 +90,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 
 ## Publicar os sites
 
-Pelo Wrangler (CLI do Cloudflare). O login abre o navegador uma vez; a primeira publicação cria o projeto.
+Pelo Wrangler (CLI do Cloudflare). O login abre o navegador uma vez; a primeira publicação cria o projeto. O Wrangler cria o projeto com o branch do git atual como produção: em projeto novo, confira em Settings → Branch control que o branch de produção é `main`, senão a publicação fica como Preview e o domínio dá 404.
 
 ```bash
 npx wrangler login
