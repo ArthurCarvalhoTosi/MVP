@@ -73,7 +73,7 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
   - **Link do dossiê** (fatia 5) com o que a política diz: snapshot sem placa, chassi e observações; fotos só se o dono ligar; validade e desativação; só o hash do token gravado.
   - **`garagem-prod` em São Paulo** (`sa-east-1`): a política diz "servidores em São Paulo".
   - Mudou fornecedor, dado coletado ou permissão: atualizar a política e a data no topo.
-- [ ] Fatia 5 (link do dossiê): página estática no Cloudflare Pages, snapshot em JSON pela Edge Function. Ver "Achado: HTML nas Edge Functions" na seção 12 do doc.
+- [ ] Fatia 5 (link do dossiê): página estática no Cloudflare Pages, cópia **cifrada pelo próprio link** (segredo depois do `#`, servidor só com cifra e hash). Desenho decidido em 2026-10-21 na seção 12 do doc ("Fatia 5: desenho decidido"). Ordem combinada: fatia 5 → fatia 6 → registros de acesso → publicação, uma conversa por fatia.
 - [ ] Fatia 7 adiantada: `eas.json`, build AAB assinado pelo EAS com chave própria (Play App Signing), sair do atalho do `garagem-dev` fixo no código.
 - [ ] Textos da ficha da loja, classificação de conteúdo, formulário de segurança de dados (o que o app coleta, criptografia, exclusão).
 
