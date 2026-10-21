@@ -76,3 +76,27 @@ jobs:
           name: garagem-${{ github.sha }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+
+  sites:
+    name: Publish sites
+    # Static files, nothing to build: main publishes both Cloudflare Pages projects. The token
+    # only has "Cloudflare Pages: Edit"; Cloudflare gets no access to the repository.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: garagem.acttechsoftware.com.br
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4.147.0
+          command: pages deploy sites/garagem --project-name garagem --branch main
+      - name: acttechsoftware.com.br
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: 4.147.0
+          command: pages deploy sites/acttech --project-name acttech --branch main

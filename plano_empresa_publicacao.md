@@ -90,7 +90,9 @@ Dono: **U** = usuário (compras, cadastros, documentos), **C** = Claude (código
 
 ## Publicar os sites
 
-Pelo Wrangler (CLI do Cloudflare). O login abre o navegador uma vez; a primeira publicação cria o projeto. O Wrangler cria o projeto com o branch do git atual como produção: em projeto novo, confira em Settings → Branch control que o branch de produção é `main`, senão a publicação fica como Preview e o domínio dá 404.
+**Automático:** todo push para o `main` publica os dois projetos pelo job `sites` do CI (`.github/workflows/ci.yml`). Os projetos foram criados por envio direto, e a Cloudflare não permite ligar o Git a esse tipo de projeto depois; por isso o CI publica com o Wrangler, sem dar à Cloudflare acesso ao repositório. Segredos do repositório: `CLOUDFLARE_API_TOKEN` (token só com Account → Cloudflare Pages → Edit) e `CLOUDFLARE_ACCOUNT_ID`, gravados pelo dono com `gh secret set`.
+
+**Manual** (primeira publicação de um projeto novo ou emergência), pelo Wrangler (CLI do Cloudflare). O login abre o navegador uma vez; a primeira publicação cria o projeto. O Wrangler cria o projeto com o branch do git atual como produção: em projeto novo, confira em Settings → Branch control que o branch de produção é `main`, senão a publicação fica como Preview e o domínio dá 404.
 
 ```bash
 npx wrangler login
